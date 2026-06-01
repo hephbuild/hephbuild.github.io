@@ -37,6 +37,9 @@ export function Nav() {
               display: 'flex',
               alignItems: 'center',
               color: i === status.length - 1 ? 'var(--ac)' : 'var(--faint)',
+              // Reserve width for the version cell so it doesn't reflow when
+              // the async version resolves (v… -> v1.8.0).
+              ...(i === 0 ? { minWidth: 92, boxSizing: 'border-box' } : {}),
             }}
           >
             {t}

@@ -335,6 +335,29 @@ article header h1 {
   color: var(--ac);
 }
 
+/* Mobile TOC collapsible — Docusaurus' default is a rounded, grey-filled pill
+   that clashes with the flat blueprint chrome. Square it off to a hairline box
+   with a mono label, matching the surrounding cards. */
+.theme-doc-toc-mobile {
+  border: 1px solid var(--hair);
+  border-radius: 0;
+  background: var(--paper);
+}
+.theme-doc-toc-mobile button {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+/* The right-rail eyebrow above injects a second "On this page"; suppress it
+   inside the collapsible (the button already carries the label). */
+.theme-doc-toc-mobile .table-of-contents {
+  border-left: none;
+}
+.theme-doc-toc-mobile .table-of-contents::before {
+  content: none;
+}
+
 /* --- Breadcrumbs → plain mono trail (no pills, no home icon) -------------- */
 .breadcrumbs__item .breadcrumbs__link {
   font-family: var(--font-mono);
@@ -697,10 +720,23 @@ body:has(.theme-doc-markdown) .navbar__brand::after {
 }
 
 /* On mobile the plugin collapses the field behind a magnifier toggle — let it
-   expand to a usable width and keep the box styling. */
+   expand to a usable width and keep the box styling. The "Source" button is
+   reachable from the hamburger sidebar, so drop it from the bar here; otherwise
+   the search field (position: left) grows into it and the two overlap. */
 @media (max-width: 996px) {
+  /* Let the field fill the row's leftover space instead of a fixed 260px that
+     overflows narrow phones. */
+  .navbar__search {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 12px;
+  }
   .navbar__search-input {
+    width: 100%;
     max-width: none;
+  }
+  .navbar__items--right a.navbar-source {
+    display: none;
   }
 }
 

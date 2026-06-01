@@ -109,7 +109,8 @@
   .heph-nav-ghlabel { display: none !important; }
   .heph-nav-main { height: auto !important; }
   .heph-nav-actions { gap: 8px !important; padding: 8px 14px 8px 0 !important; }
-  .heph-nav-docs,
+  /* Keep DOCS reachable on mobile (the Docusaurus navbar + its hamburger are
+     hidden on this route); only drop the redundant Source link. */
   .heph-nav-source { display: none !important; }
 
   /* hero — hide the margin ruler, tighten the copy column, let the build
