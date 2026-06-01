@@ -1,0 +1,41 @@
+diff --git a/node_modules/@kas-tle/docusaurus-og/lib/server/plugins/base.plugin.js b/node_modules/@kas-tle/docusaurus-og/lib/server/plugins/base.plugin.js
+index 9054fc9..ddc51b2 100644
+--- a/node_modules/@kas-tle/docusaurus-og/lib/server/plugins/base.plugin.js
++++ b/node_modules/@kas-tle/docusaurus-og/lib/server/plugins/base.plugin.js
+@@ -97,7 +97,22 @@ class BasePlugin {
+      * A common helper to get the HTML file path from a permalink.
+      */
+     getHtmlPathFromPermalink = (permalink) => {
+-        return path.join(this.stripLangFromPath(this.context.outDir), permalink, 'index.html');
++        const fs = require('fs');
++        const base = this.stripLangFromPath(this.context.outDir);
++        // Default (trailingSlash: undefined/true): <permalink>/index.html
++        const dirIndex = path.join(base, permalink, 'index.html');
++        if (fs.existsSync(dirIndex))
++            return dirIndex;
++        // trailingSlash: false → Docusaurus emits a flat <permalink>.html.
++        // Strip any trailing slash first (the docs root permalink is '/docs/')
++        // so path.join doesn't yield '<permalink>/.html'.
++        const clean = permalink.replace(/\/+$/, '');
++        if (clean && clean !== '/') {
++            const flat = path.join(base, clean) + '.html';
++            if (fs.existsSync(flat))
++                return flat;
++        }
++        return dirIndex;
+     };
+ }
+ exports.BasePlugin = BasePlugin;
+diff --git a/node_modules/@kas-tle/docusaurus-og/lib/server/plugins/docs.plugin.js b/node_modules/@kas-tle/docusaurus-og/lib/server/plugins/docs.plugin.js
+index 3a219c0..3096827 100644
+--- a/node_modules/@kas-tle/docusaurus-og/lib/server/plugins/docs.plugin.js
++++ b/node_modules/@kas-tle/docusaurus-og/lib/server/plugins/docs.plugin.js
+@@ -19,7 +19,7 @@ class DocsPlugin extends base_plugin_1.BasePlugin {
+         if (!doc.metadata?.permalink) {
+             return undefined;
+         }
+-        return path.join(this.stripLangFromPath(this.context.outDir), doc.metadata.permalink, 'index.html');
++        return this.getHtmlPathFromPermalink(doc.metadata.permalink);
+     }
+     loadInstance = async (plugin) => {
+         const content = plugin.content;

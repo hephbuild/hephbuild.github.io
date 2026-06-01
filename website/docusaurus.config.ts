@@ -2,6 +2,7 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import type { PrismTheme } from 'prism-react-renderer';
 import { GITHUB_URL } from './src/constants';
+import { ogDocs, ogPages } from './src/og/render';
 
 /**
  * Blueprint code-well theme — the docs UI kit renders code on dark inset wells
@@ -53,6 +54,19 @@ const config: Config = {
         // The landing page ('/') is bespoke marketing chrome, not searchable
         // prose — keep the index scoped to the docs.
         excludeRoutes: ['/'],
+      },
+    ],
+    // Blueprint OpenGraph cards, rendered per-page at build time (postBuild)
+    // via Satori. PNGs land in build/img/og/ and the og:image / twitter:image
+    // meta tags are rewritten to absolute URLs under `url`. See src/og/render.ts.
+    [
+      '@kas-tle/docusaurus-og',
+      {
+        path: 'img/og',
+        imageRenderers: {
+          'docusaurus-plugin-content-docs': ogDocs,
+          'docusaurus-plugin-content-pages': ogPages,
+        },
       },
     ],
   ],

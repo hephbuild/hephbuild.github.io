@@ -6,7 +6,10 @@
    Owned by @heph/uikit — every surface inherits the brand by importing this.
    ============================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+/* IBM Plex is self-hosted via @fontsource. uikit owns the font *tokens* below;
+   the actual @font-face files are loaded by the host app (see website's
+   src/theme/Root.tsx) so the bundler can emit them as separate cached assets
+   rather than base64-inlining them into this stylesheet. */
 
 :root {
   /* ---- Type families ---------------------------------------------------- */

@@ -14,7 +14,10 @@
   "dependencies": {
     "@docusaurus/core": "^3.7.0",
     "@docusaurus/preset-classic": "^3.7.0",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
     "@heph/uikit": "*",
+    "@kas-tle/docusaurus-og": "github:Kas-tle/docusaurus-og",
     "@mdx-js/react": "^3.0.0",
     "antd": "^5.21.0",
     "clsx": "^2.1.1",
