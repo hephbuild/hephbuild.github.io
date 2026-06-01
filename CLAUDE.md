@@ -7,6 +7,36 @@ heph marketing site + docs. npm workspaces: `uikit` (antd-based UI kit) + `websi
 - `install` / `lint` / `build` / `dev` — devenv scripts mirrored by CI.
 - `npm run start` (= `dev`) — Docusaurus dev server on **port 3000** (builds uikit first via `prestart`).
 
+## Lockfile / native bindings (npm optional-deps bug)
+
+Native deps (`@rolldown/binding-*` from Vite, `@resvg/resvg-js-*` from the OG plugin,
+`@unrs/resolver-binding-*`) ship per-platform binaries as `optionalDependencies`. CI
+runs `npm ci` on **linux-x64-gnu**; devs are on **darwin-arm64**. The lockfile must carry
+the binding nodes for **both**, or `npm ci` on the missing platform dies with
+`Cannot find native binding ... npm has a bug related to optional dependencies (npm/cli#4828)`.
+
+**The trap:** regenerating with `node_modules` still present (`rm package-lock.json && npm i`,
+or `npm i --package-lock-only`) records **only the host platform's** bindings and silently
+prunes the others — a broken lockfile that builds locally but fails CI.
+
+**Correct regen** (what makes npm resolve all platforms from registry metadata):
+
+```
+rm -rf node_modules uikit/node_modules website/node_modules package-lock.json
+devenv shell bash -- -c 'npm install'
+```
+
+Then sanity-check both platforms are present before committing:
+
+```
+grep -oE '"node_modules/@rolldown/binding-[a-z0-9-]+"' package-lock.json | sort -u
+# must include both binding-darwin-arm64 AND binding-linux-x64-gnu
+```
+
+Do **not** hand-edit binding nodes into the lockfile — npm won't pick the change up
+consistently and `npm install` will revert it. Adding a new build platform (e.g. linux-arm64
+CI runner) needs nothing extra: a clean regen records every platform npm knows about.
+
 ## Screenshots (Playwright)
 
 Browsers come from nixpkgs, NOT `npx playwright install`. The npm `playwright` dep is pinned to match `pkgs.playwright-driver` (currently **1.59.1**) — when bumping one, bump the other (`nix eval --raw nixpkgs#playwright-driver.version`).
