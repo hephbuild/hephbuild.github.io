@@ -1,0 +1,37 @@
+name: CI
+
+# Lint pull requests (and pushes to non-main branches) before they reach the
+# deploy workflow, which only runs on `main`. The shared ./.github/actions/setup
+# composite installs the devenv environment so CI and local commands are
+# identical (see devenv.nix).
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: devenv shell bash -- -e {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Lint
+        run: lint

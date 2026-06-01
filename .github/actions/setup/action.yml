@@ -1,0 +1,45 @@
+name: Setup
+description: >-
+  Install Nix + devenv and install project dependencies, with caching for the
+  Nix store, devenv binaries, and the npm download cache. Shared by ci.yml and
+  deploy.yml so both run the identical environment (see devenv.nix).
+
+runs:
+  using: composite
+  steps:
+    - name: Install Nix
+      uses: cachix/install-nix-action@v31
+      with:
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+          accept-flake-config = true
+          fallback = true
+          extra-substituters = https://devenv.cachix.org
+          extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+
+    # Cache /nix/store across runs, keyed on the devenv lock/config. Restores the
+    # devenv eval + Node toolchain so they don't rebuild from scratch.
+    - name: Cache Nix store
+      uses: nix-community/cache-nix-action@v7
+      with:
+        primary-key: nix-${{ runner.os }}-${{ hashFiles('devenv.lock', 'devenv.nix', 'devenv.yaml') }}
+        restore-prefixes-first-match: nix-${{ runner.os }}-
+        gc-max-store-size-linux: 1G
+
+    # Runs before devenv exists, so it can't use the devenv shell yet. devenv
+    # itself is fetched from devenv.cachix.org (substituter above), no compile.
+    - name: Install devenv.sh
+      shell: bash
+      run: nix profile add nixpkgs#devenv
+
+    # Cache the npm download cache so `npm ci` installs offline.
+    - name: Cache npm
+      uses: actions/cache@v5
+      with:
+        path: ~/.npm
+        key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: npm-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: devenv shell bash -- -e {0}
+      run: install
