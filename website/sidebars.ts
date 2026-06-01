@@ -21,6 +21,23 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Plugins',
+      collapsible: false,
+      items: [
+        'plugins/index',
+        'plugins/buildfile',
+        'plugins/exec',
+        'plugins/fs',
+        'plugins/go',
+        'plugins/group',
+        'plugins/hostbin',
+        'plugins/nix',
+        'plugins/query',
+        'plugins/textfile',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Reference',
       collapsible: false,
       items: ['reference/cli'],
