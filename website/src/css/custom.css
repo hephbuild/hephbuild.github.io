@@ -779,6 +779,16 @@ html .algolia-autocomplete .ds-dropdown-menu [class^='ds-dataset-'] {
   border: none;
   background: var(--paper);
 }
+/* Mobile — the 480px floor above fights algolia's own small-screen rule
+   (`max-width: calc(100% - 2rem)`; algolia.css `@media (max-width: 600px)`), and
+   min-width wins over max-width, so the panel stays 480px and algolia's
+   `right: 1rem` shoves it ~106px off the left edge (breadcrumb column clipped).
+   Drop the floor so the panel fits the viewport. */
+@media (max-width: 600px) {
+  html .algolia-autocomplete .ds-dropdown-menu {
+    min-width: 0;
+  }
+}
 /* Drop the indigo caret bubble above the panel — the blueprint has no pointer. */
 html .algolia-autocomplete .ds-dropdown-menu::before {
   display: none !important;
