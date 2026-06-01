@@ -580,6 +580,11 @@ body:has(.theme-doc-markdown) .navbar__brand::after {
 .theme-doc-markdown.markdown .theme-admonition svg {
   color: var(--ac);
 }
+/* Content's last paragraph keeps the global `p` 14px margin (higher specificity
+   than Docusaurus' last-child reset) → dead space below the text. Zero it. */
+.theme-doc-markdown.markdown .theme-admonition > div:last-child > :last-child {
+  margin-bottom: 0;
+}
 /* "note" → swap the icon for the cobalt registration cross, as in <Callout>. */
 .theme-doc-markdown.markdown .theme-admonition-note .admonitionHeading svg,
 .theme-doc-markdown.markdown .theme-admonition-note div[class*='admonitionHeading'] svg {

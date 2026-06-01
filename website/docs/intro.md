@@ -13,6 +13,10 @@ the output. Same inputs, byte-identical artifacts — on your laptop and in CI.
 
 > **Build once. Trust the cache.**
 
+:::warning
+Documentation for deprecated v0 can be found [here](https://hephbuild.github.io/heph).
+:::
+
 ## The model in one minute
 
 A build is a directed graph of **targets**. Each target declares its inputs and
@@ -25,7 +29,7 @@ instead of rebuilding.
 target(
     name = "server",
     driver = "bash",
-    run = "go build . -o $OUT",
+    run = "go build -o $OUT .",
     deps = ["//lib/auth:lib", "//proto:api_lib"],
     out = "server",
 )
