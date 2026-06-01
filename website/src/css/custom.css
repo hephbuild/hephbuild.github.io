@@ -255,6 +255,9 @@ article header h1 {
   vertical-align: -1px;
   background: var(--bp-cross) no-repeat center / contain;
 }
+/* Group heading is a static label — no hover effect at all (Infima tints both
+   the collapsible container and its link on hover; suppress both). */
+.menu__list-item-collapsible:hover,
 .menu__list-item-collapsible > .menu__link:hover {
   background: transparent;
 }
@@ -278,9 +281,15 @@ article header h1 {
   padding: 7px 12px 7px 26px;
   color: var(--ink-2);
 }
+/* Leaf items are clickable → a soft hover wash + darker ink. */
 .menu__list .menu__list .menu__link:hover {
-  background: transparent;
+  background: var(--bg-4);
   color: var(--ink);
+}
+/* …but the active leaf keeps its cobalt tint on hover, not the grey wash. */
+.menu__list .menu__list .menu__link--active:hover {
+  background: var(--ac-soft);
+  color: var(--ac);
 }
 
 /* Active leaf → accent text + tint + a flush accent rule in the gutter. Scoped
@@ -406,6 +415,8 @@ body:has(.theme-doc-markdown) .navbar__brand::after {
   font-size: var(--text-sm);
   letter-spacing: var(--tracking-wide);
   color: var(--ink);
+  text-decoration: none;
+  text-underline-offset: 0.22em;
   transition: border-color var(--dur-fast) var(--ease-out);
 }
 .navbar__items--right a.navbar-source::before {
@@ -418,7 +429,9 @@ body:has(.theme-doc-markdown) .navbar__brand::after {
 .navbar__items--right a.navbar-source:hover {
   border-color: var(--ink);
   color: var(--ink);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: var(--ink);
+  text-underline-offset: 0.22em;
 }
 /* Drop Docusaurus' trailing external-link icon on this button. */
 .navbar__items--right a.navbar-source svg {

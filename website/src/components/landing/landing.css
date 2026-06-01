@@ -155,3 +155,16 @@
   .heph-footer-bar { padding: 14px 20px !important; flex-wrap: wrap; gap: 4px 12px; }
   .heph-footer-bar > span:last-child { font-size: 10px; }
 }
+
+/* Underline the nav "Source" button label on hover, consistent with the docs
+   navbar's Source button (the user's preference, applied site-wide). */
+.heph-nav-source a,
+.heph-nav-source button {
+  text-decoration: none;
+  text-underline-offset: 0.22em;
+}
+.heph-nav-source a:hover,
+.heph-nav-source button:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--ink);
+}
