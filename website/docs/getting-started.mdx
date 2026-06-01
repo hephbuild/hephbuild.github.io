@@ -1,0 +1,27 @@
+---
+sidebar_position: 2
+title: Getting started
+description: Install heph and write your first .hephconfig.
+---
+
+import GettingStartedHephConfig from '@site/src/components/GettingStartedHephConfig';
+
+# Getting started
+
+Install heph:
+
+```bash
+curl -fsSL https://heph.dev/install | sh
+```
+
+Then drop a `.hephconfig` at the root of your repository. Pin the version so
+every machine and CI run resolves the same toolchain — byte for byte:
+
+<GettingStartedHephConfig />
+
+The version above is resolved live from the latest heph release. From here,
+declare targets in `BUILD.heph` files and run:
+
+```bash
+heph build //...
+```

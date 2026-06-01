@@ -1,0 +1,66 @@
+/**
+ * Docusaurus theme bridge → heph Blueprint.
+ *
+ * The design tokens themselves live in @heph/uikit (`tokens.css`, imported via
+ * the swizzled Root). Here we only map Infima's variables onto those tokens so
+ * the stock docs chrome (navbar, sidebar, article) inherits the brand.
+ */
+
+:root {
+  --ifm-color-primary: #2d5bff;
+  --ifm-color-primary-dark: #2447d6;
+  --ifm-color-primary-darker: #1e3fb0;
+  --ifm-color-primary-darkest: #18338f;
+  --ifm-color-primary-light: #5a7dff;
+  --ifm-color-primary-lighter: #8aa3ff;
+  --ifm-color-primary-lightest: #d3ddff;
+
+  --ifm-font-family-base: var(--font-sans);
+  --ifm-font-family-monospace: var(--font-mono);
+  --ifm-heading-font-family: var(--font-display);
+
+  --ifm-background-color: #ffffff;
+  --ifm-navbar-background-color: #ffffff;
+  --ifm-navbar-shadow: none;
+  --ifm-toc-border-color: var(--hair);
+  --ifm-color-emphasis-200: var(--hair);
+  --ifm-color-emphasis-300: var(--hair-strong);
+  --ifm-code-font-size: 92%;
+  --ifm-heading-font-weight: 600;
+  --docusaurus-highlighted-code-line-bg: rgba(45, 91, 255, 0.08);
+}
+
+html,
+body {
+  font-family: var(--font-sans);
+  background: #ffffff;
+}
+
+/* Hairline navbar to match the blueprint surfaces. */
+.navbar {
+  border-bottom: 1px solid var(--hair);
+}
+
+.navbar__title {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Mono eyebrow feel for code + sidebar category labels. */
+.menu__link {
+  font-size: 14px;
+}
+
+/**
+ * The landing page renders its own bespoke Nav + Footer (the blueprint chrome),
+ * so hide Docusaurus' default navbar/footer only on that route. `:has()` keys
+ * off the marker class the <Landing> root adds to the page.
+ */
+body:has(.heph-landing) .navbar,
+body:has(.heph-landing) .footer {
+  display: none;
+}
+
+body:has(.heph-landing) .main-wrapper {
+  margin: 0;
+}

@@ -1,0 +1,35 @@
+{
+  "name": "hephbuild.github.io",
+  "version": "0.0.0",
+  "private": true,
+  "description": "heph — open-source build system. Marketing site + docs.",
+  "workspaces": [
+    "uikit",
+    "website"
+  ],
+  "scripts": {
+    "build:uikit": "npm run build --workspace @heph/uikit",
+    "build:website": "npm run build --workspace @heph/website",
+    "build": "npm run build:uikit && npm run build:website",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "prestart": "npm run build:uikit",
+    "start": "npm run start --workspace @heph/website"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-typescript": "^18.0.0",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-react": "^7.37.1",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

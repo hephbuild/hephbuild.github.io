@@ -4,6 +4,13 @@
 *.iws
 *.ipr
 
+# node / build artifacts
+node_modules/
+dist/
+build/
+.docusaurus/
+*.tsbuildinfo
+
 # devenv
 .devenv/
 .devenv.flake.nix

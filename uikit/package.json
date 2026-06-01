@@ -1,0 +1,41 @@
+{
+  "name": "@heph/uikit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "heph Blueprint component library — a thin, swappable proxy layer over Ant Design.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/uikit.css"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "dev": "vite build --watch"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "antd": "^5.21.0",
+    "lucide-react": "^0.456.0"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.58.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "antd": "^5.21.0",
+    "lucide-react": "^0.456.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^8.0.16",
+    "vite-plugin-dts": "^5.0.2"
+  }
+}

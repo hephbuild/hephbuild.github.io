@@ -1,0 +1,11 @@
+{
+  "extends": ["@docusaurus/tsconfig", "../tsconfig.base.json"],
+  "compilerOptions": {
+    "noEmit": true,
+    // @docusaurus/tsconfig still relies on `baseUrl` (for its `@site/*` paths),
+    // which TS 6 deprecates ahead of removal in TS 7. Acknowledge it explicitly.
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src", "docusaurus.config.ts", "sidebars.ts"],
+  "exclude": ["build", ".docusaurus", "node_modules"]
+}
