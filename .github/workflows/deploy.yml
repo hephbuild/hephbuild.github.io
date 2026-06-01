@@ -36,8 +36,10 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Lint
-        run: lint
+      - name: Generate CLI reference
+        run: gen-cli-reference
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Build
         run: build
