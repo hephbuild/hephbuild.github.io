@@ -597,3 +597,255 @@ body:has(.theme-doc-markdown) .navbar__brand::after {
 .theme-doc-markdown.markdown .alert--danger svg {
   color: var(--danger);
 }
+
+/* ==========================================================================
+   Search — docusaurus-lunr-search injects a navbar search box
+   (`.navbar__search` > `input#search_input_react.navbar__search-input`). We
+   restyle it to the blueprint DocTopNav search field: a flat hairline box on
+   the raised surface, a faint magnifier on the left, a mono "search the docs…"
+   placeholder, and a "/" key-hint chip on the right (the key is bound to focus
+   in src/searchHotkey.ts). The plugin sets the real placeholder text in JS, so
+   we render the design's copy as an overlay and make the native placeholder
+   transparent.
+   ========================================================================== */
+.navbar__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 4px;
+}
+
+/* The field itself — square hairline box on the raised surface, mono ink text.
+   Override Infima's pill + its own search glyph. */
+.navbar__search-input {
+  width: 260px;
+  max-width: 38vw;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 30px 0 34px;
+  background: var(--bg-3)
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='14'%20height='14'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23a6a9b0'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='11'%20cy='11'%20r='8'/%3E%3Cpath%20d='m21%2021-4.3-4.3'/%3E%3C/svg%3E")
+    no-repeat 11px center;
+  border: 1px solid var(--hair-2);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  transition: border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+/* Hide the plugin's native placeholder text ("Search ⌘+K" / "Loading…") — the
+   blueprint copy is rendered as the overlay below. */
+.navbar__search-input::placeholder {
+  color: transparent;
+}
+.navbar__search-input:focus {
+  outline: none;
+  border-color: var(--ac);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+/* Drop the browser's native search-clear glyph (the stray blue "✕") — the field
+   stays flat blueprint chrome; clearing is select-all + delete. */
+.navbar__search-input::-webkit-search-cancel-button,
+.navbar__search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+/* Overlay placeholder — the kit's "search the docs…" in faint mono. Sits over
+   the field's left padding; hidden as soon as the user types (the native input
+   no longer counts as `:placeholder-shown`). */
+.navbar__search::before {
+  content: 'search the docs…';
+  position: absolute;
+  left: 34px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--faint);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.navbar__search:has(.navbar__search-input:not(:placeholder-shown))::before {
+  opacity: 0;
+}
+
+/* "/" key-hint chip on the right — a small square hairline key cap, vertically
+   centred, hidden once the field has focus. */
+.navbar__search::after {
+  content: '/';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1;
+  color: var(--faint);
+  border: 1px solid var(--hair-2);
+  pointer-events: none;
+}
+.navbar__search:focus-within::after {
+  opacity: 0;
+}
+
+/* On mobile the plugin collapses the field behind a magnifier toggle — let it
+   expand to a usable width and keep the box styling. */
+@media (max-width: 996px) {
+  .navbar__search-input {
+    max-width: none;
+  }
+}
+
+/* ==========================================================================
+   Search results dropdown — the plugin ships the legacy DocSearch v1 markup
+   (`.ds-dropdown-menu`, `.algolia-docsearch-suggestion--*`) and loads its own
+   `algolia.css` *after* this file, so every override here is `html`-prefixed
+   for specificity and `!important` where algolia hard-codes a value. We strip
+   its indigo/yellow palette and dark header bands back to the blueprint: a flat
+   paper panel on a hairline, faint mono category labels, cobalt for matches and
+   the active row.
+   ========================================================================== */
+
+/* Panel — flat paper sheet on a hairline, square corners. */
+html .algolia-autocomplete .ds-dropdown-menu {
+  margin-top: 6px;
+  min-width: 480px;
+  background: var(--paper);
+  border: 1px solid var(--hair-2);
+  border-radius: 0;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+}
+html .algolia-autocomplete .ds-dropdown-menu [class^='ds-dataset-'] {
+  border-radius: 0;
+  border: none;
+  background: var(--paper);
+}
+/* Drop the indigo caret bubble above the panel — the blueprint has no pointer. */
+html .algolia-autocomplete .ds-dropdown-menu::before {
+  display: none !important;
+}
+
+/* Category header → the sidebar's faint mono eyebrow, not a dark indigo band. */
+html .algolia-autocomplete .algolia-docsearch-suggestion--category-header {
+  padding: 8px 16px;
+  background: var(--bg-1) !important;
+  border-bottom: 1px solid var(--hair);
+  border-top: 1px solid var(--hair);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--faint) !important;
+}
+
+/* Rows — paper wrapper, hairline dividers. */
+html .algolia-autocomplete .algolia-docsearch-suggestion--wrapper {
+  background: var(--paper);
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion--content {
+  padding: 9px 14px;
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion--content::before,
+html .algolia-autocomplete .algolia-docsearch-suggestion--subcategory-column::before {
+  background: var(--hair);
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion {
+  border-bottom-color: var(--hair);
+}
+
+/* Left breadcrumb column → muted sans. */
+html .algolia-autocomplete .algolia-docsearch-suggestion--subcategory-column {
+  padding: 9px 14px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* Result title + snippet → ink heading, steel body. */
+html .algolia-autocomplete .algolia-docsearch-suggestion--title {
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion--text {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+/* Matched term → cobalt on a soft tint. Kills the yellow chip and the blue
+   underline (a box-shadow) algolia uses in titles / snippets respectively. */
+html .algolia-autocomplete .algolia-docsearch-suggestion--highlight {
+  padding: 0 1px;
+  color: var(--ac) !important;
+  background: var(--ac-soft) !important;
+  box-shadow: none !important;
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion--text .algolia-docsearch-suggestion--highlight {
+  color: var(--ac) !important;
+  background: var(--ac-soft) !important;
+  box-shadow: none !important;
+}
+
+/* Active row → cobalt tint + flush accent rule (replaces the grey wash and the
+   React-blue right rule). */
+html .algolia-autocomplete .ds-cursor .algolia-docsearch-suggestion--wrapper {
+  background: var(--ac-soft) !important;
+  box-shadow: inset 2px 0 0 var(--ac) !important;
+}
+
+/* Inline code in a result → the blueprint steel chip. */
+html .algolia-autocomplete .algolia-docsearch-suggestion code {
+  font-family: var(--font-mono);
+  background: var(--bg-3);
+  border: 1px solid var(--hair);
+  border-radius: 3px;
+  color: var(--ink);
+}
+
+/* "no results" band → a single centred blueprint row. The empty template nests
+   the message in a floated `--content`/`--wrapper`; we flatten that to a flex
+   box (kills the float dead-space) and centre it both axes. */
+html .algolia-autocomplete .algolia-docsearch-suggestion--wrapper:has(.algolia-docsearch-suggestion--no-results) {
+  padding: 0;
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion--no-results {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  float: none !important;
+  width: 100% !important;
+  min-height: 60px;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  background: var(--paper) !important;
+  text-align: center;
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion--no-results::before {
+  display: none !important;
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion--no-results .algolia-docsearch-suggestion--title {
+  margin: 0 !important;
+}
+html .algolia-autocomplete .algolia-docsearch-suggestion--no-results .algolia-docsearch-suggestion--text {
+  margin: 0 !important;
+  color: var(--muted) !important;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+}
+
+/* Hide the third-party "Search by Algolia" logo — this is local lunr, and the
+   blueprint carries no vendor marks. */
+html .algolia-autocomplete .algolia-docsearch-footer {
+  display: none !important;
+}

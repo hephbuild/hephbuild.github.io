@@ -38,6 +38,25 @@ const config: Config = {
 
   onBrokenLinks: 'throw',
 
+  // Binds "/" to focus the navbar search — the key-hint chip the blueprint
+  // DocTopNav shows inside the search field.
+  clientModules: ['./src/searchHotkey.ts'],
+
+  // Client-side full-text search (lunr). The plugin crawls the built docs and
+  // ships a static index, so search works on GitHub Pages with no backend. The
+  // navbar search box it injects is restyled to the blueprint DocTopNav search
+  // field (mono placeholder + "/" key hint) in src/css/custom.css.
+  plugins: [
+    [
+      'docusaurus-lunr-search',
+      {
+        // The landing page ('/') is bespoke marketing chrome, not searchable
+        // prose — keep the index scoped to the docs.
+        excludeRoutes: ['/'],
+      },
+    ],
+  ],
+
   markdown: {
     hooks: {
       onBrokenMarkdownLinks: 'warn',
@@ -81,6 +100,10 @@ const config: Config = {
       },
       items: [
         { to: '/docs', label: 'Docs', position: 'left' },
+        // Search sits left, right after the wordmark — the blueprint DocTopNav
+        // search field. (Without an explicit item Docusaurus auto-appends it to
+        // the right; we want the kit's position.)
+        { type: 'search', position: 'left' },
         { href: GITHUB_URL, label: 'Source', position: 'right', className: 'navbar-source' },
       ],
     },
