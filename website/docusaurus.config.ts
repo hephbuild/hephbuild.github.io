@@ -1,7 +1,28 @@
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
-import { themes as prismThemes } from 'prism-react-renderer';
+import type { PrismTheme } from 'prism-react-renderer';
 import { GITHUB_URL } from './src/constants';
+
+/**
+ * Blueprint code-well theme — the docs UI kit renders code on dark inset wells
+ * (`--bg-inset #0b0c0f`) with the brand's two signal hues: cobalt for keywords,
+ * verify-green for strings, steel-faint for comments. We pin the lighter accent
+ * steps (ac-400 / verify-400) so they stay legible on near-black, while reading
+ * as the same cobalt + green from the mock.
+ */
+const blueprintCode: PrismTheme = {
+  plain: { color: '#e6e7ea', backgroundColor: '#0b0c0f' },
+  styles: [
+    { types: ['comment', 'prolog', 'cdata'], style: { color: '#6b7080', fontStyle: 'italic' } },
+    { types: ['keyword', 'builtin', 'boolean', 'rule', 'important'], style: { color: '#5a7dff' } },
+    { types: ['string', 'char', 'attr-value', 'inserted', 'url'], style: { color: '#2bbd84' } },
+    { types: ['number', 'constant', 'symbol'], style: { color: '#8aa3ff' } },
+    { types: ['function', 'class-name', 'tag', 'selector'], style: { color: '#e6e7ea' } },
+    { types: ['attr-name', 'property', 'variable'], style: { color: '#c4c6cc' } },
+    { types: ['punctuation', 'operator'], style: { color: '#a6a9b0' } },
+    { types: ['deleted'], style: { color: '#d6494e' } },
+  ],
+};
 
 const config: Config = {
   title: 'heph',
@@ -60,7 +81,7 @@ const config: Config = {
       },
       items: [
         { to: '/docs', label: 'Docs', position: 'left' },
-        { href: GITHUB_URL, label: 'GitHub', position: 'right' },
+        { href: GITHUB_URL, label: 'Source', position: 'right', className: 'navbar-source' },
       ],
     },
     footer: {
@@ -86,8 +107,8 @@ const config: Config = {
       copyright: `© ${new Date().getFullYear()} heph labs · MIT`,
     },
     prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      theme: blueprintCode,
+      darkTheme: blueprintCode,
       additionalLanguages: ['bash', 'python'],
     },
   } satisfies Preset.ThemeConfig,

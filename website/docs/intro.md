@@ -20,8 +20,8 @@ the action that produces its outputs. Before running anything, heph hashes the
 inputs. A matching digest is a **cache hit** — heph returns the cached output
 instead of rebuilding.
 
-```python
-# BUILD.heph — a target is just data
+```python title="BUILD.heph"
+# a target is just data
 go_binary(
     name = "server",
     srcs = ["main.go"],
@@ -29,9 +29,16 @@ go_binary(
 )
 ```
 
+:::note
+
+Every input you reference — sources, deps, the toolchain — is tracked. If it
+isn't declared, the sandbox won't see it.
+
+:::
+
 Build it, and watch heph rebuild only what changed:
 
-```bash
+```bash title="terminal"
 $ heph build //app:server
 //proto:api      cache hit   0.00s
 //lib/core       cache hit   0.00s

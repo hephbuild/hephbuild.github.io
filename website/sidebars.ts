@@ -7,16 +7,22 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
  */
 const sidebars: SidebarsConfig = {
   docs: [
-    'intro',
-    'getting-started',
+    {
+      type: 'category',
+      label: 'Getting started',
+      collapsible: false,
+      items: ['intro', 'getting-started'],
+    },
     {
       type: 'category',
       label: 'Concepts',
+      collapsible: false,
       items: ['concepts/targets', 'concepts/reproducibility'],
     },
     {
       type: 'category',
       label: 'Reference',
+      collapsible: false,
       items: ['reference/cli'],
     },
   ],

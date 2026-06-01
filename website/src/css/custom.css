@@ -64,3 +64,523 @@ body:has(.heph-landing) .footer {
 body:has(.heph-landing) .main-wrapper {
   margin: 0;
 }
+
+/* ==========================================================================
+   Blueprint docs surface
+   --------------------------------------------------------------------------
+   Brings the landing page's blueprint language into the Docusaurus docs
+   chrome: a faint graph-paper canvas, a paper "sheet" article pinned with
+   registration crosses, mono eyebrow labels, hairline structure and the single
+   cobalt accent. No ambient plasma here — the docs read calm; the blueprint
+   shows only in structure and accent. Every rule is scoped to a doc-page
+   marker (`body:has(.theme-doc-markdown)`, `.markdown`, `.menu`, …) so the
+   bespoke landing chrome is never touched.
+   ========================================================================== */
+
+/* Registration cross "+" in the cobalt accent — the Cross primitive as an SVG
+   data-URI so pure-CSS pseudo-elements can stamp it like the landing surface. */
+:root {
+  --bp-cross: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='11'%20height='11'%20viewBox='0%200%2011%2011'%3E%3Cline%20x1='5.5'%20y1='0'%20x2='5.5'%20y2='11'%20stroke='%232d5bff'%20stroke-width='1'/%3E%3Cline%20x1='0'%20y1='5.5'%20x2='11'%20y2='5.5'%20stroke='%232d5bff'%20stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* Flat white canvas — the docs kit is an edge-to-edge app shell: paper surface,
+   columns separated by hairlines, no graph-paper, no floating card, no shadow.
+   Structure comes from the hairline rules between sidebar / article / TOC. */
+body:has(.theme-doc-markdown) .main-wrapper {
+  background: var(--paper);
+}
+
+/* Sidebar column → flush against the article with a single hairline rule, the
+   docs kit's <DocSidebar> (248px, paper, border-right). */
+body:has(.theme-doc-markdown) .theme-doc-sidebar-container {
+  border-right: 1px solid var(--hair);
+}
+
+/* Article = flat on the paper, constrained to the kit's ~760px measure. Left
+   aligned (NOT centered) and with no horizontal padding so its left edge lines
+   up exactly with the breadcrumb above it. No border, radius or shadow. */
+.theme-doc-markdown.markdown {
+  max-width: 760px;
+  margin: 0;
+  padding: 8px 0 64px;
+}
+/* Breadcrumb shares the same measure + left edge as the article. */
+body:has(.theme-doc-markdown) .theme-doc-breadcrumbs {
+  max-width: 760px;
+}
+
+/* ==========================================================================
+   Typography — pinned to the docs kit's exact specs (DocContent.jsx), since
+   Infima's defaults (16px body, 1.65 leading, ~28px H2, 700 bold) drift from
+   the mock. Scoped to the doc article so the landing chrome is untouched.
+   ========================================================================== */
+.theme-doc-markdown.markdown {
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.theme-doc-markdown.markdown p {
+  margin: 0 0 14px;
+}
+.theme-doc-markdown.markdown li {
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+.theme-doc-markdown.markdown strong {
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+/* H1 → the kit's 38px display title. */
+.theme-doc-markdown.markdown h1:first-child,
+article header h1 {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: var(--weight-semibold);
+  line-height: 1.05;
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+
+/* H2 → 22px display, -0.02em, with the mono "#" anchor glyph in cobalt. No
+   hairline rule (the kit's <H2> is rule-less); spacing is the mock's 38/12. */
+.theme-doc-markdown.markdown h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  color: var(--ink);
+  margin: 38px 0 12px;
+}
+.theme-doc-markdown.markdown h2::before {
+  content: '#';
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: var(--weight-medium);
+  color: var(--ac);
+  margin-right: 10px;
+  vertical-align: 1px;
+}
+
+/* H3 → the kit's 19px sans subhead. */
+.theme-doc-markdown.markdown h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  color: var(--ink);
+  margin: 28px 0 8px;
+}
+
+/* Blockquote: accent rule + tint, matching the "Build once. Trust the cache."
+   call-out treatment on the landing hero. */
+.theme-doc-markdown.markdown blockquote {
+  border-left: 2px solid var(--ac);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: var(--ac-soft);
+  color: var(--ink-2);
+}
+
+/* Inline code: a restrained steel chip on a hairline — the accent stays
+   reserved for links, crosses and active state. */
+.theme-doc-markdown.markdown :not(pre) > code {
+  background: var(--bg-3);
+  border: 1px solid var(--hair);
+  border-radius: 3px;
+  color: var(--ink);
+  font-size: 13px;
+  padding: 1px 5px;
+  vertical-align: baseline;
+}
+
+/* Links: accent with a deliberate underline offset. */
+.theme-doc-markdown.markdown a {
+  text-underline-offset: 0.22em;
+  text-decoration-color: var(--ac-line);
+}
+
+/* Tables: hairline grid with a mono uppercase header band. */
+.theme-doc-markdown.markdown table {
+  display: table;
+  width: 100%;
+  border: 1px solid var(--hair);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.theme-doc-markdown.markdown table thead th {
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--hair-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* --- Sidebar ------------------------------------------------------------- */
+.menu {
+  padding: 18px 12px;
+}
+.menu__list .menu__list {
+  margin-left: 0;
+}
+/* Group spacing — each category is a static block, the kit's grouped tree. */
+.menu > .menu__list > .menu__list-item:not(:first-child) {
+  margin-top: 22px;
+}
+
+/* Category headers → mono eyebrow labels prefixed with the cobalt registration
+   cross, exactly as the kit's <DocSidebar> group headings. Non-collapsible, so
+   they read as static labels rather than buttons. */
+.menu__list-item-collapsible > .menu__link,
+.menu__list-item-collapsible > .menu__link--sublist {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--faint);
+  background: transparent;
+  cursor: default;
+}
+.menu__list-item-collapsible > .menu__link::before {
+  content: '';
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 9px;
+  vertical-align: -1px;
+  background: var(--bp-cross) no-repeat center / contain;
+}
+.menu__list-item-collapsible > .menu__link:hover {
+  background: transparent;
+}
+/* A category whose child is active still renders as a plain (non-sublist) link
+   and picks up `menu__link--active`. Keep the group heading static — faint, no
+   tint, no accent rule — so only the leaf item reads as selected. */
+.menu__list-item-collapsible > .menu__link--active {
+  background: transparent;
+  color: var(--faint);
+}
+/* Drop the collapse caret — these groups are always open. */
+.menu__list-item-collapsible .menu__link--sublist-caret::after,
+.menu__caret {
+  display: none;
+}
+
+/* Leaf links → the kit's 13.5px sans items, indented under the group cross. */
+.menu__list .menu__list .menu__link {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  padding: 7px 12px 7px 26px;
+  color: var(--ink-2);
+}
+.menu__list .menu__list .menu__link:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+/* Active leaf → accent text + tint + a flush accent rule in the gutter. Scoped
+   to nested items so it never lands on a category heading (see above). */
+.menu__list .menu__list .menu__link--active {
+  position: relative;
+  background: var(--ac-soft);
+  color: var(--ac);
+  font-weight: var(--weight-semibold);
+}
+.menu__list .menu__list .menu__link--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--ac);
+}
+
+/* --- Table of contents (right rail) -------------------------------------- */
+/* "ON THIS PAGE" mono eyebrow header above the list, like the kit's <DocToc>. */
+.table-of-contents {
+  font-size: var(--text-sm);
+  border-left: 1px solid var(--hair);
+}
+.table-of-contents::before {
+  content: 'On this page';
+  display: block;
+  margin: 0 0 12px 16px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.table-of-contents__link {
+  color: var(--muted);
+}
+.table-of-contents__link:hover,
+.table-of-contents__link--active,
+.table-of-contents__link--active code {
+  color: var(--ac);
+}
+
+/* --- Breadcrumbs → plain mono trail (no pills, no home icon) -------------- */
+.breadcrumbs__item .breadcrumbs__link {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  background: transparent;
+  padding: 2px 0;
+  color: var(--muted);
+}
+.breadcrumbs__item--active .breadcrumbs__link {
+  background: transparent;
+  color: var(--ink);
+}
+.breadcrumbs__link:hover {
+  background: transparent;
+  color: var(--ink);
+}
+/* Replace the home glyph with a mono "/" root marker. */
+.breadcrumbs__item:first-child .breadcrumbs__link svg {
+  display: none;
+}
+.breadcrumbs__item:first-child .breadcrumbs__link::before {
+  content: '//';
+  color: var(--ac);
+}
+
+/* --- Prev / next pagination → blueprint cards ---------------------------- */
+.pagination-nav__link {
+  border: 1px solid var(--hair);
+  border-radius: var(--r-md);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.pagination-nav__link:hover {
+  border-color: var(--ac-line);
+}
+.pagination-nav__sublabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pagination-nav__label {
+  font-weight: var(--weight-semibold);
+}
+
+/* --- Navbar links → mono, to match the landing nav voice ----------------- */
+.navbar__link {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+}
+
+/* "DOCS" badge pinned beside the wordmark, like the docs kit's <DocTopNav>:
+   a hairline-bordered mono chip. Scoped to doc routes so it never shows on the
+   bespoke landing chrome (which hides the navbar anyway). */
+body:has(.theme-doc-markdown) .navbar__brand::after {
+  content: 'DOCS';
+  margin-left: 11px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  border: 1px solid var(--hair-2);
+}
+
+/* "Source" → a hairline-bordered button with the GitHub mark, replacing the
+   plain external link. The octocat is stamped as an SVG data-URI so no markup
+   change is needed; the default external-link glyph is hidden. */
+.navbar__items--right a.navbar-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--hair-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+  color: var(--ink);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.navbar__items--right a.navbar-source::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230b0c0f'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M9%2019c-5%201.5-5-2.5-7-3m14%206v-3.87a3.37%203.37%200%200%200-.94-2.61c3.14-.35%206.44-1.54%206.44-7A5.44%205.44%200%200%200%2020%204.77%205.07%205.07%200%200%200%2019.91%201S18.73.65%2016%202.48a13.38%2013.38%200%200%200-7%200C6.27.65%205.09%201%205.09%201A5.07%205.07%200%200%200%205%204.77a5.44%205.44%200%200%200-1.5%203.78c0%205.42%203.3%206.61%206.44%207A3.37%203.37%200%200%200%209%2018.13V22'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+.navbar__items--right a.navbar-source:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+}
+/* Drop Docusaurus' trailing external-link icon on this button. */
+.navbar__items--right a.navbar-source svg {
+  display: none;
+}
+
+/* ==========================================================================
+   Code wells — the docs kit renders code on a dark inset (`--bg-inset`) framed
+   by a light hairline, with an optional light title band (```lang title="…")
+   carrying the file name in mono. The prism token colours come from the
+   `blueprintCode` theme in docusaurus.config.ts (cobalt / verify-green).
+   ========================================================================== */
+.theme-doc-markdown.markdown .theme-code-block,
+.theme-doc-markdown.markdown div[class*='codeBlockContainer'] {
+  border: 1px solid var(--hair);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 18px 0;
+}
+
+/* Title band: light surface, hairline base, mono file label on the left and an
+   uppercase language tag on the right — the header row of the kit's <CodeBlock>.
+   The language is recovered from the container's `language-*` class. */
+.theme-doc-markdown.markdown div[class*='codeBlockTitle'] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--hair);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.theme-doc-markdown.markdown div[class*='codeBlockTitle']::after {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.theme-doc-markdown.markdown .language-bash div[class*='codeBlockTitle']::after { content: 'shell'; }
+.theme-doc-markdown.markdown .language-shell div[class*='codeBlockTitle']::after { content: 'shell'; }
+.theme-doc-markdown.markdown .language-python div[class*='codeBlockTitle']::after { content: 'python'; }
+.theme-doc-markdown.markdown .language-go div[class*='codeBlockTitle']::after { content: 'go'; }
+.theme-doc-markdown.markdown .language-json div[class*='codeBlockTitle']::after { content: 'json'; }
+.theme-doc-markdown.markdown .language-yaml div[class*='codeBlockTitle']::after { content: 'yaml'; }
+.theme-doc-markdown.markdown .language-toml div[class*='codeBlockTitle']::after { content: 'toml'; }
+
+/* The well itself: near-black, line-height matching the kit's 1.85. */
+.theme-doc-markdown.markdown div[class*='codeBlockContent'] pre,
+.theme-doc-markdown.markdown pre.prism-code {
+  background: var(--bg-inset) !important;
+  border-radius: 0;
+}
+.theme-doc-markdown.markdown div[class*='codeBlockContent'] code {
+  font-size: var(--text-sm);
+  line-height: 1.85;
+}
+
+/* Line numbers on every well — a steel gutter counter, like the kit's
+   <CodeBlock>. Done in pure CSS (pseudo-element counters) so it applies
+   globally without per-block flags, and the digits never land in copied text. */
+.theme-doc-markdown.markdown pre.prism-code {
+  counter-reset: ln;
+}
+.theme-doc-markdown.markdown pre.prism-code .token-line {
+  counter-increment: ln;
+}
+.theme-doc-markdown.markdown pre.prism-code .token-line::before {
+  content: counter(ln);
+  display: inline-block;
+  width: 1.4em;
+  margin-right: 16px;
+  text-align: right;
+  color: #3a3f48;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Cobalt-tinted highlighted line, flush accent rule in the gutter. */
+.theme-doc-markdown.markdown .theme-code-block-highlighted-line {
+  background: rgba(45, 91, 255, 0.14);
+  box-shadow: inset 2px 0 0 var(--ac);
+}
+
+/* Copy / word-wrap buttons read on the dark well rather than the light default. */
+.theme-doc-markdown.markdown div[class*='codeBlockContent'] button[class*='copyButton'],
+.theme-doc-markdown.markdown div[class*='buttonGroup'] button {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--steel-300);
+}
+
+/* ==========================================================================
+   Callout — admonitions restyled as the docs kit's <Callout>: a cobalt-lined
+   tint panel with a mono uppercase label. The "note" variant carries the brand
+   accent; the others keep their semantic hue but the same flat, hairline frame.
+   ========================================================================== */
+.theme-doc-markdown.markdown .theme-admonition {
+  border: 1px solid var(--ac-line);
+  border-radius: 0;
+  background: var(--ac-soft);
+  box-shadow: none;
+}
+.theme-doc-markdown.markdown .theme-admonition .admonitionHeading,
+.theme-doc-markdown.markdown .theme-admonition div[class*='admonitionHeading'] {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ac);
+}
+.theme-doc-markdown.markdown .theme-admonition svg {
+  color: var(--ac);
+}
+/* "note" → swap the icon for the cobalt registration cross, as in <Callout>. */
+.theme-doc-markdown.markdown .theme-admonition-note .admonitionHeading svg,
+.theme-doc-markdown.markdown .theme-admonition-note div[class*='admonitionHeading'] svg {
+  display: none;
+}
+.theme-doc-markdown.markdown .theme-admonition-note .admonitionHeading::before,
+.theme-doc-markdown.markdown .theme-admonition-note div[class*='admonitionHeading']::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 9px;
+  vertical-align: -2px;
+  background: var(--bp-cross) no-repeat center / contain;
+}
+/* Tip / success → verify-green; warning → amber; danger → red. Same flat frame. */
+.theme-doc-markdown.markdown .theme-admonition-tip,
+.theme-doc-markdown.markdown .alert--success {
+  border-color: rgba(22, 163, 106, 0.3);
+  background: var(--success-quiet);
+}
+.theme-doc-markdown.markdown .theme-admonition-tip .admonitionHeading,
+.theme-doc-markdown.markdown .alert--success div[class*='admonitionHeading'],
+.theme-doc-markdown.markdown .theme-admonition-tip svg,
+.theme-doc-markdown.markdown .alert--success svg {
+  color: var(--success);
+}
+.theme-doc-markdown.markdown .theme-admonition-warning,
+.theme-doc-markdown.markdown .alert--warning {
+  border-color: rgba(200, 146, 15, 0.35);
+  background: var(--warning-quiet);
+}
+.theme-doc-markdown.markdown .theme-admonition-warning .admonitionHeading,
+.theme-doc-markdown.markdown .alert--warning div[class*='admonitionHeading'],
+.theme-doc-markdown.markdown .theme-admonition-warning svg,
+.theme-doc-markdown.markdown .alert--warning svg {
+  color: var(--warning);
+}
+.theme-doc-markdown.markdown .theme-admonition-danger,
+.theme-doc-markdown.markdown .alert--danger {
+  border-color: rgba(214, 73, 78, 0.35);
+  background: var(--danger-quiet);
+}
+.theme-doc-markdown.markdown .theme-admonition-danger .admonitionHeading,
+.theme-doc-markdown.markdown .alert--danger div[class*='admonitionHeading'],
+.theme-doc-markdown.markdown .theme-admonition-danger svg,
+.theme-doc-markdown.markdown .alert--danger svg {
+  color: var(--danger);
+}
