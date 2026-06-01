@@ -366,7 +366,7 @@ function BuildDiagram() {
   );
 }
 
-const INSTALL_CMD = 'curl -fsSL https://heph.dev/install | sh';
+const INSTALL_CMD = 'curl -fsSL https://hephbuild.github.io/install.sh | sh';
 
 /** Headline, install command, margin ruler, dimension line, and build graph. */
 export function Hero() {
