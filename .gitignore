@@ -11,6 +11,9 @@ build/
 .docusaurus/
 *.tsbuildinfo
 
+# playwright screenshots (scratch output)
+.screenshots/
+
 # devenv
 .devenv/
 .devenv.flake.nix

@@ -104,7 +104,9 @@ const config: Config = {
         // search field. (Without an explicit item Docusaurus auto-appends it to
         // the right; we want the kit's position.)
         { type: 'search', position: 'left' },
-        { href: GITHUB_URL, label: 'Source', position: 'right', className: 'navbar-source' },
+        {
+          href: GITHUB_URL, label: 'Source', position: 'right', className: 'navbar-source',
+        },
       ],
     },
     footer: {
