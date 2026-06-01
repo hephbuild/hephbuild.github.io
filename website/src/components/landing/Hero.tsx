@@ -173,6 +173,7 @@ function BuildDiagram() {
 
   return (
     <div
+      className="heph-hero-diagram"
       style={{
         position: 'relative',
         borderLeft: '1px solid var(--hair)',
@@ -223,6 +224,7 @@ function BuildDiagram() {
 
       {/* diagram */}
       <div
+        className="heph-diagram-canvas"
         style={{
           flex: 1,
           display: 'flex',
@@ -379,10 +381,11 @@ export function Hero() {
   return (
     <section style={{ position: 'relative', borderBottom: '1px solid var(--hair)' }}>
       <Corners />
-      <div style={{ display: 'grid', gridTemplateColumns: '1.02fr 0.98fr' }}>
+      <div className="heph-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.02fr 0.98fr' }}>
         {/* left */}
         <div style={{ position: 'relative', display: 'flex' }}>
           <div
+            className="heph-hero-ruler"
             style={{
               width: 38,
               borderRight: '1px solid var(--hair)',
@@ -396,6 +399,7 @@ export function Hero() {
             <Ruler count={9} gap={30} />
           </div>
           <div
+            className="heph-hero-body"
             style={{
               flex: 1,
               padding: '48px 44px 40px 32px',

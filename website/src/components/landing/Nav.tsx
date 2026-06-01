@@ -15,6 +15,7 @@ export function Nav() {
     <div style={{ background: 'var(--paper)', position: 'relative', zIndex: 1 }}>
       {/* technical status strip */}
       <div
+        className="heph-nav-status"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -42,6 +43,7 @@ export function Nav() {
           </span>
         ))}
         <span
+          className="heph-nav-ghlabel"
           style={{
             marginLeft: 'auto',
             padding: '0 16px',
@@ -58,6 +60,7 @@ export function Nav() {
 
       {/* main nav */}
       <nav
+        className="heph-nav-main"
         style={{
           position: 'relative',
           display: 'flex',
@@ -77,7 +80,7 @@ export function Nav() {
         >
           <Logo height={26} />
         </div>
-        <div style={{ display: 'flex', height: '100%' }}>
+        <div className="heph-nav-docs" style={{ display: 'flex', height: '100%' }}>
           <Link
             to="/docs"
             style={{
@@ -99,7 +102,7 @@ export function Nav() {
             DOCS
           </Link>
         </div>
-        <Flex align="center" gap={16} style={{ marginLeft: 'auto', paddingRight: 18 }}>
+        <Flex className="heph-nav-actions" align="center" gap={16} style={{ marginLeft: 'auto', paddingRight: 18 }}>
           {/* Star count hidden for now (no real number yet); flip display to
               'inline-flex' to show it again. */}
           <a
@@ -118,7 +121,9 @@ export function Nav() {
             {' '}
             14.2k
           </a>
-          <Button variant="secondary" size="sm" icon="github" href={GITHUB_URL}>Source</Button>
+          <span className="heph-nav-source">
+            <Button variant="secondary" size="sm" icon="github" href={GITHUB_URL}>Source</Button>
+          </span>
           <Button variant="primary" size="sm" iconRight="arrow-right" href="/docs">Get started</Button>
         </Flex>
       </nav>

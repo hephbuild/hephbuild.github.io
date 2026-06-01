@@ -51,3 +51,107 @@
     box-shadow: 0 0 0 3px rgba(200, 146, 15, 0.25);
   }
 }
+
+/* ==========================================================================
+   Responsive. The landing is built from fixed multi-column grids and a couple
+   of wide fixed-size figures (the build graph, the ASCII pipeline). Below the
+   1200px blueprint frame we collapse the grids, drop the side rulers, and let
+   the wide figures scroll sideways. Almost every property here is set inline
+   on the components, so the overrides must carry !important to win.
+   ========================================================================== */
+
+/* The build-graph figure has an intrinsic 540px width. Grid/flex items default
+   to min-width:auto (= min-content), so without this the hero column expands to
+   that 540px and blows the page out horizontally on narrow screens. min-width:0
+   lets the column shrink; the figure then scrolls inside .heph-diagram-canvas. */
+.heph-hero-grid > * { min-width: 0; }
+.heph-hero-diagram { min-width: 0; }
+.heph-diagram-canvas { min-width: 0; overflow-x: auto; }
+
+/* Below the frame's 1200px max-width the frame is flush to the viewport, so the
+   decorative corner crosses (positioned at the corners with translate(-50%))
+   bleed a few px past the edge and trip a horizontal scrollbar. Clip them while
+   flush; above 1200 the frame is centred and the crosses sit in the gutter by
+   design. `clip` (not `hidden`) avoids spawning a scroll container on the Y axis. */
+@media (max-width: 1200px) {
+  .heph-frame { overflow-x: clip; }
+}
+
+/* --- Tablet: gentler 2-up grids instead of the wide 3/4-up --------------- */
+@media (max-width: 996px) {
+  .heph-hero-grid { grid-template-columns: 1fr !important; }
+  .heph-hero-diagram {
+    border-left: none !important;
+    border-top: 1px solid var(--hair);
+  }
+  .heph-features-grid { grid-template-columns: 1fr 1fr !important; }
+  .heph-footer-cols { grid-template-columns: 1fr 1fr !important; }
+}
+
+/* Recompute cell hairlines for the tablet 2-up (the inline borders assume the
+   original 3/4-up column counts). */
+@media (max-width: 996px) and (min-width: 641px) {
+  .heph-features-grid > *,
+  .heph-footer-cols > * { border-right: none !important; }
+  .heph-features-grid > *:nth-child(odd),
+  .heph-footer-cols > *:nth-child(odd) { border-right: 1px solid var(--hair) !important; }
+  .heph-features-grid > *:nth-child(n+3),
+  .heph-footer-cols > *:nth-child(n+3) { border-top: 1px solid var(--hair) !important; }
+}
+
+/* --- Mobile: single column, no outer frame, tighter padding -------------- */
+@media (max-width: 640px) {
+  /* Frame goes edge-to-edge: drop the side borders. */
+  .heph-frame { border-left: none; border-right: none; }
+
+  /* nav — wrap the strips, drop the redundant standalone links */
+  .heph-nav-status { flex-wrap: wrap; height: auto !important; }
+  .heph-nav-ghlabel { display: none !important; }
+  .heph-nav-main { height: auto !important; }
+  .heph-nav-actions { gap: 8px !important; padding: 8px 14px 8px 0 !important; }
+  .heph-nav-docs,
+  .heph-nav-source { display: none !important; }
+
+  /* hero — hide the margin ruler, tighten the copy column, let the build
+     graph scroll sideways inside its card */
+  .heph-hero-ruler { display: none !important; }
+  .heph-hero-body { padding: 32px 20px 28px !important; }
+  .heph-diagram-canvas { overflow-x: auto; justify-content: flex-start !important; }
+
+  /* features — stack, swap right-borders for row hairlines */
+  .heph-features-grid { grid-template-columns: 1fr !important; }
+  .heph-features-grid > * {
+    border-right: none !important;
+    border-top: 1px solid var(--hair) !important;
+    padding: 26px 20px 30px !important;
+  }
+  .heph-features-grid > *:first-child { border-top: none !important; }
+
+  /* ascii pipeline — scroll the node row sideways */
+  .heph-ascii { padding: 32px 20px !important; }
+  .heph-ascii-row { overflow-x: auto; justify-content: flex-start !important; }
+
+  /* metrics — 2×2 */
+  .heph-metrics { grid-template-columns: 1fr 1fr !important; }
+  .heph-metrics > * { border-right: none !important; padding: 28px 18px !important; }
+  .heph-metrics > *:nth-child(odd) { border-right: 1px solid var(--hair) !important; }
+  .heph-metrics > *:nth-child(n+3) { border-top: 1px solid var(--hair); }
+
+  /* footer — stack the CTA and the link columns */
+  .heph-footer-cta {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 22px;
+    padding: 34px 20px !important;
+  }
+  .heph-footer-cta-actions { width: 100%; }
+  .heph-footer-cols { grid-template-columns: 1fr !important; }
+  .heph-footer-cols > * {
+    border-right: none !important;
+    border-top: 1px solid var(--hair);
+    padding: 26px 20px !important;
+  }
+  .heph-footer-cols > *:first-child { border-top: none !important; }
+  .heph-footer-bar { padding: 14px 20px !important; flex-wrap: wrap; gap: 4px 12px; }
+  .heph-footer-bar > span:last-child { font-size: 10px; }
+}

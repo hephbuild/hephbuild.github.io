@@ -88,6 +88,7 @@ export function Footer() {
     <footer style={{ position: 'relative', background: 'var(--paper)' }}>
       {/* CTA slab */}
       <div
+        className="heph-footer-cta"
         style={{
           position: 'relative',
           display: 'flex',
@@ -121,7 +122,7 @@ export function Footer() {
             <span style={{ color: 'var(--ac)' }}>.</span>
           </Title>
         </div>
-        <div style={{ display: 'flex', gap: 0 }}>
+        <div className="heph-footer-cta-actions" style={{ display: 'flex', gap: 0 }}>
           <Button variant="secondary" icon="github" href={GITHUB_URL}>Star on GitHub</Button>
           <Button variant="primary" iconRight="arrow-right" href="/docs" style={{ marginLeft: -1 }}>
             Install heph
@@ -130,7 +131,7 @@ export function Footer() {
       </div>
 
       {/* columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr repeat(3, 1fr)' }}>
+      <div className="heph-footer-cols" style={{ display: 'grid', gridTemplateColumns: '1.5fr repeat(3, 1fr)' }}>
         <div style={{ padding: '32px 40px', borderRight: '1px solid var(--hair)' }}>
           <Logo height={24} />
           <p style={{
@@ -169,6 +170,7 @@ export function Footer() {
       </div>
 
       <div
+        className="heph-footer-bar"
         style={{
           borderTop: '1px solid var(--hair)',
           padding: '15px 40px',

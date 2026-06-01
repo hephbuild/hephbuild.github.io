@@ -58,7 +58,7 @@ export function Features() {
     >
       <Corners />
       <SectionHead fig="FIG.02 / 06" kicker="The system" title="Built on six guarantees" right="＋ WHY HEPH" />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+      <div className="heph-features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {FEATURES.map((f, i) => (
           <div
             key={f.n}
@@ -141,12 +141,13 @@ export function AsciiGraph() {
         title="One deterministic pass"
         right="SOURCE ──▶ ARTIFACT"
       />
-      <div style={{ position: 'relative', padding: '44px 40px 40px' }}>
+      <div className="heph-ascii" style={{ position: 'relative', padding: '44px 40px 40px' }}>
         <div style={{ maxWidth: 520, margin: '0 auto 30px' }}>
           <Dim label="deterministic · hermetic · cached" />
         </div>
         {/* node row */}
         <div
+          className="heph-ascii-row"
           style={{
             display: 'flex',
             alignItems: 'flex-start',
@@ -238,6 +239,7 @@ const STATS: Stat[] = [
 export function MetricsBand() {
   return (
     <section
+      className="heph-metrics"
       style={{
         position: 'relative',
         display: 'grid',
