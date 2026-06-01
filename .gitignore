@@ -1,0 +1,11 @@
+# RustRover / JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# devenv
+.devenv/
+.devenv.flake.nix
+devenv.local.nix
+.direnv/
