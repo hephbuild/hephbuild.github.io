@@ -534,6 +534,15 @@ body:has(.theme-doc-markdown) .navbar__brand::after {
   -webkit-user-select: none;
 }
 
+/* Selection inside the dark wells: the global 9%-accent tint (--selection)
+   washes out on near-black, so highlighted text reads as barely-changed. Force
+   a solid cobalt with white glyphs for legible drag-select. */
+.theme-doc-markdown.markdown pre.prism-code ::selection,
+.theme-doc-markdown.markdown div[class*='codeBlockContent'] ::selection {
+  background: rgba(45, 91, 255, 0.55);
+  color: #ffffff;
+}
+
 /* Cobalt-tinted highlighted line, flush accent rule in the gutter. */
 .theme-doc-markdown.markdown .theme-code-block-highlighted-line {
   background: rgba(45, 91, 255, 0.14);
