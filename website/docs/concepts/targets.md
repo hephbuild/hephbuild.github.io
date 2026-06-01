@@ -10,7 +10,7 @@ A **target** is the unit of work in heph: a name, a set of inputs, and the
 action that turns those inputs into outputs. Targets are addressed by path,
 using the `//` prefix that gives the project its mark:
 
-```
+```text
 //app:server
 //lib/auth:lib
 //proto:api

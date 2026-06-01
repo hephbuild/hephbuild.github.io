@@ -15,7 +15,7 @@ const blueprintCode: PrismTheme = {
   plain: { color: '#e6e7ea', backgroundColor: '#0b0c0f' },
   styles: [
     { types: ['comment', 'prolog', 'cdata'], style: { color: '#6b7080', fontStyle: 'italic' } },
-    { types: ['keyword', 'builtin', 'boolean', 'rule', 'important'], style: { color: '#5a7dff' } },
+    { types: ['keyword', 'builtin', 'boolean', 'rule', 'important', 'key', 'atrule'], style: { color: '#5a7dff' } },
     { types: ['string', 'char', 'attr-value', 'inserted', 'url'], style: { color: '#2bbd84' } },
     { types: ['number', 'constant', 'symbol'], style: { color: '#8aa3ff' } },
     { types: ['function', 'class-name', 'tag', 'selector'], style: { color: '#e6e7ea' } },
@@ -148,7 +148,7 @@ const config: Config = {
     prism: {
       theme: blueprintCode,
       darkTheme: blueprintCode,
-      additionalLanguages: ['bash', 'python'],
+      additionalLanguages: ['bash', 'python', 'yaml', 'json'],
     },
   } satisfies Preset.ThemeConfig,
 };

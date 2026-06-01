@@ -28,7 +28,7 @@ optional `path` config sets the `PATH` override, which defaults to
 
 ## Configuration
 
-```yaml
+```yaml title=".hephconfig"
 drivers:
   - name: exec
     options:

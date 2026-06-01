@@ -21,20 +21,15 @@ driver.
 
 ## Enabling it
 
-Built-in and automatically registered. Enable the `nix` driver by referencing
-it in a target's `driver` field. Requires the `nix` command-line tool with
-flakes support on the host `PATH`.
+Not enabled by default. Register the `nix` driver in the `drivers` section of
+`.hephconfig`, then reference it from a target's `driver` field. Requires the
+`nix` command-line tool with flakes support on the host `PATH`.
 
 ## Configuration
 
-```yaml
-nix_tools = target(
-    driver = "nix",
-    nixpkgs = "github:NixOS/nixpkgs/nixos-unstable",  # flake URL, required
-    packages = ["pkgs.ripgrep", "pkgs.fd"],           # list of pkg expressions, required
-    programs = ["rg", "fd"],                          # list of binary names to expose, required
-    system = "x86_64-linux",                          # optional; defaults to host arch/os
-)
+```yaml title=".hephconfig"
+drivers:
+  - name: nix
 ```
 
 ## Usage

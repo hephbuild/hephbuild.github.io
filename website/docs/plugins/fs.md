@@ -24,7 +24,7 @@ does not require configuration in `.hephconfig`.
 
 ## Usage
 
-```
+```text
 //@heph/fs:file@f=src/main.rs
 //@heph/fs:glob@p=src/**/*.rs@e=vendor/**,generated/**
 ```

@@ -28,14 +28,6 @@ patterns) and automatically makes those targets available to the build engine.
 
 ## Configuration
 
-```yaml
-patterns:
-  - BUILD       # exact file name
-  - "*.BUILD"   # glob: anything ending in .BUILD
-```
-
-## Usage
-
 Register the provider and, optionally, tune which file names it treats as BUILD
 files:
 
@@ -47,6 +39,8 @@ providers:
         - BUILD
         - "*.BUILD"
 ```
+
+## Usage
 
 A matching BUILD file defines targets by calling `target()` in Starlark:
 

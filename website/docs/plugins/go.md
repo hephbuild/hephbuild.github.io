@@ -29,7 +29,7 @@ driver factories and must be enabled in the `drivers` section of
 
 ## Configuration
 
-```yaml
+```yaml title=".hephconfig"
 providers:
   - name: go
     options:

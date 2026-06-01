@@ -35,7 +35,7 @@ Built-in and always-on; no registration required in `.hephconfig`.
 
 Address the `@heph/query` package with one or more matcher arguments:
 
-```python
+```text
 # Query all targets with the lint label and group them
 //@heph/query:lint-targets@label=lint
 

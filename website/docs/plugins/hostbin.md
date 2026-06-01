@@ -27,6 +27,6 @@ No configuration in `.hephconfig` is required.
 Targets in the `@heph/bin` package are generated on-demand. For example, to
 reference the system `sh` binary:
 
-```python
+```text
 //@heph/bin:sh
 ```

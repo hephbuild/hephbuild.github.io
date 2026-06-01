@@ -28,7 +28,8 @@ required to enable—just use the `textfile` driver name in your targets.
 target(
     name = "my_script",
     driver = "textfile",
-    text = """#!/bin/bash
+    text = """
+#!/bin/bash
 echo "Generated script"
 """,
     out = "bin/generated.sh",
