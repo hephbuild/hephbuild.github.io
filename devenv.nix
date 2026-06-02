@@ -25,8 +25,6 @@
   scripts.lint.exec = "npm run lint";
   scripts.build.exec = "npm run build";
   scripts.dev.exec = "npm run start";
-  # Splice the latest heph release's code-generated CLI reference into the docs.
-  scripts.gen-cli-reference.exec = "node scripts/gen-cli-reference.mjs";
   # Screenshot a URL. Usage: screenshot <url> [out.png] [desktop|mobile]
   scripts.screenshot.exec = "node scripts/screenshot.mjs";
 }

@@ -25,12 +25,11 @@ inputs. A matching digest is a **cache hit** — heph returns the cached output
 instead of rebuilding.
 
 ```python title="BUILD"
-# a target is just data
 target(
     name = "server",
     driver = "bash",
     run = "go build -o $OUT .",
-    deps = ["//lib/auth:lib", "//proto:api_lib"],
+    deps = [glob("**/*.go"), "//gen:assets"],
     out = "server",
 )
 ```
@@ -45,7 +44,7 @@ isn't declared, the sandbox won't see it.
 Build it, and watch heph rebuild only what changed:
 
 ```bash title="terminal"
-$ heph build //app:server
+$ heph run //app:server
 0.565s · 1 / 1 done · 1 cached · 0 failed
 ```
 
