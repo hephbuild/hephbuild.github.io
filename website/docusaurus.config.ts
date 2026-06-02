@@ -143,7 +143,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `© ${new Date().getFullYear()} heph labs · MIT`,
+      copyright: `© ${new Date().getFullYear()} heph · MIT`,
     },
     prism: {
       theme: blueprintCode,

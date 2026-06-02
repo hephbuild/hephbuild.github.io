@@ -182,7 +182,7 @@ export function Footer() {
           letterSpacing: '0.04em',
         }}
       >
-        <span>{`© ${new Date().getFullYear()} HEPH LABS · MIT`}</span>
+        <span>{`© ${new Date().getFullYear()} HEPH · MIT`}</span>
         <span style={{ color: 'var(--muted)' }}>{GITHUB_LABEL}</span>
       </div>
     </footer>

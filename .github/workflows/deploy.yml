@@ -42,7 +42,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Install heph
-        run: curl -fsSL https://hephbuild.github.io/install.sh | sh
+        run: sh website/static/install.sh
 
       - name: Generate CLI reference
         run: node scripts/gen-cli-reference.mjs
