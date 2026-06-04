@@ -157,10 +157,28 @@ export function Plasma({
         ctx.fillRect(0, 0, w, h);
       }
 
-      const sx = 0.020;
-      const ph = p.seed * 0.613; // spatial frequency + seed phase
+      const ph = p.seed * 0.613; // seed phase
+      // Off-axis wave directions (seed-rotated) with non-harmonic frequencies so
+      // the field reads as organic, not grid-aligned. cos/sin pairs project the
+      // grid onto each wave's own axis — no pure horizontal/vertical banding.
+      const a1 = 0.7 + ph * 0.37; // ~40deg, drifts with seed
+      const a2 = 2.3 + ph * 0.53;
+      const a3 = 4.1 + ph * 0.29;
+      const c1x = Math.cos(a1) * 0.0167;
+      const c1y = Math.sin(a1) * 0.0167;
+      const c2x = Math.cos(a2) * 0.0231;
+      const c2y = Math.sin(a2) * 0.0231;
+      const c3x = Math.cos(a3) * 0.0119;
+      const c3y = Math.sin(a3) * 0.0119;
+      // Three focal blobs, each on its own Lissajous path so they travel in
+      // different directions — distinct freq pairs + sin/cos arrangement + sign
+      // give one a clockwise orbit, one counter-clockwise, one a diagonal sweep.
       const cx = w * (0.5 + 0.26 * Math.sin(t * 0.31 + ph));
-      const cy = h * (0.5 + 0.28 * Math.cos(t * 0.27 + ph * 1.3));
+      const cy = h * (0.5 + 0.28 * Math.cos(t * 0.27 + ph * 1.3)); // CW orbit
+      const cx2 = w * (0.5 + 0.31 * Math.cos(t * 0.213 - ph * 1.7));
+      const cy2 = h * (0.5 + 0.24 * Math.sin(t * 0.259 + ph * 0.7)); // CCW orbit
+      const cx3 = w * (0.5 + 0.22 * Math.sin(t * 0.151 + ph * 2.3));
+      const cy3 = h * (0.5 + 0.33 * Math.sin(t * 0.187 + ph * 0.4)); // diagonal sweep
       const { mouse: m, ripples } = S;
 
       // bucket cells by colour level so we set fillStyle ~L times, not per cell
@@ -169,10 +187,12 @@ export function Plasma({
         const py = gy * lineH;
         for (let gx = 0; gx < cols; gx++) {
           const px = gx * charW;
-          let v = Math.sin(px * sx + t * 1.0 + ph)
-            + Math.sin((px * 0.012 + py * 0.021) + t * 0.7) // diagonal
-            + Math.sin((py * 0.018 - px * 0.010) - t * 0.5 + ph) // anti-diagonal
-            + Math.sin(Math.hypot(px - cx, py - cy) * 0.030 - t * 1.1);
+          let v = Math.sin((px * c1x + py * c1y) + t * 0.83 + ph)
+            + Math.sin((px * c2x + py * c2y) + t * 0.61)
+            + Math.sin((px * c3x + py * c3y) - t * 0.47 + ph)
+            + Math.sin(Math.hypot(px - cx, py - cy) * 0.0271 - t * 1.1)
+            + 0.7 * Math.sin(Math.hypot(px - cx2, py - cy2) * 0.0413 + t * 0.67)
+            + 0.6 * Math.sin(Math.hypot(px - cx3, py - cy3) * 0.0337 - t * 0.53);
 
           // cursor warp
           if (m.on && p.interactive) {

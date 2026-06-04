@@ -21,7 +21,7 @@ export function Landing() {
             <Plasma
               height={window.innerHeight}
               cell={15}
-              speed={0.5}
+              speed={0.32}
               interactive
               passthrough
               accent={false}
