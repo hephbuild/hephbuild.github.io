@@ -2,10 +2,8 @@
 
 heph marketing site + docs. npm workspaces: `uikit` (antd-based UI kit) + `website` (Docusaurus). Everything runs inside `devenv shell` so local == CI (see `devenv.nix`).
 
-## Commands (run inside `devenv shell`)
-
-- `install` / `lint` / `build` / `dev` — devenv scripts mirrored by CI.
-- `npm run start` (= `dev`) — Docusaurus dev server on **port 3000** (builds uikit first via `prestart`).
+- Dev setup (run/build/lint): @.claude/dev-setup.md
+- Writing docs content (style + rules): @.claude/writing-docs.md
 
 ## Lockfile / native bindings (npm optional-deps bug)
 
