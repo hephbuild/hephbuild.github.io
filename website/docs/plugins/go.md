@@ -41,6 +41,29 @@ drivers:
   - name: go_testmain
 ```
 
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `gotool` | `string` | `"//@heph/bin:go"` | Address of the Go binary target to use. |
+| `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
+
+### Skipping directories
+
+Use `skip` to prevent the provider from scanning directories you don't want
+included in Go package discovery — for example, directories containing
+non-module code, generated stubs, or vendored packages managed outside of heph.
+Each pattern is matched against the workspace-relative path of the directory.
+
+```yaml title=".hephconfig"
+providers:
+  - name: go
+    options:
+      skip:
+        - vendor
+        - "internal/generated/**"
+```
+
 ## Usage
 
 The provider will generate appropriate `:build` and `:test` targets for Go
