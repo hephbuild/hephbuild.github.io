@@ -40,6 +40,30 @@ providers:
         - "*.BUILD"
 ```
 
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `patterns` | `string[]` | `["BUILD"]` | Glob patterns for BUILD file names to recognize. |
+| `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from the BUILD file walk. |
+
+### Skipping directories
+
+Use `skip` to prevent the provider from descending into directories you don't
+want scanned — vendored code, generated output trees, large third-party
+subtrees, etc. Patterns are matched against the workspace-relative path of
+each directory using [wax](https://github.com/olson-sean-k/wax) glob syntax.
+
+```yaml title=".hephconfig"
+providers:
+  - name: buildfile
+    options:
+      skip:
+        - vendor
+        - "third_party/**"
+        - "generated/*"
+```
+
 ## Usage
 
 A matching BUILD file defines targets by calling `target()` in Starlark:
