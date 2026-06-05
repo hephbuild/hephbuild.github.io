@@ -95,7 +95,7 @@ The following target config keys are available:
 | `runtime_pass_env` | Pass-through vars at runtime only.                   |
 | `runtime_env`      | Runtime literal environment variables.               |
 | `cache`            | Bool or `{enabled, remote, history}`.                |
-| `codegen`          | Copy or link generated outputs back into the source. |
+| `codegen`          | Write generated outputs into the source tree (`copy` or `in_place`). |
 
 These environment variables are available inside the sandbox:
 
