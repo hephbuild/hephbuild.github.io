@@ -51,8 +51,8 @@ providers:
 
 Use `skip` to prevent the provider from descending into directories you don't
 want scanned — vendored code, generated output trees, large third-party
-subtrees, etc. Patterns are matched against the workspace-relative path of
-each directory using [wax](https://github.com/olson-sean-k/wax) glob syntax.
+subtrees, etc. Each pattern is matched against the workspace-relative path of
+the directory.
 
 ```yaml title=".hephconfig"
 providers:

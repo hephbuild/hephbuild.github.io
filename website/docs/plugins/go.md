@@ -53,8 +53,7 @@ drivers:
 Use `skip` to prevent the provider from scanning directories you don't want
 included in Go package discovery — for example, directories containing
 non-module code, generated stubs, or vendored packages managed outside of heph.
-Patterns are matched against the workspace-relative path of each directory
-using [wax](https://github.com/olson-sean-k/wax) glob syntax.
+Each pattern is matched against the workspace-relative path of the directory.
 
 ```yaml title=".hephconfig"
 providers:
