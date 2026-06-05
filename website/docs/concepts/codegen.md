@@ -45,12 +45,6 @@ The distinction is about *ownership of the file on disk*:
   file stays a normal, version-controlled source — there is nothing new to
   ignore.
 
-:::note
-`copy` was previously called `link`. The old name is now rejected with
-`invalid codegen mode: link`, so update any older `BUILD` files to
-`codegen = "copy"`.
-:::
-
 ## `copy` — generate a new file
 
 Use `copy` when the target *creates* output that you do **not** want to commit:
