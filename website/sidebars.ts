@@ -17,7 +17,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Concepts',
       collapsible: false,
-      items: ['concepts/targets', 'concepts/reproducibility'],
+      items: ['concepts/targets', 'concepts/reproducibility', 'concepts/codegen'],
     },
     {
       type: 'category',

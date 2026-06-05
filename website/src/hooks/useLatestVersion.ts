@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 // The latest released heph version, resolved from the GitHub releases API
 // (`tag_name` of the latest release). `FALLBACK_VERSION` is used while the
 // request is in flight and if it fails (offline, rate-limited, etc.).
-const RELEASES_API_URL =
-  'https://api.github.com/repos/hephbuild/heph-artifacts-v1/releases/latest';
+const RELEASES_API_URL = 'https://api.github.com/repos/hephbuild/heph-artifacts-v1/releases/latest';
 const FALLBACK_VERSION = '?.?.?';
 
 export interface LatestVersionState {
