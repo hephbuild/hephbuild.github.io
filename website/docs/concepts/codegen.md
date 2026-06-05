@@ -121,6 +121,44 @@ Run it after adding or removing a `copy` target. Because the output is
 deterministic, it also works well as a CI check — fail the build if
 `gen-gitignore` would change the committed `.gitignore`.
 
+## Verifying the tree in CI: `--frozen`
+
+Running a codegen target normally **writes** its outputs into the tree — `copy`
+drops in the generated file, `in_place` rewrites the source. In CI you usually
+want the opposite: assert that the committed tree *already* matches what codegen
+would produce, without touching anything.
+
+That is what `--frozen` does:
+
+```bash
+heph run //fmt:fmt --frozen
+```
+
+In frozen mode heph computes the generated output but **writes nothing**. It
+compares the result against what is on disk and, if they differ, exits non-zero
+with a unified diff of every offending file:
+
+```text
+$ heph run //fmt:fmt --frozen          # clean tree → passes
+$ echo 'hello world' > fmt/greeting.txt
+$ heph run //fmt:fmt --frozen          # dirty tree → fails
+× target failed: //fmt:fmt
+╰─▶ generated output differs from tree
+  ╭─[diff]
+  │ --- a/fmt/greeting.txt
+  │ +++ b/fmt/greeting.txt
+  │ @@ -1 +1 @@
+  │ -hello world
+  │ +HELLO WORLD
+  ╰────
+```
+
+It works for both modes: a `copy` target fails if its generated file is missing
+or stale, and an `in_place` target fails if a source file isn't already in its
+formatted/transformed form. Wire `heph run <codegen-target> --frozen` into CI to
+guarantee that whoever forgot to run codegen locally gets a red build with an
+exact diff, instead of a drifting tree.
+
 ## When to use which
 
 | You want to…                                                   | Mode        |
