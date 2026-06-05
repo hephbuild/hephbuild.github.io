@@ -66,5 +66,38 @@ providers:
 
 ## Usage
 
-The provider will generate appropriate `:build` and `:test` targets for Go
-packages. You can explore the generated targets with `heph query all .`. 
+The provider analyzes each Go package from its `go.mod` and source files and
+generates targets for it — you don't write `target()` calls for Go code. For a
+package it produces:
+
+| Target    | Builds | Labels |
+|-----------|--------|--------|
+| `:build`  | The library or, for `package main`, the binary. | |
+| `:test`   | The package's tests. | `test`, `go-test` |
+
+Explore what was generated for the package in the current directory:
+
+```bash title="terminal"
+heph query all .
+```
+
+Then build or test by address:
+
+```bash title="terminal"
+heph run //cmd/server:build     # compile the binary
+heph run //lib/auth:test        # run the package's tests
+```
+
+### Generated dependency addresses
+
+The provider wires each package's imports automatically through two address
+families it generates — you reference these only when reading a dependency
+graph, never by hand:
+
+| Address | Resolves to |
+|---------|-------------|
+| `@heph/go/std/<pkg>` | A package from the Go standard library. |
+| `@heph/go/thirdparty/<module>@<version>` | A pinned third-party module. |
+
+Because the module and version are part of the address, a dependency bump
+changes the address and invalidates only the targets that import it.

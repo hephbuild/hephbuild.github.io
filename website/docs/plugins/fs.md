@@ -35,6 +35,10 @@ Path normalization: all paths are normalized (`.` and `..` segments are
 collapsed), and leading/trailing `../` escapes are rejected to prevent escaping
 the workspace root.
 
-Glob patterns use the [wax](https://docs.rs/wax) library with support for `*`,
-`?`, `[..]`, `{..}`, and `**` operators. Within a single build request, glob
-walk results are memoized to avoid redundant filesystem traversal.
+Glob patterns support the `*`, `?`, `[..]`, `{..}`, and `**` operators. Within a
+single build request, glob results are reused to avoid walking the tree twice.
+
+:::tip
+In a BUILD file you rarely write these addresses by hand — the `file()` and
+`glob()` [builtins](./buildfile.md#authoring-build-files) produce them for you.
+:::

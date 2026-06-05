@@ -107,3 +107,72 @@ These environment variables are available inside the sandbox:
 | `OUT` / `OUT_<group>`         | Output paths.            |
 | `WORKSPACE_ROOT`              | Root of the workspace.   |
 | `PATH`                        | Executables search path. |
+
+## Dependencies
+
+`deps` accepts either a **list** or a **dict**. The dict form names each group,
+and that name becomes the suffix on the sandbox variables — `deps = {"src": …}`
+surfaces as `$SRC_SRC` (and `$LIST_SRC_SRC`, a file listing every path in the
+group, handy when a group expands to many files):
+
+```python title="BUILD"
+target(
+    name = "bundle",
+    driver = "bash",
+    deps = {
+        "code": glob("*.go"),
+        "assets": "//web:assets",
+    },
+    run = "cat $LIST_SRC_CODE; cp -r $SRC_ASSETS $OUT",
+    out = "bundle",
+)
+```
+
+A plain list lands in the default group, available as `$SRC` and `$LIST_SRC`.
+
+heph distinguishes three dependency kinds by how they affect the cache:
+
+| Field          | Hashed into the key? | Present in the sandbox? | Use for |
+|----------------|----------------------|-------------------------|---------|
+| `deps`         | yes                  | yes                     | Normal build inputs. |
+| `hash_deps`    | yes                  | no                      | Inputs that must invalidate the cache but the command never reads. |
+| `runtime_deps` | no                   | yes (at run only)       | Things needed to *run* an output, not to build it — changing them is a cache hit. |
+
+## Output groups
+
+`out` mirrors `deps`: a string or list is the default group (`$OUT`), a dict
+names groups (`$OUT_<group>`). Other targets select a specific group with the
+`|group` suffix on the address:
+
+```python title="BUILD"
+target(
+    name = "compile",
+    driver = "bash",
+    run = "go build -o $OUT_BIN .; go doc . > $OUT_DOC",
+    out = {"bin": "app", "doc": "app.txt"},
+)
+
+target(
+    name = "package",
+    driver = "bash",
+    deps = ["//app:compile|bin"],   # just the bin group
+    run = "cp $SRC $OUT",
+    out = "app.tar",
+)
+```
+
+`support_files` declares files a target produces that are **not** outputs — kept
+in the sandbox for the command's own use but not published to dependents.
+
+## Interactive debugging with `--shell`
+
+When a target fails, drop into its sandbox with the exact inputs, tools, and
+environment it would run with:
+
+```bash title="terminal"
+heph run //app:server --shell
+```
+
+The `bash` and `sh` drivers allocate a PTY and start an interactive shell inside
+the prepared sandbox, so you can inspect `$SRC_*`, re-run the command by hand,
+and see why it broke.
