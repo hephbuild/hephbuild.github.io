@@ -88,6 +88,82 @@ heph run //cmd/server:build     # compile the binary
 heph run //lib/auth:test        # run the package's tests
 ```
 
+## Generated code and test data
+
+The provider analyzes Go packages, but a package often needs files that aren't
+hand-written `.go` sources — generated code (protobuf stubs, mocks, enums) or
+fixtures a test reads at runtime. You don't wire these into the `:build` and
+`:test` targets by hand. Instead you **label** the target that produces them and
+the provider picks it up automatically.
+
+Two labels are recognized:
+
+| Label           | Attach to a target that produces…                  | Pulled into |
+|-----------------|----------------------------------------------------|-------------|
+| `go_src`        | Generated `.go` or embedded files.                 | `:build`, `:build_test` |
+| `go_test_data`  | Files a test reads at runtime (fixtures, goldens). | `:test`, `:xtest`  |
+
+### `go_src` — generated source
+
+Label a codegen target `go_src` and its output tree is unpacked into the
+package before analysis, so the generated `.go` (and embedded) files are
+compiled as part of the package — exactly as if you'd committed them. This is
+how `go list`, the build, and the tests all see code produced by `protoc`,
+`mockgen`, `stringer`, and friends.
+
+```python title="api/BUILD"
+target(
+    name = "proto",
+    driver = "bash",
+    codegen = "copy",
+    labels = ["go_src"],
+    deps = {"src": glob("*.proto")},
+    out = glob("*.pb.go"),
+    run = "protoc --go_out=. $SRC_SRC",
+)
+```
+
+The `api` package now builds and tests with `api.pb.go` included — no `deps`
+entry, no reference to `:proto` anywhere. Add the generator, label it, done:
+
+```bash title="terminal"
+heph run //api:build     # compiles your sources + the generated .pb.go
+heph run //api:test      # tests see the generated code too
+```
+
+:::tip
+Pair `go_src` with `codegen = "copy"` (see [Codegen](../concepts/codegen.md))
+so the generated files also land in the tree for your editor and `gofmt`, and
+`heph tool gen-gitignore` keeps them out of git.
+:::
+
+### `go_test_data` — test fixtures
+
+Tests frequently read files from disk — golden files, sample inputs, a fixture
+database. Label the target that produces them `go_test_data` and its outputs are
+staged into the sandbox next to the test binary when `:test` (or `:xtest`) runs,
+so the test finds them at the path it expects.
+
+```python title="parser/BUILD"
+target(
+    name = "fixtures",
+    driver = "bash",
+    labels = ["go_test_data"],
+    deps = {"src": glob("schema/*.json")},
+    out = glob("testdata/*.golden"),
+    run = "./gen-goldens.sh",
+)
+```
+
+```bash title="terminal"
+heph run //parser:test     # the .golden files are present in the sandbox
+```
+
+Because the sandbox is isolated, a test only sees the files its package
+declares. Labeling a fixture target `go_test_data` is what makes those files
+visible to the test without loosening isolation — the test stays reproducible
+and cacheable.
+
 ### Generated dependency addresses
 
 The provider wires each package's imports automatically through two address
