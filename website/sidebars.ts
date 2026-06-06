@@ -17,7 +17,20 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Concepts',
       collapsible: false,
-      items: ['concepts/targets', 'concepts/reproducibility', 'concepts/codegen'],
+      items: [
+        'concepts/targets',
+        'concepts/dependencies',
+        'concepts/reproducibility',
+        'concepts/caching',
+        'concepts/sandbox',
+        'concepts/codegen',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Guides',
+      collapsible: false,
+      items: ['guides/first-build', 'guides/ci', 'guides/inspecting-builds'],
     },
     {
       type: 'category',
@@ -40,7 +53,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Reference',
       collapsible: false,
-      items: ['reference/cli'],
+      items: ['reference/configuration', 'reference/addresses', 'reference/cli'],
     },
   ],
 };
