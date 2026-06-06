@@ -30,20 +30,56 @@ references another.
 
 ## Relative forms
 
-You can omit the `//` prefix and write addresses relative to a base package.
-heph resolves them against that package before executing.
+Inside `BUILD` files you can write addresses relative to the current package
+instead of spelling out the full `//package:name` path. heph resolves them
+against the package that owns the `BUILD` file.
 
 | Form | Resolves to |
 |------|-------------|
-| `:name` | `//base/pkg:name` |
-| `./sub` | `//base/pkg/sub` |
-| `./sub:name` | `//base/pkg/sub:name` |
-| `../sibling` | `//base/sibling` |
-| `../sibling:name` | `//base/sibling:name` |
+| `:name` | `//current/pkg:name` |
+| `./sub` | `//current/pkg/sub` |
+| `./sub:name` | `//current/pkg/sub:name` |
+| `../sibling` | `//current/sibling` |
+| `../sibling:name` | `//current/sibling:name` |
 
-On the command line the base package is the one matching your current working
-directory. Tab completion expands all of these forms automatically, in the same
-style you are already typing.
+```python title="BUILD"
+# Inside //app/BUILD — these two deps are equivalent:
+rust_binary(
+    name = "server",
+    deps = [
+        ":util",          # shorthand for //app:util
+        "./proto:api",    # shorthand for //app/proto:api
+    ],
+)
+```
+
+:::note
+CLI commands accept **absolute** addresses only (`//package:name`). Tab
+completion offers candidates in whichever form you start typing.
+:::
+
+## Package matchers
+
+Some commands (such as `heph inspect packages`) accept a **package matcher**
+instead of a single address. Matchers select one or more packages at once.
+
+| Pattern | Selects |
+|---------|---------|
+| `//pkg` | exactly `//pkg` |
+| `//pkg/...` | `//pkg` and every package beneath it |
+| `.` | the package matching the current working directory |
+| `...` | the current package and every package beneath it |
+| `./sub` | `//current/pkg/sub` |
+| `./sub/...` | `//current/pkg/sub` and everything beneath it |
+| `../sibling` | `//current/sibling` |
+
+```bash
+# All packages rooted at //lib:
+heph inspect packages //lib/...
+
+# Packages in and below the current directory:
+heph inspect packages ...
+```
 
 ## Output-group selector
 
