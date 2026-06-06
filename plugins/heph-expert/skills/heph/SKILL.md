@@ -66,6 +66,13 @@ is self-contained and mirrors the official docs.
 | `.hephconfig`: registering plugins, `version`, `homeDir`, `memCache`, `fuse`, `lock` | `references/configuration.md` |
 | Which plugin/driver/provider does what (exec, fs, group, hostbin, nix, textfile, go, buildfile, query) and addresses | `references/plugins.md` |
 
+> **Go is its own plugin.** Setting up or debugging Go under heph — enabling the
+> `go` provider and its drivers, `gotool`/`skip`, and wiring generated code
+> (`go_src`, `go_codegen_root`, `go_codegen_deps`) and fixtures (`go_test_data`)
+> — is owned by the dedicated **`heph-go`** plugin (skill `heph-go`, agent
+> `heph-go-expert`, commands `/heph-go:*`). Hand Go-specific work off to it; this
+> skill keeps only the general model and a one-paragraph pointer in `plugins.md`.
+
 ## Operating rules when helping in a heph workspace
 
 1. **Declare every input.** If `run` reads a file, it must arrive via `deps`,
