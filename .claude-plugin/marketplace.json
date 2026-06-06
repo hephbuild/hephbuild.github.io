@@ -14,6 +14,13 @@
       "source": "./plugins/heph-expert",
       "category": "build-tools",
       "keywords": ["heph", "build-system", "caching", "monorepo", "starlark"]
+    },
+    {
+      "name": "heph-go",
+      "description": "Set up and maintain Go under heph: enable the go provider and drivers, wire generated code (go_src / go_codegen_root / go_codegen_deps) and test fixtures (go_test_data), and keep :build/:test green.",
+      "source": "./plugins/heph-go",
+      "category": "build-tools",
+      "keywords": ["heph", "go", "golang", "codegen", "go_src", "go_test_data"]
     }
   ]
 }

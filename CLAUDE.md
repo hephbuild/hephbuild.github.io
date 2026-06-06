@@ -13,12 +13,13 @@ heph marketing site + docs. npm workspaces: `uikit` (antd-based UI kit) + `websi
 
 The repo root doubles as a Claude Code plugin marketplace, co-located with the docs:
 
-- `.claude-plugin/marketplace.json` — catalog; lists `heph-expert` via a relative `./plugins/heph-expert` source.
-- `plugins/heph-expert/` — the plugin (skill `heph` + agent + 4 commands + `skills/heph/references/*.md`).
+- `.claude-plugin/marketplace.json` — catalog; lists `heph-expert` and `heph-go` via relative `./plugins/<name>` sources.
+- `plugins/heph-expert/` — the general plugin (skill `heph` + agent + 4 commands + `skills/heph/references/*.md`).
+- `plugins/heph-go/` — Go-focused plugin (skill `heph-go` + agent + 3 commands + `skills/heph-go/references/go-plugin.md`); covers the `go` provider, its drivers, and the `go_src` / `go_test_data` / `go_codegen_root` / `go_codegen_deps` wiring.
 
-Neither directory is part of the Docusaurus build (`website/`), so they don't appear on the site.
+None of these directories are part of the Docusaurus build (`website/`), so they don't appear on the site.
 
-**Reference drift rule:** `plugins/heph-expert/skills/heph/references/*.md` are distilled from the docs pages in `website/docs/`. When heph behavior changes, update **both** the docs page and its reference twin in the same PR. Version bumps go in both `.claude-plugin/marketplace.json` and `plugins/heph-expert/.claude-plugin/plugin.json`.
+**Reference drift rule:** the `plugins/*/skills/**/references/*.md` files are distilled from the docs pages in `website/docs/`. When heph behavior changes, update **both** the docs page and its reference twin in the same PR — e.g. the go provider lives in both `website/docs/plugins/go.md` and `plugins/heph-go/skills/heph-go/references/go-plugin.md`. Version bumps go in `.claude-plugin/marketplace.json` and the relevant `plugins/<name>/.claude-plugin/plugin.json`.
 
 ## Lockfile / native bindings (npm optional-deps bug)
 
