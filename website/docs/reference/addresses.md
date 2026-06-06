@@ -37,9 +37,7 @@ against the package that owns the `BUILD` file.
 | Form | Resolves to |
 |------|-------------|
 | `:name` | `//current/pkg:name` |
-| `./sub` | `//current/pkg/sub` |
 | `./sub:name` | `//current/pkg/sub:name` |
-| `../sibling` | `//current/sibling` |
 | `../sibling:name` | `//current/sibling:name` |
 
 See [Buildfile → Relative addresses](/docs/plugins/buildfile#relative-addresses) for examples.

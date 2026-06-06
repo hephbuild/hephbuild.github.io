@@ -148,17 +148,15 @@ address forms resolved against the BUILD file's own package. This avoids
 repeating the package path for targets that live nearby.
 
 ```python title="app/BUILD"
-# :name — a target in the same package (//app)
 util = target(name = "util", driver = "exec", run = "...", out = "util")
 
 target(
     name = "server",
     driver = "exec",
     deps = [
-        ":util",        # same as //app:util
-        "./config",     # same as //app/config (default target)
-        "./proto:api",  # same as //app/proto:api
-        "../shared",    # same as //shared (default target)
+        ":util",          # same as //app:util
+        "./proto:api",    # same as //app/proto:api
+        "../shared:lib",  # same as //shared:lib
     ],
     run = "...",
     out = "server",
