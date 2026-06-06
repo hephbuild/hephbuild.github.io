@@ -22,6 +22,9 @@ not the person who built it.
 - **No source-code references.** Don't point at internal package names, file
   paths, function names, or link into the codebase. Document the public surface:
   commands, config keys, build-file functions, outputs.
+- **No commands in headings.** Section headings describe the concept, not the
+  command. Put the command in the body, not the title. Write
+  `## Detecting output conflicts` not `## Detecting output conflicts: \`heph validate\``.
 
 ## Do
 
