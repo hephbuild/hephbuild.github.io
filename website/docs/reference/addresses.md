@@ -1,7 +1,7 @@
 ---
 title: "Addresses"
 sidebar_position: 3
-description: How targets are named — absolute, relative, output-group selector, and the built-in @heph packages.
+description: How targets are named — package, name, output-group selector, and the built-in @heph packages.
 ---
 
 # Addresses
@@ -28,40 +28,42 @@ references another.
   package is the empty string, written `//:name`.
 - **name** — the target's name within that package, after the `:`.
 
-## Relative addresses
+## Relative forms
 
-Inside a `BUILD` file or when passing an address to a command from within a
-package directory, you can use relative forms instead of the full `//pkg:name`
-path. All relative forms require an explicit prefix — a bare identifier like
-`name` is **not** a valid address.
+Inside `BUILD` files you can write addresses relative to the current package
+instead of spelling out the full `//package:name` path. heph resolves them
+against the package that owns the `BUILD` file.
 
-| Form | Resolves to | Example |
-|------|-------------|--------|
-| `:name` | Current package | `:server` → `//app:server` from `app/` |
-| `./subdir:name` | Subdirectory of current package | `./cmd:bin` → `//app/cmd:bin` from `app/` |
-| `../sibling:name` | Sibling package | `../lib:core` → `//lib:core` from `app/` |
+| Form | Resolves to |
+|------|-------------|
+| `:name` | `//current/pkg:name` |
+| `./sub:name` | `//current/pkg/sub:name` |
+| `../sibling:name` | `//current/sibling:name` |
 
-```python title="BUILD"
-# Inside app/BUILD — all three are equivalent ways to reference //app:compile:
-lib = target(name = "compile", ...)
+See [Buildfile → Relative addresses](/docs/plugins/buildfile#relative-addresses) for examples.
 
-target(
-    name = "server",
-    deps = [
-        lib,           # Python variable — always preferred
-        ":compile",    # explicit relative form
-        "//app:compile",  # absolute form
-    ],
-    ...
-)
+## Package matchers
+
+Some commands (such as `heph inspect packages`) accept a **package matcher**
+instead of a single address. Matchers select one or more packages at once.
+
+| Pattern | Selects |
+|---------|--------|
+| `//pkg` | exactly `//pkg` |
+| `//pkg/...` | `//pkg` and every package beneath it |
+| `.` | the package matching the current working directory |
+| `...` | the current package and every package beneath it |
+| `./sub` | `//current/pkg/sub` |
+| `./sub/...` | `//current/pkg/sub` and everything beneath it |
+| `../sibling` | `//current/sibling` |
+
+```bash
+# All packages rooted at //lib:
+heph inspect packages //lib/...
+
+# Packages in and below the current directory:
+heph inspect packages ...
 ```
-
-:::tip
-Using the Python variable returned by `target()` is the most concise and
-refactor-safe way to reference a target defined in the same file. Relative
-string forms like `:name` are useful when referencing a target defined in
-another file within the package.
-:::
 
 ## Output-group selector
 

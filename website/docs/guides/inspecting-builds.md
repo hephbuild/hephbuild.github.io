@@ -56,13 +56,13 @@ the fully resolved form the engine executes.
 heph inspect packages              # all packages
 heph inspect packages //cmd/...    # packages under a prefix (absolute)
 heph inspect packages .            # the current package
-heph inspect packages ./sub        # a subdirectory of the current package
+heph inspect packages ...          # current package and everything beneath it
 heph inspect functions             # provider-exposed BUILD functions
 ```
 
-The matcher passed to `heph inspect packages` uses the same [address
-resolution](/docs/reference/addresses#relative-addresses) as `heph run` —
-absolute (`//pkg/...`), current-directory (`.`), and relative (`./sub`,
+The matcher passed to `heph inspect packages` uses the same [package matcher
+syntax](/docs/reference/addresses#package-matchers) as other commands —
+absolute (`//pkg/...`), current-directory (`.`, `...`), and relative (`./sub`,
 `../sibling`) forms all work when invoked from within a package directory.
 
 `functions` lists the `heph.<provider>.<fn>` helpers available in BUILD files —
