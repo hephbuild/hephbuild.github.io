@@ -5,12 +5,15 @@ import {
 import { GITHUB_URL, GITHUB_LABEL } from '../../constants';
 import { useLatestVersion } from '../../hooks/useLatestVersion';
 
-const STATUS_TAIL = ['MIT LICENSE', 'OPEN SOURCE'];
+const STATUS_TAIL = [
+  { label: 'MIT LICENSE' },
+  { label: 'LLMS.TXT', href: '/llms.txt' },
+];
 
 /** Technical status strip + minimal mono nav. */
 export function Nav() {
   const { version } = useLatestVersion();
-  const status = [version ? `v${version}` : 'v…', ...STATUS_TAIL];
+  const status = [{ label: version ? `v${version}` : 'v…' }, ...STATUS_TAIL];
   return (
     <div style={{ background: 'var(--paper)', position: 'relative', zIndex: 1 }}>
       {/* technical status strip */}
@@ -29,7 +32,7 @@ export function Nav() {
       >
         {status.map((t, i) => (
           <span
-            key={t}
+            key={t.label}
             style={{
               padding: '0 16px',
               borderRight: '1px solid var(--hair)',
@@ -42,7 +45,11 @@ export function Nav() {
               ...(i === 0 ? { minWidth: 92, boxSizing: 'border-box' } : {}),
             }}
           >
-            {t}
+            {t.href ? (
+              <a href={t.href} style={{ color: 'inherit', textDecoration: 'none' }}>{t.label}</a>
+            ) : (
+              t.label
+            )}
           </span>
         ))}
         <span

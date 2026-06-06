@@ -409,11 +409,7 @@ export function Hero() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Coord style={{ color: '#565b63' }}>FIG.01 / 06</Coord>
-              <Coord style={{ color: '#565b63' }}>
-                <a href="/llms.txt" style={{ color: 'inherit', textDecoration: 'none' }}>
-                  ＋ LLMS.TXT
-                </a>
-              </Coord>
+              <Coord style={{ color: '#565b63' }}>＋ OPEN SOURCE</Coord>
             </div>
             <div style={{ marginTop: 28 }}>
               <Eyebrow style={{ color: '#565b63' }}>Open-source build system</Eyebrow>
