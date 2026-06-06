@@ -104,7 +104,9 @@ You don't write `target()` for Go code.
 ### Buildfile (provider)
 Scans for BUILD files (default name `BUILD`; customize via `patterns`). `skip`
 excludes directories from the walk (vendored code, generated trees, etc.).
-Authoring details in `authoring.md`.
+`defaultDriver` sets a fallback driver for targets that omit `driver` — useful
+when most targets in the workspace share the same driver. An explicit `driver`
+in `target()` always takes precedence. Authoring details in `authoring.md`.
 
 ### Query (provider)
 Address the `@heph/query` package with matcher args; combining matchers is AND

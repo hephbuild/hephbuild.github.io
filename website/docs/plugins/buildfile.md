@@ -46,6 +46,7 @@ providers:
 |--------|------|---------|-------------|
 | `patterns` | `string[]` | `["BUILD"]` | Glob patterns for BUILD file names to recognize. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from the BUILD file walk. |
+| `defaultDriver` | `string` | `""` | Driver name to use when a target omits `driver`. An explicit `driver` in `target()` always wins. |
 
 ### Skipping directories
 
@@ -63,6 +64,37 @@ providers:
         - "third_party/**"
         - "generated/*"
 ```
+
+### Default driver
+
+If most targets in your workspace use the same driver, set `defaultDriver` so
+`target()` calls can omit the `driver` field:
+
+```yaml title=".hephconfig"
+providers:
+  - name: buildfile
+    options:
+      defaultDriver: bash
+```
+
+```python title="BUILD"
+# driver is omitted — falls back to "bash"
+target(
+    name = "hello",
+    run = ["echo hello"],
+    out = "hello.txt",
+)
+
+# explicit driver always wins
+target(
+    name = "gen",
+    driver = "exec",
+    run = ["./gen.sh"],
+    out = "gen.txt",
+)
+```
+
+A target that omits `driver` when no `defaultDriver` is configured is an error.
 
 ## Usage
 
@@ -115,7 +147,7 @@ everything else is handed verbatim to the **driver**:
 | Field | Required | Meaning |
 |-------|----------|---------|
 | `name` | yes | The target's name within its package. |
-| `driver` | yes | The driver that executes it (`bash`, `go_golist`, `group`, …). |
+| `driver` | no* | The driver that executes it (`bash`, `go_golist`, `group`, …). Required when `defaultDriver` is not set. |
 | `labels` | no | A label or list of labels, used by [query](./query.md) and matchers. |
 | `transitive` | no | Sandbox settings propagated to targets that depend on this one. |
 
