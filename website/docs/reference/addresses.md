@@ -42,21 +42,7 @@ against the package that owns the `BUILD` file.
 | `../sibling` | `//current/sibling` |
 | `../sibling:name` | `//current/sibling:name` |
 
-```python title="BUILD"
-# Inside //app/BUILD — these two deps are equivalent:
-rust_binary(
-    name = "server",
-    deps = [
-        ":util",          # shorthand for //app:util
-        "./proto:api",    # shorthand for //app/proto:api
-    ],
-)
-```
-
-:::note
-CLI commands accept **absolute** addresses only (`//package:name`). Tab
-completion offers candidates in whichever form you start typing.
-:::
+See [Buildfile → Relative addresses](/docs/plugins/buildfile#relative-addresses) for examples.
 
 ## Package matchers
 
