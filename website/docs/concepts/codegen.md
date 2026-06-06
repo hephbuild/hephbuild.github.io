@@ -121,7 +121,7 @@ Run it after adding or removing a `copy` target. Because the output is
 deterministic, it also works well as a CI check — fail the build if
 `gen-gitignore` would change the committed `.gitignore`.
 
-## Detecting output conflicts: `heph validate`
+## Detecting output conflicts
 
 Two `copy` targets must never claim overlapping output paths — if they do, one
 target's output silently overwrites the other's. Run `heph validate` to catch
