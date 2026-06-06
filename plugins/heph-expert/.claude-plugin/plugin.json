@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "heph-expert",
+  "version": "0.1.0",
+  "description": "Expert assistance for the heph build system: author BUILD files, debug caching and sandbox issues, wire up CI, and explain the target graph.",
+  "author": {
+    "name": "hephbuild"
+  },
+  "homepage": "https://hephbuild.github.io/",
+  "repository": "https://github.com/hephbuild/heph",
+  "license": "MIT",
+  "keywords": ["heph", "build-system", "caching", "monorepo", "starlark", "ci"]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "heph-marketplace",
+  "version": "0.1.0",
+  "description": "Claude Code plugins for the heph build system, co-located with the docs.",
+  "owner": {
+    "name": "hephbuild",
+    "url": "https://hephbuild.github.io/"
+  },
+  "plugins": [
+    {
+      "name": "heph-expert",
+      "description": "Expert assistance for the heph build system: author BUILD files, debug caching and sandbox issues, wire up CI, and explain the target graph.",
+      "source": "./plugins/heph-expert",
+      "category": "build-tools",
+      "keywords": ["heph", "build-system", "caching", "monorepo", "starlark"]
+    }
+  ]
+}
