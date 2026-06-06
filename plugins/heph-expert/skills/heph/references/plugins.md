@@ -30,7 +30,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 
 | Plugin | Driver(s) | Purpose |
 |---|---|---|
-| Go | `go_golist`, `go_embed`, `go_testmain` | Go support: libraries, binaries, tests. Drivers are internal — you don't call them directly. |
+| Go | `go_golist`, `go_embed`, `go_testmain` | Go support: libraries, binaries, tests. Drivers are internal — you don't call them directly. **Setup/usage is owned by the dedicated `heph-go` plugin.** |
 
 ## Providers
 
@@ -38,7 +38,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 |---|---|---|
 | Buildfile | Scan the workspace for Starlark BUILD files and parse `target()` definitions. | Built-in; register under `providers:`. |
 | Query | Select targets dynamically by label/package/prefix/output, returning a group. | Built-in, always on. |
-| Go | Analyze Go packages and generate build/test targets (also registers the `go_*` drivers). | Opt-in; register under `providers:`. |
+| Go | Analyze Go packages and generate build/test targets (also registers the `go_*` drivers). | Opt-in; register under `providers:`. For Go work, defer to the `heph-go` plugin. |
 
 ## Addresses & the `@heph/*` packages
 
@@ -90,28 +90,16 @@ disabled (wrappers reference host-local `/nix/store` paths). Requires
 `nix-command` + `flakes`. Use `system` to override host-system detection.
 
 ### Go (provider)
-Analyzes each package from `go.mod` + sources and generates targets — you don't
-write `target()` for Go code. Per package: `:build` (library, or binary for
-`package main`) and `:test` (labels `test`, `go-test`). Imports are wired
-automatically through the `@heph/go/std/*` and
-`@heph/go/thirdparty/<module>@<version>` address families; because the version
-is in the address, a dependency bump invalidates only importers.
+The `go` provider analyzes Go packages and generates `:build`/`:test` targets;
+imports resolve through the `@heph/go/std/*` and
+`@heph/go/thirdparty/<module>@<version>` address families (see the table above).
+You don't write `target()` for Go code.
 
-```yaml title=".hephconfig"
-providers:
-  - name: go
-    options:
-      gotool: "//@heph/bin:go"   # optional, this is the default
-drivers:
-  - name: go_golist
-  - name: go_embed
-  - name: go_testmain
-```
-```bash
-heph query all .             # explore generated targets for the current package
-heph run //cmd/server:build  # compile the binary
-heph run //lib/auth:test     # run the package's tests
-```
+> Setting up Go — enabling the provider and its drivers, picking `gotool`,
+> skipping dirs, and wiring generated code (`go_src`, `go_codegen_root`,
+> `go_codegen_deps`) and fixtures (`go_test_data`) — is owned by the dedicated
+> **`heph-go`** plugin (skill `heph-go`, agent `heph-go-expert`, commands
+> `/heph-go:*`). Use it for any Go-specific work rather than the detail here.
 
 ### Buildfile (provider)
 Scans for BUILD files (default name `BUILD`; customize via `patterns`). `skip`

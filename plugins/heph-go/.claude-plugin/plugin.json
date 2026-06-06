@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "heph-go",
+  "version": "0.1.0",
+  "description": "Set up and maintain Go in a heph workspace correctly: enable the go provider and drivers, wire generated code (go_src / go_codegen_root / go_codegen_deps) and test fixtures (go_test_data), and keep :build/:test green.",
+  "author": {
+    "name": "hephbuild"
+  },
+  "homepage": "https://hephbuild.github.io/docs/plugins/go",
+  "repository": "https://github.com/hephbuild/heph",
+  "license": "MIT",
+  "keywords": ["heph", "go", "golang", "build-system", "codegen", "go_src", "go_test_data"]
+}

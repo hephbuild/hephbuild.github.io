@@ -18,7 +18,8 @@ Steps:
 2. **Pick the driver.** `bash`/`sh`/`exec` for shell actions, `nix` for a pinned
    toolchain, `textfile` for a generated text file, `group` to bundle. For Go
    code, do NOT write `target()` — the `go` provider generates `:build`/`:test`
-   automatically; point the user there instead.
+   automatically; hand the user off to the dedicated **`heph-go`** plugin
+   (`/heph-go:*`) instead.
 
 3. **Declare every input.** Translate each file/dir the command reads into
    `deps` (or `tools` for executables on `PATH`, `glob()`/`file()` for sources).
