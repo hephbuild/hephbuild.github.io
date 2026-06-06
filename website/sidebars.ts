@@ -30,7 +30,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Guides',
       collapsible: false,
-      items: ['guides/first-build', 'guides/ci', 'guides/inspecting-builds'],
+      items: ['guides/first-build', 'guides/ci', 'guides/inspecting-builds', 'guides/claude-code-plugin'],
     },
     {
       type: 'category',
