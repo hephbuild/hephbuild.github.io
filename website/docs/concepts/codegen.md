@@ -121,6 +121,27 @@ Run it after adding or removing a `copy` target. Because the output is
 deterministic, it also works well as a CI check — fail the build if
 `gen-gitignore` would change the committed `.gitignore`.
 
+## Detecting output conflicts: `heph validate`
+
+Two `copy` targets must never claim overlapping output paths — if they do, one
+target's output silently overwrites the other's. Run `heph validate` to catch
+these conflicts across the whole workspace:
+
+```bash
+heph validate
+```
+
+Overlap means more than identical paths. heph also flags **containment**: if one
+target claims the directory `/gen/` and another claims the file `/gen/a.go`,
+they overlap because the directory output encompasses the file. A file and a
+same-named directory (trailing slash ignored) also conflict.
+
+Only conflicts between *different* targets are reported — a single target that
+declares both a directory output and a file inside it is valid.
+
+Run `heph validate` in CI alongside `gen-gitignore` to ensure no two targets
+compete for the same part of the source tree.
+
 ## Verifying the tree in CI: `--frozen`
 
 Running a codegen target normally **writes** its outputs into the tree — `copy`
