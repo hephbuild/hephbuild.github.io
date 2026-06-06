@@ -113,6 +113,20 @@ heph run //cmd/server:build  # compile the binary
 heph run //lib/auth:test     # run the package's tests
 ```
 
+Generated code and test data are wired in by **label**, not by hand:
+- **`go_src`** — label a codegen target (typically `codegen = "copy"`) whose
+  output is generated `.go`; its tree is unpacked into the package, so `:build`
+  and `:test` compile it as if committed (proto stubs, mocks, `stringer`). No
+  `deps` entry needed.
+- **`go_test_data`** — label a target producing files a test reads at runtime
+  (golden files, fixtures); its outputs are staged into the sandbox for `:test`
+  and `:xtest`, keeping tests isolated and reproducible.
+```python title="api/BUILD"
+target(name = "proto", driver = "bash", codegen = "copy",
+       labels = ["go_src"], deps = {"src": glob("*.proto")},
+       out = glob("*.pb.go"), run = "protoc --go_out=. $SRC_SRC")
+```
+
 ### Buildfile (provider)
 Scans for BUILD files (default name `BUILD`; customize via `patterns`). `skip`
 excludes directories from the walk (vendored code, generated trees, etc.).
