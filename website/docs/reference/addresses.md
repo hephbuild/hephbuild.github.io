@@ -28,6 +28,34 @@ references another.
   package is the empty string, written `//:name`.
 - **name** — the target's name within that package, after the `:`.
 
+## Relative addresses
+
+When you run `heph` from inside a package directory, you can omit the `//pkg`
+prefix. heph resolves the address against the **current package** — the package
+whose `BUILD` file is in the nearest ancestor directory.
+
+| Form | Resolves to |
+|------|-------------|
+| `:name` | `//current-pkg:name` |
+| `name` | `//current-pkg:name` |
+| `./sub:name` | `//current-pkg/sub:name` |
+| `../sibling:name` | `//parent/sibling:name` |
+
+```bash title="terminal"
+# Inside //app/server
+heph run :build            # runs //app/server:build
+heph run build             # same
+heph run ./handlers:test   # runs //app/server/handlers:test
+heph run ../shared:lib     # runs //app/shared:lib
+```
+
+Relative forms also apply to exclude flags passed to `heph run`.
+
+:::note
+Absolute addresses (`//pkg:name`) always work regardless of the working
+directory and are required when referencing targets inside `BUILD` files.
+:::
+
 ## Output-group selector
 
 A target can publish several [output groups](/docs/plugins/exec#output-groups).
