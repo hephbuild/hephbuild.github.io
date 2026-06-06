@@ -84,6 +84,9 @@ const config: Config = {
         // Also emit a per-page .md alongside each route (e.g. /docs/intro.md),
         // so an LLM (or a human) can fetch the raw markdown of any single page.
         generateMarkdownFiles: true,
+        // Strip MDX `import` statements (component imports) from the output —
+        // they're build-time JSX plumbing, noise in an LLM corpus.
+        excludeImports: true,
       },
     ],
   ],
