@@ -48,7 +48,7 @@ Some commands (such as `heph inspect packages`) accept a **package matcher**
 instead of a single address. Matchers select one or more packages at once.
 
 | Pattern | Selects |
-|---------|--------|
+|---------|----------|
 | `//pkg` | exactly `//pkg` |
 | `//pkg/...` | `//pkg` and every package beneath it |
 | `.` | the package matching the current working directory |
