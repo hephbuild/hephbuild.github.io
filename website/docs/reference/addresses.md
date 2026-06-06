@@ -30,26 +30,20 @@ references another.
 
 ## Relative forms
 
-On the command line you can omit the `//` prefix and write addresses relative to
-the package in your current working directory. heph resolves them against that
-package before executing.
+You can omit the `//` prefix and write addresses relative to a base package.
+heph resolves them against that package before executing.
 
 | Form | Resolves to |
 |------|-------------|
-| `:name` | `//current/pkg:name` |
-| `name` | `//current/pkg:name` |
-| `./sub` | `//current/pkg/sub` |
-| `./sub:name` | `//current/pkg/sub:name` |
-| `../sibling` | `//current/sibling` |
-| `../sibling:name` | `//current/sibling:name` |
+| `:name` | `//base/pkg:name` |
+| `./sub` | `//base/pkg/sub` |
+| `./sub:name` | `//base/pkg/sub:name` |
+| `../sibling` | `//base/sibling` |
+| `../sibling:name` | `//base/sibling:name` |
 
-Tab completion expands all of these forms automatically, in the same style you
-are already typing.
-
-:::note
-Relative forms are only available on the command line. Inside `BUILD` files,
-always use absolute `//package:name` addresses.
-:::
+On the command line the base package is the one matching your current working
+directory. Tab completion expands all of these forms automatically, in the same
+style you are already typing.
 
 ## Output-group selector
 
