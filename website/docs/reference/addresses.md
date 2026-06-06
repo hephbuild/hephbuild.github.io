@@ -1,7 +1,7 @@
 ---
 title: "Addresses"
 sidebar_position: 3
-description: How targets are named — package, name, output-group selector, and the built-in @heph packages.
+description: How targets are named — absolute, relative, output-group selector, and the built-in @heph packages.
 ---
 
 # Addresses
@@ -27,6 +27,41 @@ references another.
 - **package** — the workspace-relative directory, after the `//`. The root
   package is the empty string, written `//:name`.
 - **name** — the target's name within that package, after the `:`.
+
+## Relative addresses
+
+Inside a `BUILD` file or when passing an address to a command from within a
+package directory, you can use relative forms instead of the full `//pkg:name`
+path. All relative forms require an explicit prefix — a bare identifier like
+`name` is **not** a valid address.
+
+| Form | Resolves to | Example |
+|------|-------------|--------|
+| `:name` | Current package | `:server` → `//app:server` from `app/` |
+| `./subdir:name` | Subdirectory of current package | `./cmd:bin` → `//app/cmd:bin` from `app/` |
+| `../sibling:name` | Sibling package | `../lib:core` → `//lib:core` from `app/` |
+
+```python title="BUILD"
+# Inside app/BUILD — all three are equivalent ways to reference //app:compile:
+lib = target(name = "compile", ...)
+
+target(
+    name = "server",
+    deps = [
+        lib,           # Python variable — always preferred
+        ":compile",    # explicit relative form
+        "//app:compile",  # absolute form
+    ],
+    ...
+)
+```
+
+:::tip
+Using the Python variable returned by `target()` is the most concise and
+refactor-safe way to reference a target defined in the same file. Relative
+string forms like `:name` are useful when referencing a target defined in
+another file within the package.
+:::
 
 ## Output-group selector
 
