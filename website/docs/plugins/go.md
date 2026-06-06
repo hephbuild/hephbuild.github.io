@@ -100,16 +100,16 @@ Two labels are recognized:
 
 | Label           | Attach to a target that produces…                  | Pulled into |
 |-----------------|----------------------------------------------------|-------------|
-| `go_src`        | Generated `.go` sources (and sibling outputs).     | `:build`, `:test` |
+| `go_src`        | Generated `.go` or embedded files.                 | `:build`, `:build_test` |
 | `go_test_data`  | Files a test reads at runtime (fixtures, goldens). | `:test`, `:xtest`  |
 
 ### `go_src` — generated source
 
 Label a codegen target `go_src` and its output tree is unpacked into the
-package before analysis, so the generated `.go` files are compiled as part of
-the package — exactly as if you'd committed them. This is how `go list`, the
-build, and the tests all see code produced by `protoc`, `mockgen`, `stringer`,
-and friends.
+package before analysis, so the generated `.go` (and embedded) files are
+compiled as part of the package — exactly as if you'd committed them. This is
+how `go list`, the build, and the tests all see code produced by `protoc`,
+`mockgen`, `stringer`, and friends.
 
 ```python title="api/BUILD"
 target(
