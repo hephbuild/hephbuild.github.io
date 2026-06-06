@@ -28,6 +28,29 @@ references another.
   package is the empty string, written `//:name`.
 - **name** — the target's name within that package, after the `:`.
 
+## Relative forms
+
+On the command line you can omit the `//` prefix and write addresses relative to
+the package in your current working directory. heph resolves them against that
+package before executing.
+
+| Form | Resolves to |
+|------|-------------|
+| `:name` | `//current/pkg:name` |
+| `name` | `//current/pkg:name` |
+| `./sub` | `//current/pkg/sub` |
+| `./sub:name` | `//current/pkg/sub:name` |
+| `../sibling` | `//current/sibling` |
+| `../sibling:name` | `//current/sibling:name` |
+
+Tab completion expands all of these forms automatically, in the same style you
+are already typing.
+
+:::note
+Relative forms are only available on the command line. Inside `BUILD` files,
+always use absolute `//package:name` addresses.
+:::
+
 ## Output-group selector
 
 A target can publish several [output groups](/docs/plugins/exec#output-groups).
