@@ -43,7 +43,7 @@ Only these fields are interpreted by the engine/buildfile:
 | Field | Required | Meaning |
 |---|---|---|
 | `name` | yes | Target name within its package. |
-| `driver` | yes | Driver that executes it (`bash`, `sh`, `exec`, `nix`, `group`, …). |
+| `driver` | no* | Driver that executes it (`bash`, `sh`, `exec`, `nix`, `group`, …). Required when `defaultDriver` is not set in the buildfile provider options. |
 | `labels` | no | Label or list of labels, used by `query` and matchers. |
 | `transitive` | no | Sandbox settings propagated to dependents. |
 
