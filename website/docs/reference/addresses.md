@@ -28,6 +28,43 @@ references another.
   package is the empty string, written `//:name`.
 - **name** — the target's name within that package, after the `:`.
 
+## Relative forms
+
+Inside `BUILD` files you can write addresses relative to the current package
+instead of spelling out the full `//package:name` path. heph resolves them
+against the package that owns the `BUILD` file.
+
+| Form | Resolves to |
+|------|-------------|
+| `:name` | `//current/pkg:name` |
+| `./sub:name` | `//current/pkg/sub:name` |
+| `../sibling:name` | `//current/sibling:name` |
+
+See [Buildfile → Relative addresses](/docs/plugins/buildfile#relative-addresses) for examples.
+
+## Package matchers
+
+Some commands (such as `heph inspect packages`) accept a **package matcher**
+instead of a single address. Matchers select one or more packages at once.
+
+| Pattern | Selects |
+|---------|---------|
+| `//pkg` | exactly `//pkg` |
+| `//pkg/...` | `//pkg` and every package beneath it |
+| `.` | the package matching the current working directory |
+| `...` | the current package and every package beneath it |
+| `./sub` | `//current/pkg/sub` |
+| `./sub/...` | `//current/pkg/sub` and everything beneath it |
+| `../sibling` | `//current/sibling` |
+
+```bash
+# All packages rooted at //lib:
+heph inspect packages //lib/...
+
+# Packages in and below the current directory:
+heph inspect packages ...
+```
+
 ## Output-group selector
 
 A target can publish several [output groups](/docs/plugins/exec#output-groups).

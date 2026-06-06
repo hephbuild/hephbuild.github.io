@@ -141,6 +141,30 @@ target(
 )
 ```
 
+### Relative addresses
+
+Inside a BUILD file, `deps` (and any other address field) accept relative
+address forms resolved against the BUILD file's own package. This avoids
+repeating the package path for targets that live nearby.
+
+```python title="app/BUILD"
+util = target(name = "util", driver = "exec", run = "...", out = "util")
+
+target(
+    name = "server",
+    driver = "exec",
+    deps = [
+        ":util",          # same as //app:util
+        "./proto:api",    # same as //app/proto:api
+        "../shared:lib",  # same as //shared:lib
+    ],
+    run = "...",
+    out = "server",
+)
+```
+
+See [Addresses → Relative forms](/docs/reference/addresses#relative-forms) for the full reference table.
+
 ### `heph.core` — host platform
 
 `heph.core` is a namespace available in every BUILD file. Use it to read the
