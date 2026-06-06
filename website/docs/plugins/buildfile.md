@@ -82,13 +82,14 @@ BUILD files are written in Starlark — a small, deterministic dialect of Python
 The plugin exposes a fixed set of builtins:
 
 | Builtin | Returns | Purpose |
-|---------|---------|---------|
+|---------|---------|----------|
 | `target(name, driver, **kwargs)` | the target's address | Declare a target. |
 | `file(path, abs=False)` | a file address | Reference one workspace file as an input. |
 | `glob(pattern, exclude=None, abs=False)` | a glob address | Reference many files by pattern. |
 | `struct(**kwargs)` | a struct | Bundle named values to pass into a field. |
-| `get_pkg()` | the current package path | Compute addresses relative to where the BUILD file lives. |
+| `get_pkg()` | the current package path | Compute addresses relative to where the BUILD file lives. Prefer `heph.core.pkg()`. |
 | `provider_state(provider, **kwargs)` | — | Hand package-level state to a provider. |
+| `heph.core` | namespace | Host platform info and current package. See [below](#hephcore--host-platform). |
 
 `file()` and `glob()` resolve to [filesystem](./fs.md) addresses, so their
 results drop straight into a dependency field:
@@ -140,6 +141,51 @@ target(
 )
 ```
 
+### `heph.core` — host platform
+
+`heph.core` is a namespace available in every BUILD file. Use it to read the
+host platform so targets can vary by operating system or CPU architecture.
+
+| Function | Returns | Example values |
+|----------|---------|----------------|
+| `heph.core.os()` | normalized OS name | `"darwin"`, `"linux"`, `"windows"` |
+| `heph.core.arch()` | normalized architecture | `"amd64"`, `"arm64"` |
+| `heph.core.os_raw()` | host OS identifier | `"macos"`, `"linux"` |
+| `heph.core.arch_raw()` | host architecture identifier | `"x86_64"`, `"aarch64"` |
+| `heph.core.pkg()` | current package path | `"//tools/build"` |
+
+`heph.core.os()` and `heph.core.arch()` return normalized names that match
+the conventions used by container registries and most package distribution
+tools. `heph.core.os_raw()` and `heph.core.arch_raw()` return the exact
+identifiers the host reports — use those when a tool or URL scheme expects
+non-normalized names.
+
+`heph.core.pkg()` returns the current package path — the same value as the
+top-level `get_pkg()`, which still works but `heph.core.pkg()` is preferred.
+
+```python title="BUILD"
+# Download a platform-specific binary
+target(
+    name = "tool",
+    driver = "exec",
+    run = [
+        "curl -fsSLo $OUT https://releases.example.com/tool/{}/{}/tool".format(
+            heph.core.os(),
+            heph.core.arch(),
+        ),
+    ],
+    out = "tool",
+)
+```
+
+```python title="BUILD"
+# Build different targets per platform
+if heph.core.os() == "linux":
+    target(name = "bundle", driver = "exec", run = ["./package-linux.sh"], out = "bundle")
+else:
+    target(name = "bundle", driver = "exec", run = ["./package-mac.sh"], out = "bundle")
+```
+
 ### Sharing symbols with `load()`
 
 `load()` imports symbols from another Starlark file so common definitions live
@@ -151,4 +197,3 @@ load("//build/defs:go.star", "go_service")
 
 go_service(name = "api")
 ```
-
