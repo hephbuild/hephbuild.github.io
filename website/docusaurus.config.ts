@@ -69,6 +69,23 @@ const config: Config = {
         },
       },
     ],
+    // Generates /llms.txt (link index) and /llms-full.txt (full docs corpus)
+    // at build time, following the llmstxt.org standard so LLMs can ingest the
+    // docs. Build-only — does not run under the dev server.
+    [
+      'docusaurus-plugin-llms',
+      {
+        docsDir: 'docs',
+        // The site root is bespoke marketing chrome; only the docs are useful
+        // as an LLM corpus.
+        includeBlog: false,
+        title: 'heph',
+        description: 'Build once. Trust the cache.',
+        // Also emit a per-page .md alongside each route (e.g. /docs/intro.md),
+        // so an LLM (or a human) can fetch the raw markdown of any single page.
+        generateMarkdownFiles: true,
+      },
+    ],
   ],
 
   markdown: {
