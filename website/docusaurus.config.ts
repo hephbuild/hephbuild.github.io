@@ -1,7 +1,7 @@
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import type { PrismTheme } from 'prism-react-renderer';
-import { GITHUB_URL } from './src/constants';
+import { GITHUB_DOCS_URL, GITHUB_URL } from './src/constants';
 import { ogDocs, ogPages } from './src/og/render';
 
 /**
@@ -109,7 +109,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
-          editUrl: `${GITHUB_URL}/tree/main/website/`,
+          editUrl: `${GITHUB_DOCS_URL}/tree/main/`,
         },
         blog: false,
         theme: {
@@ -159,7 +159,7 @@ const config: Config = {
           title: 'Project',
           items: [
             { label: 'GitHub', href: GITHUB_URL },
-            { label: 'License — MIT', href: `${GITHUB_URL}/blob/main/LICENSE` },
+            { label: 'License — MIT', href: `${GITHUB_URL}/blob/master/LICENSE` },
           ],
         },
       ],

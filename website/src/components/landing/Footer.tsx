@@ -33,7 +33,7 @@ const COLS: FooterCol[] = [
       { label: 'GitHub', href: GITHUB_URL },
       { label: 'Security', href: `${GITHUB_URL}/security` },
       { label: 'Status', href: `${GITHUB_URL}/actions` },
-      { label: 'License — MIT', href: `${GITHUB_URL}/blob/main/LICENSE` },
+      { label: 'License — MIT', href: `${GITHUB_URL}/blob/master/LICENSE` },
     ],
   },
 ];
