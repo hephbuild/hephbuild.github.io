@@ -177,3 +177,62 @@ graph, never by hand:
 
 Because the module and version are part of the address, a dependency bump
 changes the address and invalidates only the targets that import it.
+
+## Claude Code plugin
+
+`heph-go` is a [Claude Code](https://claude.com/claude-code) plugin focused on Go
+under heph: it teaches Claude to enable the provider and drivers, wire generated
+code (`go_src` / `go_codegen_root` / `go_codegen_deps`) and test fixtures
+(`go_test_data`), and keep `:build` / `:test` green.
+
+It ships from this docs site, which doubles as a plugin **marketplace**.
+
+### Install
+
+Run both commands inside Claude Code:
+
+```text title="Claude Code"
+/plugin marketplace add hephbuild/hephbuild.github.io
+/plugin install heph-go@heph-marketplace
+```
+
+The first command registers the marketplace from this repository; the second
+installs the plugin. Restart Claude Code if prompted.
+
+### What you get
+
+| Piece | What it does |
+|---|---|
+| **Skill `heph-go`** | Auto-activates whenever Claude works on Go under heph — enabling the provider and the `go_golist` / `go_embed` / `go_testmain` drivers, building and testing packages, wiring `go_src` / `go_codegen_root` / `go_codegen_deps` and `go_test_data`, pinning `gotool`, or debugging missing generated code, embeds, modules, or testdata. Carries this page's reference bundled. |
+| **Agent `heph-go-expert`** | A specialist subagent for non-trivial Go-in-heph jobs: standing up the provider, wiring cross-package codegen, staging fixtures, or diagnosing why a `:build` / `:test` fails to see what it needs. |
+| **`/heph-go-setup`** | Turn on and configure Go support — provider, the three drivers, `gotool`, and `skip`. |
+| **`/heph-go-codegen`** | Wire generated code and test fixtures into a package via `go_src`, `go_codegen_root`, `go_codegen_deps`, and `go_test_data`. |
+| **`/heph-go-check`** | Audit a workspace's Go setup — drivers enabled, `gotool` / `skip` sane, generated code and fixtures wired, `:build` / `:test` green — and fix what isn't. |
+
+The skill activates on its own — you don't invoke it. Type a command with its
+leading slash; address the agent by name ("ask the heph-go-expert to…").
+
+:::tip
+The plugin's bundled knowledge mirrors this page. When an exact option or label
+matters, the skill fetches the matching `.md` doc live (indexed at
+[llms.txt](https://hephbuild.github.io/llms.txt)), so it stays current even
+between plugin updates.
+:::
+
+For general heph support beyond Go, install `heph-expert` the same way — see the
+[Claude Code plugin guide](../guides/claude-code-plugin.md).
+
+### Update
+
+Pull the latest marketplace catalog, then upgrade:
+
+```text title="Claude Code"
+/plugin marketplace update heph-marketplace
+/plugin install heph-go@heph-marketplace
+```
+
+### Uninstall
+
+```text title="Claude Code"
+/plugin uninstall heph-go@heph-marketplace
+```
