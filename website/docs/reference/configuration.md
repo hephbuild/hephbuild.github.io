@@ -84,6 +84,11 @@ memCache:
 Controls whether sandboxes are assembled with a FUSE overlay instead of copying
 inputs. It is opt-in.
 
+:::warning
+The FUSE overlay is in development and not yet fully functional. Leave it off
+for production builds.
+:::
+
 ```yaml title=".hephconfig"
 fuse:
   enabled: auto   # true | false | auto
