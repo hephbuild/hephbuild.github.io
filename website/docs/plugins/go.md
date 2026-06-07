@@ -177,3 +177,42 @@ graph, never by hand:
 
 Because the module and version are part of the address, a dependency bump
 changes the address and invalidates only the targets that import it.
+
+## Claude Code plugin
+
+`heph-go` is a [Claude Code](https://claude.com/claude-code) plugin focused on Go
+under heph: it teaches Claude to enable the provider and drivers, wire generated
+code (`go_src` / `go_codegen_root` / `go_codegen_deps`) and test fixtures
+(`go_test_data`), and keep `:build` / `:test` green.
+
+It ships from this docs site, which doubles as a plugin **marketplace**.
+
+### Install
+
+Run both commands inside Claude Code:
+
+```text title="Claude Code"
+/plugin marketplace add hephbuild/hephbuild.github.io
+/plugin install heph-go@heph-marketplace
+```
+
+The first command registers the marketplace from this repository; the second
+installs the plugin. Restart Claude Code if prompted.
+
+For general heph support beyond Go, install `heph-expert` the same way — see the
+[Claude Code plugin guide](../guides/claude-code-plugin.md).
+
+### Update
+
+Pull the latest marketplace catalog, then upgrade:
+
+```text title="Claude Code"
+/plugin marketplace update heph-marketplace
+/plugin install heph-go@heph-marketplace
+```
+
+### Uninstall
+
+```text title="Claude Code"
+/plugin uninstall heph-go@heph-marketplace
+```
