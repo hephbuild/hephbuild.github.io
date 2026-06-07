@@ -34,6 +34,11 @@ fuse:
   enabled: auto   # true | false | auto
 ```
 
+:::warning
+The FUSE overlay is in development and not yet fully functional. Leave it off
+for production builds.
+:::
+
 `auto` lets the engine choose per target. The sandbox's contents are identical
 either way — only how the files get there differs.
 
