@@ -65,6 +65,11 @@ providers:
         - "generated/*"
 ```
 
+`skip` is a hard boundary: it applies to discovery *and* to direct target
+resolution. Addressing a target inside a skipped subtree — for example
+`heph run //vendor/pkg:lib` — returns not found, the same as if the BUILD
+file were never there.
+
 ### Default driver
 
 If most targets in your workspace use the same driver, set `defaultDriver` so

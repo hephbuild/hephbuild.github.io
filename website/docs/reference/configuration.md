@@ -37,6 +37,7 @@ Every key below is optional.
 | `providers` | list of `{name, options}`     | `[]`    | Providers to register — the plugins that discover targets. |
 | `drivers`   | list of `{name, options}`     | `[]`    | Drivers to register — the plugins that execute targets. |
 | `homeDir`   | path                          | unset   | Where heph keeps its home and cache. |
+| `fs`        | `{skip: string[]}`            | `{}`    | Workspace-wide ignore patterns shared with all tree-walking plugins. |
 | `memCache`  | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
 | `fuse`      | `{enabled: true \| false \| "auto"}` | off | Sandbox overlay mode. |
 | `lock`      | `{backend: fs \| mem}`        | `fs`    | Execute-phase lock backend. |
@@ -68,6 +69,44 @@ Some plugins are built-in and always available (`group`, `fs`, `hostbin`,
 `query`); others must be listed here before a target can use them. Each plugin
 page states which.
 :::
+
+## `fs` — workspace ignore patterns
+
+`fs.skip` is a list of workspace-root-relative patterns shared with every
+tree-walking plugin — the `fs` plugin, the `buildfile` provider, and the `go`
+provider. Patterns in this list apply everywhere at once, unlike per-plugin
+`skip` options which affect only one provider.
+
+```yaml title=".hephconfig"
+fs:
+  skip:
+    - vendor                  # literal dir — pruned by every plugin
+    - "./node_modules"        # leading ./ is normalized (same as "node_modules")
+    - "**/generated/**"       # glob — prunes any dir named generated at any depth
+```
+
+Each entry is interpreted by its shape:
+
+| Entry shape | Effect |
+|-------------|--------|
+| Literal path (no `*`, `?`, `[`, `{`) | Pruned by exact match against workspace-relative paths. `./`-prefixed forms normalize to bare paths (`./vendor` → `vendor`). |
+| Glob pattern (contains metacharacters) | Matched against workspace-relative paths using glob semantics. |
+
+`.git` is always ignored — you do not need to list it.
+
+### `fs.skip` vs per-plugin `skip`
+
+The `buildfile` and `go` providers each accept their own `skip` option (under
+`providers[name=buildfile].options.skip` and `providers[name=go].options.skip`).
+Those apply only to the respective provider.
+
+`fs.skip` is global: the engine merges it with every plugin's own `skip` list
+before building the final ignore set, so the same path is pruned consistently
+across every plugin.
+
+Use `fs.skip` for workspace-wide exclusions (e.g. `vendor`, `node_modules`,
+generated output trees). Use per-plugin `skip` for patterns that should only
+affect one provider.
 
 ## `memCache` — in-memory cache
 
