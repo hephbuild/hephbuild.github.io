@@ -64,6 +64,13 @@ providers:
         - "internal/generated/**"
 ```
 
+`skip` is a hard boundary for first-party packages: it applies to both
+discovery and direct target resolution. Addressing a first-party package inside
+a skipped subtree — for example `heph run //vendor/pkg:build` — returns not
+found. Standard library (`@heph/go/std/…`) and third-party module
+(`@heph/go/thirdparty/…`) packages live outside the workspace tree and are
+never affected by `skip`.
+
 ## Usage
 
 The provider analyzes each Go package from its `go.mod` and source files and
