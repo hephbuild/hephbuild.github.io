@@ -42,6 +42,7 @@ Every key below is optional.
 | `cache`     | `{spillThresholdBytes: number}` | `{}`  | Durable local-cache tuning. |
 | `fuse`      | `{enabled: true \| false \| "auto"}` | off | Sandbox overlay mode. |
 | `lock`      | `{backend: fs \| mem}`        | `fs`    | Execute-phase lock backend. |
+| `telemetry` | `{enabled: true \| false}`    | `{}`  (enabled) | Anonymous usage reporting. Set `enabled: false` to opt out. |
 
 ## Registering plugins
 
@@ -168,3 +169,31 @@ lock:
 
 `fs` coordinates across processes via the filesystem; `mem` keeps the lock
 in-process (useful for ephemeral or single-process runs).
+
+## `telemetry` — usage reporting
+
+heph collects anonymous, aggregate usage data to guide development. No target
+addresses, file paths, labels, or any user-identifying information is ever
+reported — only coarse facts like OS, architecture, version, command name, and
+aggregate counters (targets resolved, cache hits, artifact count).
+
+Telemetry is **on by default** (opt-out). To disable it, add to `.hephconfig`:
+
+```yaml title=".hephconfig"
+telemetry:
+  enabled: false
+```
+
+You can also opt out via environment variable, which takes precedence over the
+config file:
+
+```sh
+export HEPH_DISABLE_TELEMETRY=1
+```
+
+The environment variable is useful in CI pipelines or scripts where you do not
+want to touch the config file.
+
+| Key       | Type               | Default | Description |
+|-----------|--------------------|---------|-------------|
+| `enabled` | `true` \| `false`  | `true`  | Set to `false` to disable all reporting. |
