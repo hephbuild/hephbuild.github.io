@@ -87,14 +87,13 @@ optional `tags="a,b"`) cross-compiles. In BUILD files, format these addresses
 with the provider function instead of assembling strings:
 
 ```python
-heph.go.build_addr(pkg, goos, goarch, tags = [], name = "build")
+heph.go.build_addr(pkg, goos, goarch, tags = [])
 # heph.go.build_addr("cmd/server", "linux", "amd64")
 #   -> "//cmd/server:build@goarch=amd64,goos=linux"
 ```
 
 - `pkg` — the addr's package: `"cmd/server"`, `"@heph/go/std/fmt"`, or a
   thirdparty `@heph/go/thirdparty/<module>@<version>` path.
-- `name` defaults to `"build"` (the binary); pass `"build_lib"` for the library.
 - `tags` are sorted into the address.
 - Pure string formatting — resolves and builds nothing. The result is the
   canonical address the provider serves, ready for a `deps` field (e.g. embed a

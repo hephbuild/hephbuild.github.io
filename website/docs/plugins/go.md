@@ -110,7 +110,7 @@ In a BUILD file, don't assemble these address strings by hand — the provider
 exposes `heph.go.build_addr()` to format them:
 
 ```python title="BUILD"
-heph.go.build_addr(pkg, goos, goarch, tags = [], name = "build")
+heph.go.build_addr(pkg, goos, goarch, tags = [])
 ```
 
 | Argument | Default   | Meaning |
@@ -119,7 +119,6 @@ heph.go.build_addr(pkg, goos, goarch, tags = [], name = "build")
 | `goos`   | required  | Target operating system, e.g. `"linux"`. |
 | `goarch` | required  | Target architecture, e.g. `"amd64"`. |
 | `tags`   | `[]`      | Build tags to compile with. |
-| `name`   | `"build"` | Target name — pass `"build_lib"` for the library. |
 
 It returns the canonical address string — exactly the address the provider
 generates for that package — ready to drop into a dependency field:
