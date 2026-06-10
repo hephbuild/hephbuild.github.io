@@ -49,6 +49,14 @@ Within a single run, heph also keeps results in memory. Size it with the
 [`memCache`](/docs/reference/configuration#memcache--in-memory-cache) block in
 `.hephconfig`; `capacityBytes: 0` disables it.
 
+## Durable cache storage
+
+Between runs, artifacts are stored on disk. Small artifacts (≤ 8 MiB by default)
+are kept in the cache database; larger ones are stored as plain files under
+`<homeDir>/cache/blobs/`. GC reclaims both. The threshold is tunable with
+[`cache.spillThresholdBytes`](/docs/reference/configuration#cache--local-cache-storage)
+in `.hephconfig`.
+
 ## Filesystem scan cache
 
 heph also remembers the results of workspace file scans — glob expansion,

@@ -39,6 +39,7 @@ Every key below is optional.
 | `homeDir`   | path                          | unset   | Where heph keeps its home and cache. |
 | `fs`        | `{skip: string[]}`            | `{}`    | Workspace-wide ignore patterns shared with all tree-walking plugins. |
 | `memCache`  | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
+| `cache`     | `{spillThresholdBytes: number}` | `{}`  | Durable local-cache tuning. |
 | `fuse`      | `{enabled: true \| false \| "auto"}` | off | Sandbox overlay mode. |
 | `lock`      | `{backend: fs \| mem}`        | `fs`    | Execute-phase lock backend. |
 
@@ -117,6 +118,21 @@ memCache:
   perEntryBytes: 16384      # largest single entry kept in memory
   capacityBytes: 67108864   # total budget; 0 disables the in-memory cache
 ```
+
+## `cache` — local cache storage
+
+Controls how heph stores artifacts in the durable on-disk cache.
+
+```yaml title=".hephconfig"
+cache:
+  spillThresholdBytes: 8388608   # optional; default is 8 MiB
+```
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `spillThresholdBytes` | number | `8388608` (8 MiB) | Artifacts strictly larger than this are stored as plain files under `<homeDir>/cache/blobs/`. Smaller artifacts and all manifests stay in the cache database. |
+
+Raising the threshold keeps more artifacts in the database; lowering it spills more to plain files. The default works well for most projects.
 
 ## `fuse` — sandbox overlay
 
