@@ -49,6 +49,19 @@ Within a single run, heph also keeps results in memory. Size it with the
 [`memCache`](/docs/reference/configuration#memcache--in-memory-cache) block in
 `.hephconfig`; `capacityBytes: 0` disables it.
 
+## Filesystem scan cache
+
+heph also remembers the results of workspace file scans — glob expansion,
+package discovery — across runs, validated against file and directory metadata.
+Any change to the tree re-scans the affected paths, so edits are always picked
+up. This is transparent and needs no configuration.
+
+:::tip
+When debugging, rule the scan cache out by setting
+`HEPH_DEBUG_CACHED_WALKER=0` — every scan then reads the filesystem directly,
+with no caching at all.
+:::
+
 ## Reclaiming space
 
 The on-disk cache grows as inputs change. Garbage-collect entries that are no

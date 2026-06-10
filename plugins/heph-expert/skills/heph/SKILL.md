@@ -12,7 +12,7 @@ description: >-
   .hephconfig, diagnosing why a target rebuilt or a cache missed, or setting up
   heph in CI — even when the user does not say the word "heph" explicitly but
   the files or commands make it clear.
-version: 0.1.0
+version: 0.1.1
 ---
 
 # heph build system

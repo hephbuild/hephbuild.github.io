@@ -8,11 +8,12 @@ description: >-
   `//pkg:test`, `//pkg:xtest`), wiring generated `.go` code into a package
   (the `go_src` label, `go_codegen_root`, `go_codegen_deps`), staging test
   fixtures (`go_test_data`), skipping directories from Go discovery, pointing at
-  a specific Go toolchain (`gotool`), skipping tests, or debugging why a Go
+  a specific Go toolchain (`gotool`), cross-compiling for another platform
+  (address args / `heph.go.build_addr`), skipping tests, or debugging why a Go
   package fails to find generated code, embeds, third-party modules, or testdata.
   Also use it when a go.mod / *.go file is present and the task is "make Go work
   under heph" even if the user does not say "heph" explicitly.
-version: 0.1.0
+version: 0.1.1
 ---
 
 # heph + Go setup

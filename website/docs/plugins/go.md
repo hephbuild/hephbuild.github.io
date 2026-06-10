@@ -95,6 +95,53 @@ heph run //cmd/server:build     # compile the binary
 heph run //lib/auth:test        # run the package's tests
 ```
 
+## Targeting another platform
+
+Go targets are parameterized by platform through address arguments. An address
+without arguments builds for the host; add `goos` and `goarch` (and optionally
+`tags`) to cross-compile:
+
+```bash title="terminal"
+heph run //cmd/server:build                            # host platform
+heph run //cmd/server:build@goarch=amd64,goos=linux    # cross-compile
+```
+
+In a BUILD file, don't assemble these address strings by hand — the provider
+exposes `heph.go.build_addr()` to format them:
+
+```python title="BUILD"
+heph.go.build_addr(pkg, goos, goarch, tags = [], name = "build")
+```
+
+| Argument | Default   | Meaning |
+|----------|-----------|---------|
+| `pkg`    | required  | The target's package, e.g. `"cmd/server"`. |
+| `goos`   | required  | Target operating system, e.g. `"linux"`. |
+| `goarch` | required  | Target architecture, e.g. `"amd64"`. |
+| `tags`   | `[]`      | Build tags to compile with. |
+| `name`   | `"build"` | Target name — pass `"build_lib"` for the library. |
+
+It returns the canonical address string — exactly the address the provider
+generates for that package — ready to drop into a dependency field:
+
+```python title="cmd/server/BUILD"
+target(
+    name = "image",
+    driver = "bash",
+    deps = {"bin": heph.go.build_addr("cmd/server", "linux", "amd64")},
+    run = "./package-image.sh $SRC_BIN $OUT",
+    out = "image.tar",
+)
+```
+
+The image target now embeds the linux/amd64 binary regardless of the machine
+running the build. Calling `build_addr` only formats the address — it does not
+resolve or build anything.
+
+:::note
+List every provider-exposed BUILD function with `heph inspect functions`.
+:::
+
 ## Generated code and test data
 
 The provider analyzes Go packages, but a package often needs files that aren't

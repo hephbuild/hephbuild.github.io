@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin.json",
   "name": "heph-expert",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Expert assistance for the heph build system: author BUILD files, debug caching and sandbox issues, wire up CI, and explain the target graph.",
   "author": {
     "name": "hephbuild"
