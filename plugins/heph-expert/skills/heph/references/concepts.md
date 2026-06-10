@@ -107,6 +107,12 @@ bool or `{enabled, remote, history}`.
 **In-memory cache:** within a run, results are also kept in memory; size it with
 the `memCache` block (`capacityBytes: 0` disables it).
 
+**Filesystem scan cache:** workspace file scans (glob expansion, package
+discovery) are cached across runs, validated against file/directory metadata —
+edits always trigger a re-scan. Transparent, no configuration. To rule it out
+while debugging, set `HEPH_DEBUG_CACHED_WALKER=0` (every scan reads the
+filesystem directly).
+
 **Reclaim space:** `heph tool gc` sweeps the on-disk cache and removes artifacts
 no longer reachable from any current target.
 
