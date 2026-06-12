@@ -79,6 +79,25 @@ target(
 )
 ```
 
+## `heph.fs`: path helpers
+
+Available in every BUILD file. These return plain string values (not target
+addresses) and are useful for computing paths at BUILD-eval time.
+
+| Function | Signature | Returns |
+|---|---|---|
+| `heph.fs.glob(pattern)` | `glob(pattern: string) -> list[string]` | Paths matching `pattern`, relative to the current package. |
+| `heph.fs.join(*elems)` | `join(*elems: string) -> string` | Join path elements (`path.Join` semantics). |
+| `heph.fs.dir(path)` | `dir(path: string) -> string` | Directory component of `path`. |
+| `heph.fs.base(path)` | `base(path: string) -> string` | Base name of `path`. |
+
+All four enforce their argument types. Wrong type, missing required arg, or
+unknown keyword → hard error naming the function and the offending argument.
+
+Note: `heph.fs.glob(pattern)` returns a `list[string]` of path strings; the
+top-level `glob(pattern)` builtin returns a filesystem _target address_. Use
+`heph.fs.glob` when you need path strings, `glob()` for build inputs.
+
 ## `heph.core`: host platform
 
 Available in every BUILD file; use it to vary targets by OS/arch.
