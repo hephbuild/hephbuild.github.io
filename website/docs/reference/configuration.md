@@ -18,12 +18,6 @@ drivers:
   - name: bash
 ```
 
-:::note
-If your workspace still has a `.hephconfig2` file, heph reads it as a migration
-override — it takes precedence over `.hephconfig` when both exist, so repos
-mid-migration continue to work. Rename it to `.hephconfig` when you are ready.
-:::
-
 ## Pinning the version
 
 ```yaml title=".hephconfig"
@@ -259,11 +253,6 @@ loads the base `.hephconfig`, then applies `a.hephconfig`, then
 `b.hephconfig` — each merged over the result of the previous step.
 
 A profile file that is missing or has invalid YAML is a hard error.
-
-:::note
-Profile filenames follow the base config file that heph chose. A workspace that
-still uses `.hephconfig2` will look for `a.hephconfig2`, not `a.hephconfig`.
-:::
 
 ### Merge rules
 
