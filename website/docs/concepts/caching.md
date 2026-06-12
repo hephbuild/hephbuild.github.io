@@ -47,7 +47,7 @@ opt a target out or tune retention. See the driver's page for the exact shape.
 
 Within a single run, heph also keeps results in memory. Size it with the
 [`memCache`](/docs/reference/configuration#memcache--in-memory-cache) block in
-`.hephconfig`; `capacityBytes: 0` disables it.
+`.hephconfig2`; `capacityBytes: 0` disables it.
 
 ## Durable cache storage
 
@@ -55,7 +55,37 @@ Between runs, artifacts are stored on disk. Small artifacts (≤ 8 MiB by defaul
 are kept in the cache database; larger ones are stored as plain files under
 `<homeDir>/cache/blobs/`. GC reclaims both. The threshold is tunable with
 [`cache.spillThresholdBytes`](/docs/reference/configuration#cache--local-cache-storage)
-in `.hephconfig`.
+in `.hephconfig2`.
+
+## Remote shared cache
+
+A remote cache lets multiple machines share build artifacts. When one machine
+builds a target, its artifacts are pushed to the remote; any other machine with
+the same inputs pulls them instead of rebuilding.
+
+Configure one or more remote caches in `.hephconfig2`:
+
+```yaml title=".hephconfig2"
+caches:
+  shared:
+    uri: s3://my-bucket/heph-cache   # s3://, gs://, az://, https://, file://
+```
+
+**Writes** happen on a background task after a local cache write — every
+writable remote receives the artifacts in parallel. The build's critical path
+does not wait on the network; heph stays open until all uploads drain.
+
+**Reads** happen on a local cache miss. heph tries remotes in ascending-latency
+order and pulls the full revision from the first cache that has it. Latency is
+measured once per process (or loaded from a persisted file) and refreshed when
+the cache definitions change.
+
+A failing remote never fails the build — errors are logged once and, after three
+consecutive failures, that cache is skipped for the rest of the run.
+
+For the full set of options and supported backends, see
+[`caches` in the configuration reference](/docs/reference/configuration#caches--remote-shared-caches).
+For a step-by-step CI walkthrough, see the [Remote cache guide](/docs/guides/remote-cache).
 
 ## Filesystem scan cache
 
