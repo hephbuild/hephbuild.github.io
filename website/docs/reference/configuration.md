@@ -237,3 +237,72 @@ want to touch the config file.
 | Key       | Type               | Default | Description |
 |-----------|--------------------|---------|-------------|
 | `enabled` | `true` \| `false`  | `true`  | Set to `false` to disable all reporting. |
+
+## Profiles — layered config overlays
+
+Set the `HEPH_PROFILES` environment variable to a comma-separated list of
+profile names to layer additional config files on top of `.hephconfig2`:
+
+```bash
+HEPH_PROFILES=ci heph run //...
+```
+
+For each name in the list, heph loads `<name>.hephconfig2` from the workspace
+root and merges it over the accumulated config in order. `HEPH_PROFILES=a,b`
+loads the base `.hephconfig2`, then applies `a.hephconfig2`, then
+`b.hephconfig2` — each merged over the result of the previous step.
+
+A profile file that is missing or has invalid YAML is a hard error.
+
+### Merge rules
+
+| Config section | Behavior |
+|----------------|----------|
+| Scalar fields (`homeDir`, `lock`, `fuse`, `telemetry`, …) | Profile value wins when present; base value is kept when absent. |
+| `caches` | Deep-merged by cache name. A profile can patch individual fields (e.g. flip `write`) while inheriting the rest of the entry from the base. |
+| `providers` / `drivers` | Merged by `name`. A matching entry is replaced in place; new names are appended, preserving order. |
+
+### Disabling remote cache writes locally
+
+The base config enables a shared cache for everyone. A `dev` profile turns off
+writes so local machines read from the cache without polluting it:
+
+```yaml title=".hephconfig2"
+caches:
+  shared:
+    uri: s3://my-bucket/heph-cache
+    read: true
+    write: true
+```
+
+```yaml title="dev.hephconfig2"
+caches:
+  shared:
+    write: false   # inherit uri and read from the base
+```
+
+```bash
+HEPH_PROFILES=dev heph run //...
+```
+
+### CI-specific settings
+
+A `ci` profile can override any key — here disabling telemetry and ensuring
+the shared cache is writable:
+
+```yaml title="ci.hephconfig2"
+telemetry:
+  enabled: false
+caches:
+  shared:
+    write: true
+```
+
+Activate it in your workflow:
+
+```yaml title=".github/workflows/build.yml"
+env:
+  HEPH_PROFILES: ci
+```
+
+See the [CI guide](/docs/guides/ci) for a full CI setup.
