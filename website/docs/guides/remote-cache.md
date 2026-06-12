@@ -24,9 +24,9 @@ the run.
 
 ## Setting up S3
 
-Add a `caches:` block to `.hephconfig2`:
+Add a `caches:` block to `.hephconfig`:
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 caches:
   shared:
     uri: s3://my-bucket/heph-cache
@@ -38,7 +38,7 @@ instance/workload-identity role.
 
 ## Setting up GCS
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 caches:
   shared:
     uri: gs://my-bucket/heph-cache
@@ -53,7 +53,7 @@ both work.
 Set `read` or `write` to `false` to restrict what a cache does. A common
 setup: CI writes, developers only read.
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 caches:
   shared:
     uri: s3://my-bucket/heph-cache
@@ -66,7 +66,7 @@ caches:
 Configure more than one cache — for example a fast regional store and a
 slower central one:
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 caches:
   regional:
     uri: s3://eu-bucket/heph-cache

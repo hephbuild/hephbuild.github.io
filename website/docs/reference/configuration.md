@@ -1,16 +1,16 @@
 ---
 title: "Configuration"
 sidebar_position: 2
-description: Every key in .hephconfig2 — registering plugins and tuning the engine.
+description: Every key in .hephconfig — registering plugins and tuning the engine.
 ---
 
 # Configuration
 
-`.hephconfig2` sits at the root of your workspace and marks it as a heph project.
+`.hephconfig` sits at the root of your workspace and marks it as a heph project.
 It registers the [plugins](/docs/plugins) your build uses and tunes a handful of
 engine-level settings. It is YAML.
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 version: 1.2.3
 providers:
   - name: buildfile
@@ -18,9 +18,15 @@ drivers:
   - name: bash
 ```
 
+:::note
+If your workspace still has a `.hephconfig2` file, heph reads it as a migration
+override — it takes precedence over `.hephconfig` when both exist, so repos
+mid-migration continue to work. Rename it to `.hephconfig` when you are ready.
+:::
+
 ## Pinning the version
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 version: 1.2.3
 ```
 
@@ -50,7 +56,7 @@ Every key below is optional.
 `providers` and `drivers` each take a list of entries. Every entry has a `name`
 (the plugin to register) and an optional `options` map passed to that plugin:
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 providers:
   - name: buildfile
     options:
@@ -80,7 +86,7 @@ tree-walking plugin — the `fs` plugin, the `buildfile` provider, and the `go`
 provider. Patterns in this list apply everywhere at once, unlike per-plugin
 `skip` options which affect only one provider.
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 fs:
   skip:
     - vendor                  # literal dir — pruned by every plugin
@@ -115,7 +121,7 @@ affect one provider.
 
 Bounds the cache heph keeps in memory for the current run.
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 memCache:
   perEntryBytes: 16384      # largest single entry kept in memory
   capacityBytes: 67108864   # total budget; 0 disables the in-memory cache
@@ -125,7 +131,7 @@ memCache:
 
 Controls how heph stores artifacts in the durable on-disk cache.
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 cache:
   spillThresholdBytes: 8388608   # optional; default is 8 MiB
 ```
@@ -141,7 +147,7 @@ Raising the threshold keeps more artifacts in the database; lowering it spills m
 A map of named remote caches. Each entry is keyed by a name you choose and
 describes one backend:
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 caches:
   shared:
     uri: s3://my-bucket/heph-cache
@@ -185,7 +191,7 @@ The FUSE overlay is in development and not yet fully functional. Leave it off
 for production builds.
 :::
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 fuse:
   enabled: auto   # true | false | auto
 ```
@@ -202,7 +208,7 @@ See [Sandbox](/docs/concepts/sandbox) for what the overlay changes.
 
 Selects how heph serializes concurrent access during execution.
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 lock:
   backend: fs   # fs (default) | mem
 ```
@@ -217,9 +223,9 @@ addresses, file paths, labels, or any user-identifying information is ever
 reported — only coarse facts like OS, architecture, version, command name, and
 aggregate counters (targets resolved, cache hits, artifact count).
 
-Telemetry is **on by default** (opt-out). To disable it, add to `.hephconfig2`:
+Telemetry is **on by default** (opt-out). To disable it, add to `.hephconfig`:
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 telemetry:
   enabled: false
 ```
@@ -241,18 +247,23 @@ want to touch the config file.
 ## Profiles — layered config overlays
 
 Set the `HEPH_PROFILES` environment variable to a comma-separated list of
-profile names to layer additional config files on top of `.hephconfig2`:
+profile names to layer additional config files on top of `.hephconfig`:
 
 ```bash
 HEPH_PROFILES=ci heph run //...
 ```
 
-For each name in the list, heph loads `<name>.hephconfig2` from the workspace
+For each name in the list, heph loads `<name>.hephconfig` from the workspace
 root and merges it over the accumulated config in order. `HEPH_PROFILES=a,b`
-loads the base `.hephconfig2`, then applies `a.hephconfig2`, then
-`b.hephconfig2` — each merged over the result of the previous step.
+loads the base `.hephconfig`, then applies `a.hephconfig`, then
+`b.hephconfig` — each merged over the result of the previous step.
 
 A profile file that is missing or has invalid YAML is a hard error.
+
+:::note
+Profile filenames follow the base config file that heph chose. A workspace that
+still uses `.hephconfig2` will look for `a.hephconfig2`, not `a.hephconfig`.
+:::
 
 ### Merge rules
 
@@ -267,7 +278,7 @@ A profile file that is missing or has invalid YAML is a hard error.
 The base config enables a shared cache for everyone. A `dev` profile turns off
 writes so local machines read from the cache without polluting it:
 
-```yaml title=".hephconfig2"
+```yaml title=".hephconfig"
 caches:
   shared:
     uri: s3://my-bucket/heph-cache
@@ -275,7 +286,7 @@ caches:
     write: true
 ```
 
-```yaml title="dev.hephconfig2"
+```yaml title="dev.hephconfig"
 caches:
   shared:
     write: false   # inherit uri and read from the base
@@ -290,7 +301,7 @@ HEPH_PROFILES=dev heph run //...
 A `ci` profile can override any key — here disabling telemetry and ensuring
 the shared cache is writable:
 
-```yaml title="ci.hephconfig2"
+```yaml title="ci.hephconfig"
 telemetry:
   enabled: false
 caches:
