@@ -79,12 +79,19 @@ only read these (e.g. in a dep graph); never write them by hand.
 Because module + version are part of the address, a dependency bump changes the
 address and invalidates only the targets importing it.
 
-## Platform factors & `heph.go.build_addr`
+## Provider functions & `heph.go.build_addr`
+
+| Function | Signature | Returns |
+|---|---|---|
+| `heph.go.build_addr` | `build_addr(pkg: string, goos: string, goarch: string, tags: list[string]) -> string` | Canonical target address for building `pkg` on the given platform. |
+
+All arguments are type-enforced: wrong type, missing required arg, or unknown
+keyword → hard error naming the function and the offending argument.
 
 Go targets are parameterized by platform via address arguments: `:build` with no
 args builds for the host; `//cmd/server:build@goarch=amd64,goos=linux` (plus
 optional `tags="a,b"`) cross-compiles. In BUILD files, format these addresses
-with the provider function instead of assembling strings:
+with `heph.go.build_addr` instead of assembling strings:
 
 ```python
 heph.go.build_addr(pkg, goos, goarch, tags = [])

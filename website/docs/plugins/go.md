@@ -95,6 +95,20 @@ heph run //cmd/server:build     # compile the binary
 heph run //lib/auth:test        # run the package's tests
 ```
 
+## Provider functions
+
+The go plugin exposes one helper function in every BUILD file under the `heph.go`
+namespace.
+
+| Function | Signature | Returns |
+|----------|-----------|---------|
+| `heph.go.build_addr` | `build_addr(pkg: string, goos: string, goarch: string, tags: list[string]) -> string` | The canonical target address for building `pkg` on the given platform. |
+
+The function enforces its argument types: wrong type, missing required argument,
+or unknown keyword produces a clear error.
+
+See [Targeting another platform](#targeting-another-platform) for usage details.
+
 ## Targeting another platform
 
 Go targets are parameterized by platform through address arguments. An address

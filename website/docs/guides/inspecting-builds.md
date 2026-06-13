@@ -58,9 +58,11 @@ heph inspect packages cmd/...      # packages under a matcher
 heph inspect functions             # provider-exposed BUILD functions
 ```
 
-`functions` lists the `heph.<provider>.<fn>` helpers available in BUILD files —
-useful when a provider adds its own callable beyond the core
-[builtins](/docs/plugins/buildfile#authoring-build-files).
+`functions` lists every provider function available in BUILD files, with its
+typed signature — for example `fs.glob(pattern: string) -> list[string]`.
+Useful when a provider adds its own callable beyond the core
+[builtins](/docs/plugins/buildfile#authoring-build-files), or to check argument
+names and types before writing a call.
 
 ## Reproducing the environment
 
