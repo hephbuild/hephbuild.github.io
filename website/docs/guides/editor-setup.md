@@ -1,14 +1,14 @@
 ---
 title: "Editor setup"
 sidebar_position: 6
-description: Connect your editor to heph's BUILD-file language server for completion, hover, and go-to-definition.
+description: Connect your editor to heph's language server for completion, hover, and go-to-definition.
 ---
 
 # Editor setup
 
-heph ships a BUILD-file language server that connects to any editor supporting
-the Language Server Protocol. It provides completion, hover documentation, and
-go-to-definition inside `BUILD` files.
+heph ships a language server that connects to any editor supporting the Language
+Server Protocol. It provides completion, hover documentation, and
+go-to-definition.
 
 ## What it provides
 
@@ -27,9 +27,9 @@ launch:
 heph tool build-lsp
 ```
 
-Set the file-type trigger to files matching your workspace's BUILD file pattern
-(the default is files named `BUILD`; see the
-[buildfile provider's `patterns` option](/docs/plugins/buildfile#configuration)).
+### VS Code
+
+Install the [heph extension](https://marketplace.visualstudio.com/items?itemName=hephbuild.heph-nightly) from the marketplace. It configures the language server automatically.
 
 ### Neovim
 
