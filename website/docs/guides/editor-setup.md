@@ -18,18 +18,18 @@ go-to-definition.
 | Hover | Signature and documentation for any builtin or provider function. Hover a `target()` call to see the addresses it produced. |
 | Go-to-definition | Jump to the BUILD file that defines an address — both `//pkg:name` and relative `:name` forms. |
 
+## VS Code
+
+Install the [heph extension](https://marketplace.visualstudio.com/items?itemName=hephbuild.heph-nightly) from the marketplace. It configures the language server automatically.
+
 ## Connecting an editor
 
 The language server runs over stdio. Configure your editor's LSP client to
-launch:
+launch `heph tool build-lsp`.
 
-```
-heph tool build-lsp
-```
-
-### VS Code
-
-Install the [heph extension](https://marketplace.visualstudio.com/items?itemName=hephbuild.heph-nightly) from the marketplace. It configures the language server automatically.
+:::warning
+The `heph tool build-lsp` command is not part of the stable public API and may change without notice.
+:::
 
 ### Neovim
 
