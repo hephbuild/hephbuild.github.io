@@ -91,8 +91,8 @@ The following target config keys are available:
 | `out`              | Output groups and paths.                             |
 | `support_files`    | Non-output artifacts.                                |
 | `env`              | Literal environment variables.                       |
-| `pass_env`         | Pass-through vars from the parent at hash time.      |
-| `runtime_pass_env` | Pass-through vars at runtime only.                   |
+| `pass_env`         | Host vars passed at parse time and hashed into the cache key. Accepts `["*"]` to pass all. |
+| `runtime_pass_env` | Host vars passed at run time only, not hashed. Accepts `["*"]` to pass all. |
 | `runtime_env`      | Runtime literal environment variables.               |
 | `cache`            | Bool or `{enabled, remote, history}`.                |
 | `codegen`          | Write generated outputs into the source tree (`copy` or `in_place`). |
@@ -100,7 +100,7 @@ The following target config keys are available:
 These environment variables are available inside the sandbox:
 
 | Variable                      | Meaning                  |
-|-------------------------------|--------------------------|
+|-------------------------------|-------------------------|
 | `SRC` / `SRC_<group>`         | Dependency paths.        |
 | `LIST_SRC` / `LIST_SRC_<group>` | Dependency list files.   |
 | `TOOL` / `TOOL_<group>`       | Tool paths.              |
@@ -163,6 +163,45 @@ target(
 
 `support_files` declares files a target produces that are **not** outputs — kept
 in the sandbox for the command's own use but not published to dependents.
+
+## Environment passthrough
+
+`pass_env` and `runtime_pass_env` each accept a list of variable names to
+inherit from the host environment. Both also accept the special value `"*"` to
+pass through every host environment variable:
+
+| Field | Hashed into the cache key? | When applied |
+|-------|----------------------------|--------------|
+| `pass_env` | yes | At parse time. The full environment snapshot is folded into the input hash. |
+| `runtime_pass_env` | no | At run time only. Variables are not hashed and do not affect the cache. |
+
+Because `pass_env = ["*"]` hashes the entire host environment, any change to
+any env var forces a rebuild. Only use it on targets where `cache` is disabled:
+
+```python title="BUILD"
+target(
+    name = "local-tool",
+    driver = "exec",
+    run = ["./build.sh"],
+    out = "tool",
+    pass_env = ["*"],   # full env snapshot — only for uncached targets
+    cache = False,
+)
+```
+
+Use `runtime_pass_env = ["*"]` when the command needs the full environment at
+run time but you still want caching — the environment will not affect the cache
+key:
+
+```python title="BUILD"
+target(
+    name = "run-tool",
+    driver = "exec",
+    run = ["./tool"],
+    out = "result",
+    runtime_pass_env = ["*"],   # full env at run time, not hashed
+)
+```
 
 ## Interactive debugging with `--shell`
 
