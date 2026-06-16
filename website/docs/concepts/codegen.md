@@ -102,7 +102,7 @@ scans the workspace for **every** `codegen = "copy"` output and writes them into
 a managed block in the root `.gitignore`:
 
 ```text title=".gitignore"
-# BEGIN heph-generated (managed by `heph gen-gitignore` — do not edit)
+# BEGIN heph-generated (managed by `heph tool gen-gitignore` — do not edit)
 /fmt/generated.txt
 # END heph-generated
 ```
@@ -119,7 +119,7 @@ The command is:
 
 Run it after adding or removing a `copy` target. Because the output is
 deterministic, it also works well as a CI check — fail the build if
-`gen-gitignore` would change the committed `.gitignore`.
+`heph tool gen-gitignore` would change the committed `.gitignore`.
 
 ## Detecting output conflicts
 
@@ -139,7 +139,7 @@ same-named directory (trailing slash ignored) also conflict.
 Only conflicts between *different* targets are reported — a single target that
 declares both a directory output and a file inside it is valid.
 
-Run `heph validate` in CI alongside `gen-gitignore` to ensure no two targets
+Run `heph validate` in CI alongside `heph tool gen-gitignore` to ensure no two targets
 compete for the same part of the source tree.
 
 ## Verifying the tree in CI: `--frozen`
@@ -190,5 +190,5 @@ exact diff, instead of a drifting tree.
 | Run a codemod or auto-fixing linter over checked-in code       | `in_place`  |
 
 The quick rule: if the file is **born from the build**, use `copy` and let
-`gen-gitignore` keep it out of git. If the file is **yours and the build edits
+`heph tool gen-gitignore` keep it out of git. If the file is **yours and the build edits
 it**, use `in_place` and commit the result.
