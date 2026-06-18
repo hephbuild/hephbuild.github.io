@@ -25,14 +25,11 @@ single `plugins:` entry loads the provider and all three drivers:
 
 ```yaml title=".hephconfig"
 plugins:
-  - path: .heph3/heph-go-plugin.json
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
       gotool: "//@heph/bin:go"  # optional
       skip: []                  # optional
 ```
-
-Use `path:` for a local manifest (e.g. placed by `heph bootstrap`), or `url:`
-to download it automatically.
 
 ### Plugin options
 
@@ -206,7 +203,7 @@ driver (so its runtime re-glob matches Go's resolution).
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `heph query all <pkg>` shows no `:build`/`:test` | go plugin not registered, or pkg under a `skip` glob | Add `plugins: [{path: .heph3/heph-go-plugin.json}]`; check `options.skip`. |
+| `heph query all <pkg>` shows no `:build`/`:test` | go plugin not registered, or pkg under a `skip` glob | Add `plugins: [{url: "https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json"}]`; check `options.skip`. |
 | Build fails: undefined symbol from generated code | generator not labelled `go_src`, or it's in another package without `go_codegen_root` | Label it `go_src`; if cross-package, add `go_codegen_root=True` at the covering root. |
 | `//go:embed` finds nothing | embedded asset not produced/labelled so it isn't unpacked into the pkg | Produce it under a `go_src` target (its full output tree is unpacked). |
 | Test panics: open testdata/...: no such file | fixture not staged into the sandbox | Label the producing target `go_test_data`. |
