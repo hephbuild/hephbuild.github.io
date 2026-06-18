@@ -11,7 +11,7 @@ generates the targets to build and test them. It registers no driver you call by
 hand. Three **managed drivers** do the underlying work:
 
 | Driver        | Does                                                        |
-|---------------|---------------------------------------------------------|
+|---------------|-------------------------------------------------------------|
 | `go_golist`   | Package metadata analysis — the equivalent of `go list`.   |
 | `go_embed`    | `//go:embed` pattern processing.                            |
 | `go_testmain` | Generates the test `main` for `go test`.                   |
@@ -35,8 +35,7 @@ plugins:
 
 | Option   | Type       | Default            | Description |
 |----------|------------|--------------------|-------------|
-| `gotool` | `string`   | `"//@heph/bin:go"` | Address of the Go binary target used by the provider for package analysis. |
-| `go_bin` | `string`   | `"//@heph/bin:go"` | Address of the Go binary target used by the `go_golist` driver. |
+| `gotool` | `string`   | `"//@heph/bin:go"` | Address of the Go binary target used by the provider and the `go_golist` driver. |
 | `skip`   | `string[]` | `[]`               | Workspace-relative glob patterns for directories to exclude from Go package discovery. Each pattern is matched against the directory's workspace-relative path. |
 | `walk_db` | path      | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
@@ -208,7 +207,7 @@ driver (so its runtime re-glob matches Go's resolution).
 | `//go:embed` finds nothing | embedded asset not produced/labelled so it isn't unpacked into the pkg | Produce it under a `go_src` target (its full output tree is unpacked). |
 | Test panics: open testdata/...: no such file | fixture not staged into the sandbox | Label the producing target `go_test_data`. |
 | Wrong/old third-party version compiled | `go.mod` version drift vs the generated `@version` address | Reconcile `go.mod`; the address (and thus cache key) follows the pinned version. |
-| Non-reproducible builds across machines | host Go via default `gotool` | Point `gotool` (and `go_bin`) at a pinned toolchain target. |
+| Non-reproducible builds across machines | host Go via default `gotool` | Point `gotool` at a pinned toolchain target. |
 
 ## Verification commands
 
