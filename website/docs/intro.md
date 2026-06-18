@@ -50,7 +50,7 @@ $ heph run //app:server
 
 ## Next steps
 
-- [Your first build](./guides/first-build.mdx) — from empty repo to a cached
+- [Your first build](./guides/first-build.md) — from empty repo to a cached
   build in four steps.
 - [Targets &amp; rules](./concepts/targets.md) — how the graph is defined.
 - [Reproducibility](./concepts/reproducibility.md) — what "byte-identical"

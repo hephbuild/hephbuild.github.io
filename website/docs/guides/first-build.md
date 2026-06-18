@@ -4,8 +4,6 @@ sidebar_position: 1
 description: Go from an empty repo to a cached build wiring a dependency and a tool.
 ---
 
-import Hephconfig from '@site/src/components/Hephconfig';
-
 # Your first build
 
 This walkthrough takes you from nothing to a working, cached build with two
@@ -16,10 +14,13 @@ targets — one that produces an output, and one that consumes it.
 Drop a [`.hephconfig`](/docs/reference/configuration) at the repo root. It pins
 the toolchain and registers the plugins this build uses:
 
-<Hephconfig>{`providers:
+```yaml title=".hephconfig"
+version: <HEPH_VERSION>
+providers:
   - name: buildfile
 drivers:
-  - name: bash`}</Hephconfig>
+  - name: bash
+```
 
 ## 2. Write a BUILD file
 

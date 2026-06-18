@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react';
 
 // The latest released heph version, resolved from the GitHub releases API
-// (`tag_name` of the latest release). `FALLBACK_VERSION` is used while the
-// request is in flight and if it fails (offline, rate-limited, etc.).
+// (`tag_name` of the latest release).
 const RELEASES_API_URL = 'https://api.github.com/repos/hephbuild/heph-artifacts-v1/releases/latest';
 const FALLBACK_VERSION = '?.?.?';
 
+// Human-facing releases page, surfaced when resolution fails so readers can look
+// the version up themselves.
+export const RELEASES_PAGE_URL = 'https://github.com/hephbuild/heph-artifacts-v1/releases/latest';
+
 export interface LatestVersionState {
-  /** Resolved version, or `null` while still loading. */
+  /** Resolved version, or `null` while still loading or after an error. */
   version: string | null;
   loading: boolean;
+  /** `true` when resolution failed (offline, rate-limited, etc.). */
+  error: boolean;
 }
 
 export function useLatestVersion(): LatestVersionState {
   const [version, setVersion] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -30,12 +36,12 @@ export function useLatestVersion(): LatestVersionState {
         setVersion(tag || FALLBACK_VERSION);
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
-        setVersion(FALLBACK_VERSION);
+        setError(true);
       }
     })();
 
     return () => controller.abort();
   }, []);
 
-  return { version, loading: version === null };
+  return { version, loading: version === null && !error, error };
 }
