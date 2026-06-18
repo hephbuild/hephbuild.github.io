@@ -4,8 +4,6 @@ title: Getting started
 description: Install heph and write your first .hephconfig.
 ---
 
-import Hephconfig from '@site/src/components/Hephconfig';
-
 # Getting started
 
 Install heph:
@@ -17,7 +15,9 @@ curl -fsSL https://hephbuild.github.io/install.sh | sh
 Then drop a `.hephconfig` at the root of your repository. Pin the version so
 every machine and CI run resolves the same toolchain — byte for byte:
 
-<Hephconfig />
+```yaml title=".hephconfig"
+version: <HEPH_VERSION>
+```
 
 From here, enable the [plugins](/docs/plugins) that you require and get building!
 A good plugin to get started is [buildfile](/docs/plugins/buildfile).
