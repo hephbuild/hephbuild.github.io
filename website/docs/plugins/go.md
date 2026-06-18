@@ -34,18 +34,11 @@ plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
 ```
 
-Or point `path:` at a local manifest on disk:
-
-```yaml title=".hephconfig"
-plugins:
-  - path: .heph3/heph-go-plugin.json
-```
-
 ## Configuration
 
 ```yaml title=".hephconfig"
 plugins:
-  - path: .heph3/heph-go-plugin.json
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
       gotool: "//@heph/bin:go"  # optional
       skip: []                  # optional
@@ -69,7 +62,7 @@ Each pattern is matched against the workspace-relative path of the directory.
 
 ```yaml title=".hephconfig"
 plugins:
-  - path: .heph3/heph-go-plugin.json
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
       skip:
         - vendor
