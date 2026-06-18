@@ -19,11 +19,11 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 
 | Plugin | Driver(s) | Purpose | Registration |
 |---|---|---|---|
-| Exec | `exec`, `bash`, `sh` | Run shell commands in sandboxed builds; interactive `--shell` debugging. | Built-in; list under `drivers:`. |
+| Exec | `exec`, `bash`, `sh` | Run shell commands in sandboxed builds; interactive `--shell` debugging. | Built-in; list under `plugins:` as `builtin: exec` (or `bash`/`sh`). |
 | Filesystem | `fs` | Reference workspace files/globs as inputs. | Built-in, always on. |
 | Group | `group` | Bundle targets transparently (pass-through), no extra work. | Built-in, always on. |
 | Hostbin | `hostbin` | Wrap a host `PATH` binary as a target. | Built-in, always on. |
-| Nix | `nix` | Build reproducible tool environments via Nix flakes. | Opt-in; register under `drivers:`. Needs `nix` on PATH with flakes. |
+| Nix | `nix` | Build reproducible tool environments via Nix flakes. | Opt-in; register under `plugins:` as `builtin: nix`. Needs `nix` on PATH with flakes. |
 | Textfile | `textfile` | Generate text files, optionally executable. | Built-in. |
 
 ## Language plugins
@@ -36,9 +36,9 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 
 | Plugin | Purpose | Registration |
 |---|---|---|
-| Buildfile | Scan the workspace for Starlark BUILD files and parse `target()` definitions. | Built-in; register under `providers:`. |
+| Buildfile | Scan the workspace for Starlark BUILD files and parse `target()` definitions. | Built-in; register under `plugins:` as `builtin: buildfile`. |
 | Query | Select targets dynamically by label/package/prefix/output, returning a group. | Built-in, always on. |
-| Go | Analyze Go packages and generate build/test targets (also registers the `go_*` drivers). | Opt-in; register under `providers:`. For Go work, defer to the `heph-go` plugin. |
+| Go | Analyze Go packages and generate build/test targets (also registers the `go_*` drivers). | External plugin — not compiled in. Load via `plugins: - path:` or `- url:` pointing at `heph-go-plugin.json`. For Go work, defer to the `heph-go` plugin. |
 
 ## Addresses & the `@heph/*` packages
 
@@ -93,13 +93,15 @@ disabled (wrappers reference host-local `/nix/store` paths). Requires
 The `go` provider analyzes Go packages and generates `:build`/`:test` targets;
 imports resolve through the `@heph/go/std/*` and
 `@heph/go/thirdparty/<module>@<version>` address families (see the table above).
-You don't write `target()` for Go code.
+You don't write `target()` for Go code. The Go plugin is external — not compiled
+into the heph binary. Load it via a single `plugins: - path:` or `- url:` entry
+that covers the provider and all three drivers.
 
-> Setting up Go — enabling the provider and its drivers, picking `gotool`,
-> skipping dirs, and wiring generated code (`go_src`, `go_codegen_root`,
-> `go_codegen_deps`) and fixtures (`go_test_data`) — is owned by the dedicated
-> **`heph-go`** plugin (skill `heph-go`, agent `heph-go-expert`, commands
-> `/heph-go:*`). Use it for any Go-specific work rather than the detail here.
+> Setting up Go — enabling the plugin, picking `gotool`, skipping dirs, and
+> wiring generated code (`go_src`, `go_codegen_root`, `go_codegen_deps`) and
+> fixtures (`go_test_data`) — is owned by the dedicated **`heph-go`** plugin
+> (skill `heph-go`, agent `heph-go-expert`, commands `/heph-go:*`). Use it for
+> any Go-specific work rather than the detail here.
 
 ### Buildfile (provider)
 Scans for BUILD files (default name `BUILD`; customize via `patterns`). `skip`

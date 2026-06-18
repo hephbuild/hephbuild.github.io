@@ -21,28 +21,27 @@ turn its inputs into outputs. This plugin registers the drivers named `exec`,
 
 ## Enabling it
 
-The drivers are built-in and automatically registered. List them in
-`.hephconfig` under `drivers:` with the names `exec`, `bash`, or `sh`. The
-optional `path` config sets the `PATH` override, which defaults to
-`/usr/local/bin:/usr/bin:/bin` if empty or unset.
+Built-in. Register in `.hephconfig` under `plugins` with `builtin: exec`,
+`builtin: bash`, or `builtin: sh`. The optional `path` option sets the `PATH`
+override, which defaults to `/usr/local/bin:/usr/bin:/bin` if empty or unset.
 
 ## Configuration
 
 ```yaml title=".hephconfig"
-drivers:
-  - name: exec
+plugins:
+  - builtin: exec
     options:
       path:
         - /usr/local/bin
         - /usr/bin
         - /bin
-  - name: bash
+  - builtin: bash
     options:
       path:
         - /usr/local/bin
         - /usr/bin
         - /bin
-  - name: sh
+  - builtin: sh
     options:
       path:
         - /usr/local/bin
@@ -133,7 +132,7 @@ A plain list lands in the default group, available as `$SRC` and `$LIST_SRC`.
 heph distinguishes three dependency kinds by how they affect the cache:
 
 | Field          | Hashed into the key? | Present in the sandbox? | Use for |
-|----------------|----------------------|-------------------------|---------|
+|----------------|----------------------|-------------------------|--------|
 | `deps`         | yes                  | yes                     | Normal build inputs. |
 | `hash_deps`    | yes                  | no                      | Inputs that must invalidate the cache but the command never reads. |
 | `runtime_deps` | no                   | yes (at run only)       | Things needed to *run* an output, not to build it — changing them is a cache hit. |

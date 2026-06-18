@@ -21,15 +21,16 @@ driver.
 
 ## Enabling it
 
-Not enabled by default. Register the `nix` driver in the `drivers` section of
-`.hephconfig`, then reference it from a target's `driver` field. Requires the
-`nix` command-line tool with flakes support on the host `PATH`.
+Not enabled by default. Register the `nix` driver in `.hephconfig` under
+`plugins` with `builtin: nix`, then reference it from a target's `driver`
+field. Requires the `nix` command-line tool with flakes support on the host
+`PATH`.
 
 ## Configuration
 
 ```yaml title=".hephconfig"
-drivers:
-  - name: nix
+plugins:
+  - builtin: nix
 ```
 
 ## Usage

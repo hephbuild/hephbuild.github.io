@@ -22,9 +22,9 @@ whatever driver each target names.
 
 ## Enabling it
 
-Built-in. Register in `.hephconfig` under `providers` with name
-`buildfile`. The plugin scans the workspace for BUILD files (or custom
-patterns) and automatically makes those targets available to the build engine.
+Built-in. Register in `.hephconfig` under `plugins` with `builtin: buildfile`.
+The plugin scans the workspace for BUILD files (or custom patterns) and
+automatically makes those targets available to the build engine.
 
 ## Configuration
 
@@ -32,8 +32,8 @@ Register the provider and, optionally, tune which file names it treats as BUILD
 files:
 
 ```yaml title=".hephconfig"
-providers:
-  - name: buildfile
+plugins:
+  - builtin: buildfile
     options:
       patterns:
         - BUILD
@@ -56,8 +56,8 @@ subtrees, etc. Each pattern is matched against the workspace-relative path of
 the directory.
 
 ```yaml title=".hephconfig"
-providers:
-  - name: buildfile
+plugins:
+  - builtin: buildfile
     options:
       skip:
         - vendor
@@ -76,8 +76,8 @@ If most targets in your workspace use the same driver, set `defaultDriver` so
 `target()` calls can omit the `driver` field:
 
 ```yaml title=".hephconfig"
-providers:
-  - name: buildfile
+plugins:
+  - builtin: buildfile
     options:
       defaultDriver: bash
 ```
