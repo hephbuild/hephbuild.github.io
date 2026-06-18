@@ -48,8 +48,7 @@ plugins:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `gotool` | `string` | `"//@heph/bin:go"` | Address of the Go binary target used by the provider for package analysis. |
-| `go_bin` | `string` | `"//@heph/bin:go"` | Address of the Go binary target used by the `go_golist` driver. |
+| `gotool` | `string` | `"//@heph/bin:go"` | Address of the Go binary target used by the provider and the `go_golist` driver. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
 | `walk_db` | path | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
