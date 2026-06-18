@@ -22,31 +22,40 @@ them directly.
 
 ## Enabling it
 
-Registered as an opt-in provider factory named `go` in `.hephconfig`. The three
-drivers (`go_golist`, `go_embed`, `go_testmain`) are registered as managed
-driver factories and must be enabled in the `drivers` section of
-`.hephconfig`.
+The Go plugin is an **external plugin** — it is not compiled into the heph
+binary. It ships as a shared library (cdylib) with a manifest file
+(`heph-go-plugin.json`). A single `plugins:` entry loads the provider and all
+three drivers at once.
+
+Point `path:` at the manifest on disk, or use `url:` to have heph download it
+automatically:
+
+```yaml title=".hephconfig"
+plugins:
+  - path: .heph3/heph-go-plugin.json
+```
+
+The `.heph3/heph-go-plugin.json` manifest is placed there by `heph bootstrap`
+when you initialize or update a workspace.
 
 ## Configuration
 
 ```yaml title=".hephconfig"
-providers:
-  - name: go
+plugins:
+  - path: .heph3/heph-go-plugin.json
     options:
-      gotool: "//@heph/bin:go"  # Path to Go binary (optional, defaults to //@heph/bin:go)
-
-drivers:
-  - name: go_golist
-  - name: go_embed
-  - name: go_testmain
+      gotool: "//@heph/bin:go"  # optional
+      skip: []                  # optional
 ```
 
 ### Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `gotool` | `string` | `"//@heph/bin:go"` | Address of the Go binary target to use. |
+| `gotool` | `string` | `"//@heph/bin:go"` | Address of the Go binary target used by the provider for package analysis. |
+| `go_bin` | `string` | `"//@heph/bin:go"` | Address of the Go binary target used by the `go_golist` driver. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
+| `walk_db` | path | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
 ### Skipping directories
 
@@ -56,8 +65,8 @@ non-module code, generated stubs, or vendored packages managed outside of heph.
 Each pattern is matched against the workspace-relative path of the directory.
 
 ```yaml title=".hephconfig"
-providers:
-  - name: go
+plugins:
+  - path: .heph3/heph-go-plugin.json
     options:
       skip:
         - vendor
@@ -101,7 +110,7 @@ The go plugin exposes one helper function in every BUILD file under the `heph.go
 namespace.
 
 | Function | Signature | Returns |
-|----------|-----------|---------|
+|----------|-----------|--------|
 | `heph.go.build_addr` | `build_addr(pkg: string, goos: string, goarch: string, tags: list[string]) -> string` | The canonical target address for building `pkg` on the given platform. |
 
 The function enforces its argument types: wrong type, missing required argument,
@@ -128,7 +137,7 @@ heph.go.build_addr(pkg, goos, goarch, tags = [])
 ```
 
 | Argument | Default   | Meaning |
-|----------|-----------|---------|
+|----------|-----------|--------|
 | `pkg`    | required  | The target's package, e.g. `"cmd/server"`. |
 | `goos`   | required  | Target operating system, e.g. `"linux"`. |
 | `goarch` | required  | Target architecture, e.g. `"amd64"`. |

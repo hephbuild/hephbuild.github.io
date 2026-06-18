@@ -6,10 +6,9 @@ settings. Source: `https://hephbuild.github.io/docs/reference/configuration.md`.
 
 ```yaml title=".hephconfig"
 version: 1.2.3
-providers:
-  - name: buildfile
-drivers:
-  - name: bash
+plugins:
+  - builtin: buildfile
+  - builtin: bash
 ```
 
 ## Keys (all optional)
@@ -17,8 +16,7 @@ drivers:
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `version` | semver string | — | Pins the heph release that runs this workspace, so every machine/CI job resolves the same toolchain. Set it once at the top. |
-| `providers` | list of `{name, options}` | `[]` | Providers to register — plugins that discover targets. |
-| `drivers` | list of `{name, options}` | `[]` | Drivers to register — plugins that execute targets. |
+| `plugins` | list of plugin entries | `[]` | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map. |
 | `homeDir` | path | unset | Where heph keeps its home and cache. |
 | `memCache` | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
 | `fuse` | `{enabled: true \| false \| "auto"}` | off | Sandbox overlay mode. |
@@ -26,29 +24,36 @@ drivers:
 
 ## Registering plugins
 
-Each entry has a `name` and an optional `options` map passed to that plugin. The
-engine only wires plugins by name; it does not interpret `options` — the allowed
-keys are defined by each plugin (see `plugins.md`).
+`plugins` is a list of entries. Each entry must set exactly one of:
+
+| Key | Loads |
+|---|---|
+| `builtin` | A compiled-in plugin by name (e.g. `buildfile`, `exec`). |
+| `path` | A local `*-plugin.json` manifest (relative to the workspace root, or absolute). |
+| `url` | A remote `*-plugin.json` manifest — downloaded and cached in `~/.heph/plugins/`. |
+
+Each entry also accepts an optional `options` map. The allowed keys are defined
+by each plugin (see `plugins.md`).
 
 ```yaml title=".hephconfig"
-providers:
-  - name: buildfile
+plugins:
+  - builtin: buildfile
     options:
       patterns: [BUILD, "*.BUILD"]
       skip: [vendor, "third_party/**"]
-  - name: go
-
-drivers:
-  - name: bash
-  - name: nix
+  - builtin: bash
+  - builtin: nix
+  - path: .heph3/heph-go-plugin.json
+    options:
+      gotool: "//@heph/bin:go"
 ```
 
 **Built-in vs opt-in.** Some plugins are always available and need no
 registration: `group`, `fs`, `hostbin`, `query`. The exec drivers (`exec`,
-`bash`, `sh`) are built-in but should be listed under `drivers:` to use them.
-Others must be registered before a target can use them — e.g. the `go` provider
-and its `go_golist`/`go_embed`/`go_testmain` drivers, and the `nix` driver. Each
-plugin page states which.
+`bash`, `sh`) are built-in but should be listed under `plugins:` to use them.
+The `nix` driver must also be registered. The `go` plugin is **external** — it
+is not compiled into the heph binary and must be loaded via `path:` or `url:`.
+Each plugin page states which.
 
 ## `memCache` — in-memory cache
 

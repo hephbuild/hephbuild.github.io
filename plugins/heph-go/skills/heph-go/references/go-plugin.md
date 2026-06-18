@@ -8,11 +8,10 @@ behavior matters, fetch that page (its `.md` twin is indexed at
 
 `go` is a **provider**: it discovers Go packages (by `go.mod` + sources) and
 generates the targets to build and test them. It registers no driver you call by
-hand. Three **managed drivers** do the underlying work and must be enabled
-separately:
+hand. Three **managed drivers** do the underlying work:
 
 | Driver        | Does                                                        |
-|---------------|------------------------------------------------------------|
+|---------------|---------------------------------------------------------|
 | `go_golist`   | Package metadata analysis — the equivalent of `go list`.   |
 | `go_embed`    | `//go:embed` pattern processing.                            |
 | `go_testmain` | Generates the test `main` for `go test`.                   |
@@ -21,25 +20,28 @@ You should not interact with these drivers directly; they are internal plumbing.
 
 ## Registration
 
-```yaml title=".hephconfig"
-providers:
-  - name: go
-    options:
-      gotool: "//@heph/bin:go"
-      skip: []
+The Go plugin is an **external plugin** (not compiled into the heph binary). A
+single `plugins:` entry loads the provider and all three drivers:
 
-drivers:
-  - name: go_golist
-  - name: go_embed
-  - name: go_testmain
+```yaml title=".hephconfig"
+plugins:
+  - path: .heph3/heph-go-plugin.json
+    options:
+      gotool: "//@heph/bin:go"  # optional
+      skip: []                  # optional
 ```
 
-### Provider options
+Use `path:` for a local manifest (e.g. placed by `heph bootstrap`), or `url:`
+to download it automatically.
+
+### Plugin options
 
 | Option   | Type       | Default            | Description |
 |----------|------------|--------------------|-------------|
-| `gotool` | `string`   | `"//@heph/bin:go"` | Address of the Go binary target to use. Defaults to the host Go wrapped via hostbin. Point at a pinned `nix`/`hostbin`/`fs` target for hermeticity. |
+| `gotool` | `string`   | `"//@heph/bin:go"` | Address of the Go binary target used by the provider for package analysis. |
+| `go_bin` | `string`   | `"//@heph/bin:go"` | Address of the Go binary target used by the `go_golist` driver. |
 | `skip`   | `string[]` | `[]`               | Workspace-relative glob patterns for directories to exclude from Go package discovery. Each pattern is matched against the directory's workspace-relative path. |
+| `walk_db` | path      | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
 `skip` is for non-module code, generated stub trees you manage outside heph, or
 vendored packages. Example: `["vendor", "internal/generated/**"]`.
@@ -204,12 +206,12 @@ driver (so its runtime re-glob matches Go's resolution).
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `heph query all <pkg>` shows no `:build`/`:test` | go provider not registered, a driver missing, or pkg under a `skip` glob | Add `providers: [{name: go}]` + all three drivers; check `options.skip`. |
+| `heph query all <pkg>` shows no `:build`/`:test` | go plugin not registered, or pkg under a `skip` glob | Add `plugins: [{path: .heph3/heph-go-plugin.json}]`; check `options.skip`. |
 | Build fails: undefined symbol from generated code | generator not labelled `go_src`, or it's in another package without `go_codegen_root` | Label it `go_src`; if cross-package, add `go_codegen_root=True` at the covering root. |
 | `//go:embed` finds nothing | embedded asset not produced/labelled so it isn't unpacked into the pkg | Produce it under a `go_src` target (its full output tree is unpacked). |
 | Test panics: open testdata/...: no such file | fixture not staged into the sandbox | Label the producing target `go_test_data`. |
 | Wrong/old third-party version compiled | `go.mod` version drift vs the generated `@version` address | Reconcile `go.mod`; the address (and thus cache key) follows the pinned version. |
-| Non-reproducible builds across machines | host Go via default `gotool` | Point `gotool` at a pinned `nix`/`hostbin` toolchain target. |
+| Non-reproducible builds across machines | host Go via default `gotool` | Point `gotool` (and `go_bin`) at a pinned toolchain target. |
 
 ## Verification commands
 
