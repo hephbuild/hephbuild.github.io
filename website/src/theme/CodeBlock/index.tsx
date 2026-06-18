@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react';
 import CodeBlock from '@theme-original/CodeBlock';
+import Admonition from '@theme/Admonition';
 import type CodeBlockType from '@theme/CodeBlock';
 import type { WrapperProps } from '@docusaurus/types';
-import { useLatestVersion } from '../../hooks/useLatestVersion';
+import { useLatestVersion, RELEASES_PAGE_URL } from '../../hooks/useLatestVersion';
 
 type Props = WrapperProps<typeof CodeBlockType>;
+
+// Shown in place of the version when resolution fails — the reader swaps it out.
+const VERSION_PLACEHOLDER = '<VERSION>';
 
 // Language arrives as the `language` prop (JSX) or a `language-xxx` className
 // (markdown code fence).
@@ -29,13 +33,14 @@ function resolveTitle(props: Props): string | undefined {
 }
 
 /**
- * Wraps the theme `CodeBlock`: for a `.hephconfig` block, substitutes the latest
- * released heph version into the source. `<HEPH_VERSION>` becomes the raw version
- * and `<HEPH_VERSION_URL>` its URL-encoded form. While the version is loading it
- * falls back to `latest`. Every other code block passes through untouched.
+ * Wraps the theme `CodeBlock`: for a yaml block titled `.hephconfig`, substitutes
+ * the latest released heph version into the source — `<HEPH_VERSION>` becomes the
+ * raw version and `<HEPH_VERSION_URL>` its URL-encoded form. While loading it
+ * falls back to `latest`; if resolution fails it renders an error notice above
+ * the block and shows `<VERSION>` as a placeholder. Other blocks pass through.
  */
 export default function CodeBlockWrapper(props: Props): ReactNode {
-  const { version } = useLatestVersion();
+  const { version, error } = useLatestVersion();
   const { children } = props;
 
   if (
@@ -43,11 +48,32 @@ export default function CodeBlockWrapper(props: Props): ReactNode {
     && resolveTitle(props) === '.hephconfig'
     && typeof children === 'string'
   ) {
-    const v = version ?? 'latest';
+    const v = error ? VERSION_PLACEHOLDER : (version ?? 'latest');
     const code = children
       .replace(/<HEPH_VERSION>/g, v)
       .replace(/<HEPH_VERSION_URL>/g, encodeURIComponent(v));
-    return <CodeBlock {...props}>{code}</CodeBlock>;
+    return (
+      <>
+        {error && (
+          <Admonition type="danger" title="Could not resolve the latest version">
+            <p>
+              Open the
+              {' '}
+              <a href={RELEASES_PAGE_URL} target="_blank" rel="noreferrer">
+                releases page
+              </a>
+              {' '}
+              and replace
+              {' '}
+              <code>{VERSION_PLACEHOLDER}</code>
+              {' '}
+              below with the latest tag.
+            </p>
+          </Admonition>
+        )}
+        <CodeBlock {...props}>{code}</CodeBlock>
+      </>
+    );
   }
 
   return <CodeBlock {...props} />;
