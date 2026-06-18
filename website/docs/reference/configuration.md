@@ -66,9 +66,9 @@ plugins:
         - /usr/local/bin
         - /usr/bin
         - /bin
-  - path: .heph3/heph-go-plugin.json
+  - path: ./path/to/my-plugin.json
     options:
-      gotool: "//@heph/bin:go"
+      some_option: value
 ```
 
 The keys allowed inside `options` are defined by each plugin — see its page
@@ -95,8 +95,8 @@ and reused on subsequent runs.
 
 ```yaml title=".hephconfig"
 plugins:
-  # Local manifest (e.g. placed by `heph bootstrap`)
-  - path: .heph3/heph-go-plugin.json
+  # Local manifest on disk
+  - path: ./path/to/my-plugin.json
 
   # Remote manifest — downloaded and cached automatically
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
