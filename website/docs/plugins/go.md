@@ -27,16 +27,19 @@ binary. It ships as a shared library (cdylib) with a manifest file
 (`heph-go-plugin.json`). A single `plugins:` entry loads the provider and all
 three drivers at once.
 
-Point `path:` at the manifest on disk, or use `url:` to have heph download it
-automatically:
+Use `url:` to have heph fetch and cache the plugin automatically:
+
+```yaml title=".hephconfig"
+plugins:
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
+```
+
+Or point `path:` at a local manifest on disk:
 
 ```yaml title=".hephconfig"
 plugins:
   - path: .heph3/heph-go-plugin.json
 ```
-
-The `.heph3/heph-go-plugin.json` manifest is placed there by `heph bootstrap`
-when you initialize or update a workspace.
 
 ## Configuration
 
@@ -110,7 +113,7 @@ The go plugin exposes one helper function in every BUILD file under the `heph.go
 namespace.
 
 | Function | Signature | Returns |
-|----------|-----------|--------|
+|----------|-----------|-------|
 | `heph.go.build_addr` | `build_addr(pkg: string, goos: string, goarch: string, tags: list[string]) -> string` | The canonical target address for building `pkg` on the given platform. |
 
 The function enforces its argument types: wrong type, missing required argument,
@@ -137,7 +140,7 @@ heph.go.build_addr(pkg, goos, goarch, tags = [])
 ```
 
 | Argument | Default   | Meaning |
-|----------|-----------|--------|
+|----------|-----------|-------|
 | `pkg`    | required  | The target's package, e.g. `"cmd/server"`. |
 | `goos`   | required  | Target operating system, e.g. `"linux"`. |
 | `goarch` | required  | Target architecture, e.g. `"amd64"`. |
