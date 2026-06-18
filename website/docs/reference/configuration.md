@@ -99,7 +99,7 @@ plugins:
   - path: .heph3/heph-go-plugin.json
 
   # Remote manifest — downloaded and cached automatically
-  - url: https://example.com/releases/v1.2.3/heph-go-plugin.json
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
 ```
 
 `path:` and `url:` plugins are supported on Unix only.
