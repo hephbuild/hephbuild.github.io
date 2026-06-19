@@ -6,7 +6,8 @@
 # Environment overrides:
 #   HEPH_BIN_NAME  installed binary name   (default: heph)
 #   HEPH_BIN_DIR   install directory       (default: $HOME/.local/bin)
-#   HEPH_VERSION   release tag to install  (default: latest)
+#   HEPH_VERSION   release tag to install  (default: the version pinned in
+#                  .hephconfig / .hephconfig2, else latest)
 #   HEPH_NO_MODIFY_PATH=1   skip writing to shell rc files
 
 set -eu
@@ -14,7 +15,6 @@ set -eu
 REPO="hephbuild/heph-artifacts-v1"
 BIN_NAME="${HEPH_BIN_NAME:-heph}"
 BIN_DIR="${HEPH_BIN_DIR:-$HOME/.local/bin}"
-VERSION="${HEPH_VERSION:-latest}"
 
 # ---- output helpers ---------------------------------------------------------
 
@@ -28,6 +28,54 @@ fi
 info() { printf '%s\n' "$*"; }
 note() { printf '%s%s%s\n' "$DIM" "$*" "$RESET"; }
 err()  { printf '%serror:%s %s\n' "$RED" "$RESET" "$*" >&2; exit 1; }
+
+# ---- version resolution -----------------------------------------------------
+#
+# Priority:
+#   1. $HEPH_VERSION                       (explicit override)
+#   2. version: pinned in .hephconfig / .hephconfig2
+#   3. latest
+#
+# The config is searched for in the current directory and each parent, so the
+# right toolchain is installed from anywhere inside a workspace.
+
+CONFIG_FILE=""
+
+find_config_version() {
+    # On success sets VERSION + CONFIG_FILE from the first top-level `version:`
+    # key found, walking up from $PWD. Returns non-zero if nothing is pinned.
+    dir="$PWD"
+    while :; do
+        for name in .hephconfig .hephconfig2; do
+            conf="$dir/$name"
+            [ -f "$conf" ] || continue
+            # First `version:` value, stripped of trailing comment, surrounding
+            # quotes, and whitespace.
+            v="$(sed -n 's/^[[:space:]]*version:[[:space:]]*//p' "$conf" \
+                 | head -n1 \
+                 | sed -e 's/[[:space:]]*#.*$//' \
+                       -e 's/^["'\'']*//' \
+                       -e 's/["'\'']*[[:space:]]*$//')"
+            if [ -n "$v" ]; then
+                VERSION="$v"
+                CONFIG_FILE="$conf"
+                return 0
+            fi
+        done
+        parent="$(dirname "$dir")"
+        [ "$parent" = "$dir" ] && break
+        dir="$parent"
+    done
+    return 1
+}
+
+if [ -n "${HEPH_VERSION:-}" ]; then
+    VERSION="$HEPH_VERSION"
+elif find_config_version; then
+    note "pinned version $VERSION (from $CONFIG_FILE)"
+else
+    VERSION="latest"
+fi
 
 # ---- platform detection -----------------------------------------------------
 
