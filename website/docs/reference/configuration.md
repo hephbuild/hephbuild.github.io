@@ -33,7 +33,7 @@ Every key below is optional.
 
 | Key         | Type                          | Default | Description |
 |-------------|-------------------------------|---------|-------------|
-| `plugins`   | list of plugin entries        | `[]`    | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map. |
+| `plugins`   | list of plugin entries        | `[]`    | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map and, for `url:` entries, an optional `checksum`. |
 | `homeDir`   | path                          | unset   | Where heph keeps its home and cache. |
 | `fs`        | `{skip: string[]}`            | `{}`    | Workspace-wide ignore patterns shared with all tree-walking plugins. |
 | `memCache`  | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
@@ -71,6 +71,8 @@ plugins:
       some_option: value
 ```
 
+`url:` entries also accept a `checksum` field to pin the downloaded manifest — see [Pinning manifests with checksums](#pinning-manifests-with-checksums).
+
 The keys allowed inside `options` are defined by each plugin — see its page
 (for example [Buildfile](/docs/plugins/buildfile), [Exec](/docs/plugins/exec),
 [Go](/docs/plugins/go)). The engine only wires plugins together; it does not
@@ -103,6 +105,34 @@ plugins:
 ```
 
 `path:` and `url:` plugins are supported on Unix only.
+
+### Pinning manifests with checksums
+
+A `url:` entry accepts an optional `checksum` field that pins the SHA-256 of
+the downloaded manifest. heph verifies the manifest against this digest before
+trusting anything it declares — a mismatch is a hard error.
+
+```yaml title=".hephconfig"
+plugins:
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
+    checksum: sha256:<hex>
+```
+
+The checksum is published alongside each manifest as a `<manifest>.sha256`
+sidecar file (e.g. `heph-go-plugin.json.sha256`). Copy the value from that
+sidecar into `checksum:` to lock the manifest to a known-good digest.
+
+The field anchors a **trust chain**: the config pins the manifest → the manifest
+pins each per-host artifact (cdylib) with its own `checksum` entry → the loaded
+binary is verified. Both levels must pass before any plugin code runs.
+
+| Format | Meaning |
+|--------|---------|
+| `sha256:<hex>` | SHA-256 digest in lowercase hex. The only supported algorithm. |
+
+`checksum` is optional. Omitting it skips manifest verification; per-artifact
+checksums embedded in the manifest still apply when present. `checksum` is only
+valid for `url:` entries — `builtin:` and `path:` entries reject it.
 
 ## `fs` — workspace ignore patterns
 
