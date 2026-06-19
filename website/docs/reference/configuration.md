@@ -20,12 +20,30 @@ plugins:
 ## Pinning the version
 
 ```yaml title=".hephconfig"
-version: 1.2.3
+version: v1.2.3
 ```
 
-`version` pins the heph release that runs this workspace, so every machine and
-CI job resolves the same toolchain. Set it once at the top of the file — see
-[Getting started](/docs/getting-started).
+`version` pins the heph release for this workspace so every machine and CI job
+runs the same binary. When the running binary differs from the pin, heph
+automatically downloads the pinned release and re-execs into it on startup —
+the rest of the run is served by the pinned version. The downloaded binary is
+cached in `~/.heph/versions/<tag>/` and reused on subsequent runs.
+
+Only **exact** version pins (`v1.2.3`) are supported. Constraint expressions
+(`>=1.2, <2`, `^1.0`, …) are recognized but not yet acted on — heph logs a
+warning and continues with the currently installed binary. A failed download is
+also non-fatal: heph warns and continues.
+
+To disable automatic self-upgrade for a process tree, set `HEPH_NO_SELF_UPDATE`
+to any non-empty value:
+
+```sh
+export HEPH_NO_SELF_UPDATE=1
+heph run //...
+```
+
+This is useful in sandboxed environments or where you manage toolchains
+yourself.
 
 ## Keys
 
@@ -33,6 +51,7 @@ Every key below is optional.
 
 | Key         | Type                          | Default | Description |
 |-------------|-------------------------------|---------|-------------|
+| `version`   | string                        | unset   | Pins the heph release for this workspace. When set, heph automatically downloads and re-execs into the pinned version on startup. See [Pinning the version](#pinning-the-version). |
 | `plugins`   | list of plugin entries        | `[]`    | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map and, for `url:` entries, an optional `checksum`. |
 | `homeDir`   | path                          | unset   | Where heph keeps its home and cache. |
 | `fs`        | `{skip: string[]}`            | `{}`    | Workspace-wide ignore patterns shared with all tree-walking plugins. |
@@ -127,7 +146,7 @@ pins each per-host artifact (cdylib) with its own `checksum` entry → the loade
 binary is verified. Both levels must pass before any plugin code runs.
 
 | Format | Meaning |
-|--------|---------|
+|--------|----------|
 | `sha256:<hex>` | SHA-256 digest in lowercase hex. The only supported algorithm. |
 
 `checksum` is optional. Omitting it skips manifest verification; per-artifact
