@@ -29,9 +29,6 @@ automatically downloads the pinned release and re-execs into it on startup —
 the rest of the run is served by the pinned version. The downloaded binary is
 cached in `~/.heph/versions/<tag>/` and reused on subsequent runs.
 
-A failed download is non-fatal: heph warns and continues with the currently
-installed binary.
-
 To disable automatic self-upgrade for a process tree, set `HEPH_NO_SELF_UPDATE`
 to any non-empty value:
 
