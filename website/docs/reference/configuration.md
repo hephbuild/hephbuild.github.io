@@ -127,7 +127,7 @@ pins each per-host artifact (cdylib) with its own `checksum` entry → the loade
 binary is verified. Both levels must pass before any plugin code runs.
 
 | Format | Meaning |
-|--------|---------|
+|--------|----------|
 | `sha256:<hex>` | SHA-256 digest in lowercase hex. The only supported algorithm. |
 
 `checksum` is optional. Omitting it skips manifest verification; per-artifact
@@ -275,8 +275,14 @@ in-process (useful for ephemeral or single-process runs).
 
 heph collects anonymous, aggregate usage data to guide development. No target
 addresses, file paths, labels, or any user-identifying information is ever
-reported — only coarse facts like OS, architecture, version, command name, and
-aggregate counters (targets resolved, cache hits, artifact count).
+reported — only coarse facts like OS, architecture, version, command name,
+aggregate counters (targets resolved, cache hits, artifact count), and an
+anonymous repo fingerprint.
+
+The repo fingerprint is a one-way hash of your repository's root commit — the
+same value across every clone of the same repo, impossible to reverse to the
+actual commit or repo name. It is absent when heph runs outside a git
+repository.
 
 Telemetry is **on by default** (opt-out). To disable it, add to `.hephconfig`:
 
