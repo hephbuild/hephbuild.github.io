@@ -172,17 +172,48 @@ provider_state(
     provider = "go",
     go_codegen_root = True,
     go_codegen_deps = ["//tools/mockgen:mocks"],
-    test = {"skip": False},
+    test = False,  # disable tests; or True / struct form — see below
 )
 ```
 
 ### Recognized keys
 
-| Key               | Type            | Effect |
-|-------------------|-----------------|--------|
-| `go_codegen_root` | `bool`          | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here (matched by package prefix) instead of only the leaf package. Use when one generator feeds many descendant packages. The deepest ancestor with this flag whose package is a prefix of the target's package is chosen. |
-| `go_codegen_deps` | `list[string]`  | Explicit codegen target addresses injected into every descendant package's analysis/build sandbox. For generators that aren't labelled `go_src`. Honored independently of `go_codegen_root` (a BUILD setting only this still injects them). The closest ancestor carrying it wins. |
-| `test`            | `map`           | `{"skip": True}` stops the provider emitting test targets for this subtree. Deeper `{"skip": False}` re-enables. |
+| Key               | Type                   | Effect |
+|-------------------|------------------------|--------|
+| `go_codegen_root` | `bool`                 | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here (matched by package prefix) instead of only the leaf package. Use when one generator feeds many descendant packages. The deepest ancestor with this flag whose package is a prefix of the target's package is chosen. |
+| `go_codegen_deps` | `list[string]`         | Explicit codegen target addresses injected into every descendant package's analysis/build sandbox. For generators that aren't labelled `go_src`. Honored independently of `go_codegen_root` (a BUILD setting only this still injects them). The closest ancestor carrying it wins. |
+| `test`            | `bool \| struct(...)` | `False` stops test-target generation for this subtree; `True` / unset runs them. The struct form sets env on `test`/`xtest` run targets, package-scoped only. See below. |
+
+### `test` — skipping and environment
+
+**Bool form** (inherited down the package tree — the deepest ancestor wins):
+
+- `test = False` — disables test-target generation for this package and all descendants.
+- `test = True` — (default) enables them. Overrides an ancestor's `test = False`.
+
+**Struct form** (package-scoped only — does **not** affect descendants):
+
+Sets environment variables on the generated `test`/`xtest` run targets. A struct-form
+state also re-enables tests even when an ancestor set `test = False`.
+
+```python title="BUILD"
+provider_state(
+    provider = "go",
+    test = {
+        "env":              {"FOO": "1"},   # hashed; affects the cache key
+        "pass_env":         ["HOME"],       # hashed; affects the cache key
+        "runtime_env":      {"BAR": "2"},   # not hashed; runtime-only
+        "runtime_pass_env": ["PATH"],       # not hashed; runtime-only
+    },
+)
+```
+
+| Field              | Type           | Hashed | Description |
+|--------------------|----------------|--------|-------------|
+| `env`              | `map[string]`  | yes    | Env vars set on the test run. |
+| `pass_env`         | `list[string]` | yes    | Names of host env vars forwarded to the test run. |
+| `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
+| `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
 
 ### How `go_src`/codegen resolution actually composes
 

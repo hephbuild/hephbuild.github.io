@@ -256,6 +256,61 @@ graph, never by hand:
 Because the module and version are part of the address, a dependency bump
 changes the address and invalidates only the targets that import it.
 
+## provider_state — per-subtree configuration
+
+`provider_state(provider="go", ...)` placed in a BUILD file configures the Go
+provider for that package and every descendant package. When the same key is set
+at multiple depths, the deepest (closest) ancestor wins.
+
+### Recognized keys
+
+| Key               | Type                  | Effect |
+|-------------------|----------------------|---------|
+| `go_codegen_root` | `bool`                | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here instead of only the leaf package. Use when one generator feeds many descendant packages. |
+| `go_codegen_deps` | `list[string]`        | Explicit codegen target addresses injected into every descendant package's sandbox. For generators not labelled `go_src`. The closest ancestor carrying it wins. |
+| `test`            | `bool \| struct(...)` | Controls test-target generation and environment for this package and descendants. See below. |
+
+### Skipping tests
+
+`test = False` disables test-target generation for this package and all
+descendants. A deeper `test = True` (or the struct form) re-enables them — the
+closest ancestor wins.
+
+```python title="BUILD"
+# Disable tests for this subtree:
+provider_state(provider = "go", test = False)
+
+# Re-enable in a subdirectory:
+provider_state(provider = "go", test = True)
+```
+
+### Test environment
+
+The struct form sets environment variables on the generated `test`/`xtest` run
+targets. Unlike the boolean form, it is **package-scoped**: it applies only to
+the exact package where the `provider_state` lives — descendants are not
+affected. A struct-form state also re-enables tests even when an ancestor set
+`test = False`.
+
+```python title="BUILD"
+provider_state(
+    provider = "go",
+    test = {
+        "env":              {"FOO": "1"},   # hashed; affects the cache key
+        "pass_env":         ["HOME"],       # hashed; affects the cache key
+        "runtime_env":      {"BAR": "2"},   # not hashed; runtime-only
+        "runtime_pass_env": ["PATH"],       # not hashed; runtime-only
+    },
+)
+```
+
+| Field              | Type           | Hashed | Description |
+|--------------------|----------------|--------|-------------|
+| `env`              | `map[string]`  | yes    | Env vars set on the test run. |
+| `pass_env`         | `list[string]` | yes    | Names of host env vars forwarded to the test run. |
+| `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
+| `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
+
 ## Claude Code plugin
 
 `heph-go` is a [Claude Code](https://claude.com/claude-code) plugin focused on Go
