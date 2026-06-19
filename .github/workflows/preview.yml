@@ -43,6 +43,8 @@ jobs:
         run: sh website/static/install.sh
 
       - name: Generate CLI reference
+        env:
+          HEPH_NO_SELF_UPDATE: "1"
         run: node scripts/gen-cli-reference.mjs
 
       - name: Build
