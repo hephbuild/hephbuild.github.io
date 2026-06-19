@@ -32,13 +32,20 @@ Use `url:` to have heph fetch and cache the plugin automatically:
 ```yaml title=".hephconfig"
 plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
+    checksum: sha256:<hex>   # optional; pin from heph-go-plugin.json.sha256
 ```
+
+The `checksum` field is optional but recommended — it pins the manifest to a
+known digest so a tampered or misdelivered manifest is rejected before loading.
+See [Pinning manifests with checksums](/docs/reference/configuration#pinning-manifests-with-checksums)
+for details.
 
 ## Configuration
 
 ```yaml title=".hephconfig"
 plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
+    checksum: sha256:<hex>   # optional
     options:
       gotool: "//@heph/bin:go"  # optional
       skip: []                  # optional
