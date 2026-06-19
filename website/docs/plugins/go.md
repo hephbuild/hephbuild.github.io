@@ -31,14 +31,14 @@ Use `url:` to have heph fetch and cache the plugin automatically:
 
 ```yaml title=".hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
 ```
 
 ## Configuration
 
 ```yaml title=".hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
       gotool: "//@heph/bin:go"  # optional
       skip: []                  # optional
@@ -61,7 +61,7 @@ Each pattern is matched against the workspace-relative path of the directory.
 
 ```yaml title=".hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
       skip:
         - vendor
