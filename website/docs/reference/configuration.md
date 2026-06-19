@@ -279,11 +279,6 @@ reported — only coarse facts like OS, architecture, version, command name,
 aggregate counters (targets resolved, cache hits, artifact count), and an
 anonymous repo fingerprint.
 
-The repo fingerprint is a one-way hash of your repository's root commit — the
-same value across every clone of the same repo, impossible to reverse to the
-actual commit or repo name. It is absent when heph runs outside a git
-repository.
-
 Telemetry is **on by default** (opt-out). To disable it, add to `.hephconfig`:
 
 ```yaml title=".hephconfig"
