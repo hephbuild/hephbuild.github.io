@@ -131,8 +131,9 @@ fi
 
 # ---- verify -----------------------------------------------------------------
 
-if "$BIN_DIR/$BIN_NAME" version >/dev/null 2>&1; then
-    info "$("$BIN_DIR/$BIN_NAME" version 2>/dev/null | head -n1)"
-fi
+# Run `heph version`: besides confirming the binary works, this lets heph
+# auto-upgrade itself to the version pinned by the workspace's .hephconfig when
+# run inside one.
+"$BIN_DIR/$BIN_NAME" version || true
 
 info "${GREEN}done.${RESET} run ${BOLD}$BIN_NAME --help${RESET} to get started"
