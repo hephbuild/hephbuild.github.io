@@ -96,6 +96,30 @@ Remote cache latency (fastest first):
 The `[rw]` flags show the configured `read`/`write` permissions. The order
 is persisted and reused automatically until the cache definitions change.
 
+## Excluding targets from the remote cache
+
+Some targets produce outputs that embed host-local paths — a wrapper script
+that references an absolute path in a local toolchain store, for example.
+Sharing those artifacts causes another machine to pull a wrapper that points
+at a path it doesn't have, which fails at run time.
+
+Set `cache = {"remote": False}` on those targets. Local caching stays on;
+heph will never upload the artifact to or download it from a remote cache:
+
+```python title="BUILD"
+target(
+    name = "local-wrapper",
+    driver = "exec",
+    run = ["./gen-wrapper.sh"],
+    out = "wrapper.sh",
+    cache = {"remote": False},
+)
+```
+
+Every machine builds its own copy and caches it locally. Targets that depend
+on it get a local hit on the same machine; other machines build their own copy
+on first use.
+
 ## In CI
 
 A typical CI setup: grant write access to CI runners and read access
