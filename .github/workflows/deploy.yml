@@ -2,7 +2,7 @@ name: Deploy
 
 # Build the marketing site + docs and publish to GitHub Pages. Every step runs
 # inside `devenv shell` so CI and local development execute byte-identical
-# commands (see devenv.nix — the install/lint/build scripts are mirrored here).
+# commands (see devenv.nix -- the install/lint/build scripts are mirrored here).
 
 on:
   push:
@@ -45,6 +45,8 @@ jobs:
         run: sh website/static/install.sh
 
       - name: Generate CLI reference
+        env:
+          HEPH_NO_SELF_UPDATE: "1"
         run: node scripts/gen-cli-reference.mjs
 
       - name: Build
