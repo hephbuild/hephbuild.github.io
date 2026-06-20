@@ -123,15 +123,23 @@ The plugin exposes a fixed set of builtins:
 | `target(name, driver, **kwargs)` | the target's address | Declare a target. |
 | `file(path, abs=False)` | a file address | Reference one workspace file as an input. |
 | `glob(pattern, exclude=None, abs=False)` | a glob address | Reference many files by pattern. |
+| `query(expr)` | a query address | Reference all targets matching a [query expression](/docs/plugins/query). |
 | `struct(**kwargs)` | a struct | Bundle named values to pass into a field. |
 | `get_pkg()` | the current package path | Compute addresses relative to where the BUILD file lives. Prefer `heph.core.pkg()`. |
 | `provider_state(provider, **kwargs)` | — | Hand package-level state to a provider. |
 | `heph.core` | namespace | Host platform info and current package. See [below](#hephcore--host-platform). |
 
-`file()` and `glob()` resolve to [filesystem](./fs.md) addresses, so their
-results drop straight into a dependency field:
+`file()` and `glob()` resolve to [filesystem](./fs.md) addresses; `query()`
+resolves to a [query](./query.md) address. All three drop straight into a
+dependency field:
 
 ```python title="BUILD"
+target(
+    name = "lint",
+    driver = "group",
+    deps = [query("//... && label(lint)")],
+)
+
 target(
     name = "lib",
     driver = "bash",

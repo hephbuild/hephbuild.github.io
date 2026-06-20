@@ -86,15 +86,14 @@ on demand — you reference them, you don't define them.
 | `//@heph/bin:<tool>` | [Hostbin](/docs/plugins/hostbin) | Wrap a binary already on the host `PATH`. |
 | `//@heph/fs:file@f=<path>` | [Filesystem](/docs/plugins/fs) | Reference a single workspace file. |
 | `//@heph/fs:glob@p=<pattern>@e=<excludes>` | [Filesystem](/docs/plugins/fs) | Reference files by glob. |
-| `//@heph/query:<name>@<matchers>` | [Query](/docs/plugins/query) | Group targets selected by label, package, or prefix. |
+| `//@heph/query:query@expr=<expr>` | [Query](/docs/plugins/query) | Group targets matching a query expression. |
 | `//@heph/go/std/<pkg>` | [Go](/docs/plugins/go) | A Go standard-library package. |
 | `//@heph/go/thirdparty/<module>@<version>` | [Go](/docs/plugins/go) | A pinned third-party Go module. |
 | `//@heph/introspect:outputs` | engine | A target's own declared outputs, used by in-place [codegen](/docs/concepts/codegen). |
 
 :::tip
-You rarely type the `@heph/fs` addresses by hand — the `file()` and `glob()`
-[builtins](/docs/plugins/buildfile#authoring-build-files) generate them. The
-[query](/docs/plugins/query) and [go](/docs/plugins/go) addresses are likewise
-produced for you; the table is here so you can recognize them in a dependency
-graph.
+You rarely type the `@heph/fs` or `@heph/query` addresses by hand. Use the
+`file()`, `glob()`, and `query()` [builtins](/docs/plugins/buildfile#authoring-build-files)
+to generate them, or pass `-e <expr>` directly to `heph run` / `heph query`.
+The table is here so you can recognize them in a dependency graph.
 :::
