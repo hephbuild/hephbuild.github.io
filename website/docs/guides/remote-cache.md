@@ -45,8 +45,29 @@ caches:
 ```
 
 Credentials come from `GOOGLE_APPLICATION_CREDENTIALS` or Application Default
-Credentials. In CI, a Workload Identity binding or a service account key file
-both work.
+Credentials. All ADC types are supported:
+
+| Credential type | How to obtain it |
+|---|---|
+| Service account key | Set `GOOGLE_APPLICATION_CREDENTIALS` to the path of a JSON key file |
+| Authorized user | `gcloud auth application-default login` |
+| Workload identity federation | Use `google-github-actions/auth@v2` with `create_credentials_file: true` (see below) |
+
+### GitHub Actions — workload identity federation
+
+The recommended keyless approach for GHA: configure a GCP Workload Identity
+provider and add this step before running heph:
+
+```yaml title=".github/workflows/ci.yml"
+- uses: google-github-actions/auth@v2
+  with:
+    workload_identity_provider: 'projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER'
+    service_account: 'my-sa@my-project.iam.gserviceaccount.com'
+    create_credentials_file: true
+```
+
+heph detects the credentials file and authenticates automatically. No
+`setup-gcloud` or extra configuration needed.
 
 ## Read-only and write-only caches
 
