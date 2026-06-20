@@ -60,7 +60,7 @@ plugins:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `gotool` | `string` | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` to download the SDK hermetically from `go.dev/dl`, or `"host"` to use the `go` binary already on the host's `PATH`. |
-| `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`). Look up values at <https://go.dev/dl/?mode=json>. When a key is missing the SDK downloads unverified (a warning is logged). Has no effect when `gotool = "host"`. |
+| `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`). Look up values at [go.dev/dl/?mode=json](https://go.dev/dl/?mode=json). When a key is missing the SDK downloads unverified (a warning is logged). Has no effect when `gotool = "host"`. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
 | `walk_db` | path | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
