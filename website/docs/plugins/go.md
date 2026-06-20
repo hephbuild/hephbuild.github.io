@@ -9,23 +9,24 @@ description: Go language support — analyze packages and generate library, bina
 Provides Go language support for heph. The `go` provider analyzes Go packages
 and generates targets for building libraries, binaries, and tests. It reads
 package metadata, resolves source files and module dependencies, and wires up
-the targets needed to compile and run Go code. Three managed drivers do the
-underlying work: package metadata analysis (`go_golist`), Go embed processing
-(`go_embed`), and test main generation (`go_testmain`).
+the targets needed to compile and run Go code. Four managed drivers do the
+underlying work: toolchain provisioning (`go_toolchain`), package metadata
+analysis (`go_golist`), Go embed processing (`go_embed`), and test main
+generation (`go_testmain`).
 
 ## Driver
 
 A driver is the execution backend that knows how to run a particular kind of
-target. This plugin registers three drivers: `go_golist`, `go_embed`, and
-`go_testmain`. These are mostly internal, you should not be interracting with
-them directly.
+target. This plugin registers four drivers: `go_toolchain`, `go_golist`,
+`go_embed`, and `go_testmain`. These are internal — you should not interact
+with them directly.
 
 ## Enabling it
 
 The Go plugin is an **external plugin** — it is not compiled into the heph
 binary. It ships as a shared library (cdylib) with a manifest file
 (`heph-go-plugin.json`). A single `plugins:` entry loads the provider and all
-three drivers at once.
+four drivers at once.
 
 Use `url:` to have heph fetch and cache the plugin automatically:
 
@@ -47,17 +48,49 @@ plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
     checksum: sha256:<hex>   # optional
     options:
-      gotool: "//@heph/bin:go"  # optional
-      skip: []                  # optional
+      gotool: "1.26.4"       # required — pinned version or "host"
+      skip: []               # optional
+      checksums:             # optional; recommended for supply-chain verification
+        "1.26.4/linux/amd64": "<sha256hex>"
+        "1.26.4/darwin/arm64": "<sha256hex>"
 ```
 
 ### Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `gotool` | `string` | `"//@heph/bin:go"` | Address of the Go binary target used by the provider and the `go_golist` driver. |
+| `gotool` | `string` | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` to download the SDK hermetically from `go.dev/dl`, or `"host"` to use the `go` binary already on the host's `PATH`. |
+| `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`). Look up values at [go.dev/dl/?mode=json](https://go.dev/dl/?mode=json). When a key is missing the SDK downloads unverified (a warning is logged). Has no effect when `gotool = "host"`. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
 | `walk_db` | path | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
+
+### Toolchain modes
+
+**Hermetic (recommended)** — set `gotool` to a Go version string:
+
+```yaml title=".hephconfig"
+options:
+  gotool: "1.26.4"
+  checksums:
+    "1.26.4/linux/amd64": "<sha256>"
+    "1.26.4/darwin/arm64": "<sha256>"
+```
+
+The plugin downloads the Go SDK tarball for the host platform from
+`go.dev/dl`, verifies its SHA-256 (when a `checksums` entry is present), and
+caches the extracted SDK. Every build, test, and analysis target depends on
+that cached SDK and points `GOROOT` at it. No Go installation is required on
+the host.
+
+**Host** — set `gotool` to `"host"`:
+
+```yaml title=".hephconfig"
+options:
+  gotool: "host"
+```
+
+The plugin uses the `go` binary found on the host's `PATH`. Builds are not
+reproducible across machines with different Go versions.
 
 ### Skipping directories
 
@@ -70,6 +103,7 @@ Each pattern is matched against the workspace-relative path of the directory.
 plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
+      gotool: "1.26.4"
       skip:
         - vendor
         - "internal/generated/**"
@@ -265,7 +299,7 @@ at multiple depths, the deepest (closest) ancestor wins.
 ### Recognized keys
 
 | Key               | Type                  | Effect |
-|-------------------|----------------------|---------|
+|-------------------|----------------------|----------|
 | `go_codegen_root` | `bool`                | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here instead of only the leaf package. Use when one generator feeds many descendant packages. |
 | `go_codegen_deps` | `list[string]`        | Explicit codegen target addresses injected into every descendant package's sandbox. For generators not labelled `go_src`. The closest ancestor carrying it wins. |
 | `test`            | `bool \| struct(...)` | Controls test-target generation and environment for this package and descendants. See below. |
