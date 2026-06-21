@@ -302,7 +302,7 @@ at multiple depths, the deepest (closest) ancestor wins.
 |-------------------|----------------------|----------|
 | `go_codegen_root` | `bool`                | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here instead of only the leaf package. Use when one generator feeds many descendant packages. |
 | `go_codegen_deps` | `list[string]`        | Explicit codegen target addresses injected into every descendant package's sandbox. For generators not labelled `go_src`. The closest ancestor carrying it wins. |
-| `test`            | `bool \| struct(...)` | Controls test-target generation and environment for this package and descendants. See below. |
+| `test`            | `bool \| struct(...)` | Controls test-target generation and configuration for this package and descendants. See below. |
 
 ### Skipping tests
 
@@ -320,7 +320,7 @@ provider_state(provider = "go", test = True)
 
 ### Test environment
 
-The struct form sets environment variables on the generated `test`/`xtest` run
+The struct form configures the generated `test`/`xtest` run
 targets. Unlike the boolean form, it is **package-scoped**: it applies only to
 the exact package where the `provider_state` lives — descendants are not
 affected. A struct-form state also re-enables tests even when an ancestor set
@@ -334,6 +334,7 @@ provider_state(
         "pass_env":         ["HOME"],       # hashed; affects the cache key
         "runtime_env":      {"BAR": "2"},   # not hashed; runtime-only
         "runtime_pass_env": ["PATH"],       # not hashed; runtime-only
+        "pre_run":          ["export FOO=bar", "mkdir -p ./scratch"],
     },
 )
 ```
@@ -344,6 +345,7 @@ provider_state(
 | `pass_env`         | `list[string]` | yes    | Names of host env vars forwarded to the test run. |
 | `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
 | `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
+| `pre_run`          | `list[string]` | yes    | Shell lines run before the test binary. When non-empty, the target switches from the `exec` driver to the `bash` driver so the lines execute as shell. |
 
 ## Claude Code plugin
 
