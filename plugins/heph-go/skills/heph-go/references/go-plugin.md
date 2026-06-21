@@ -205,7 +205,7 @@ provider_state(
 |-------------------|------------------------|--------|
 | `go_codegen_root` | `bool`                 | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here (matched by package prefix) instead of only the leaf package. Use when one generator feeds many descendant packages. The deepest ancestor with this flag whose package is a prefix of the target's package is chosen. |
 | `go_codegen_deps` | `list[string]`         | Explicit codegen target addresses injected into every descendant package's analysis/build sandbox. For generators that aren't labelled `go_src`. Honored independently of `go_codegen_root` (a BUILD setting only this still injects them). The closest ancestor carrying it wins. |
-| `test`            | `bool \| struct(...)` | `False` stops test-target generation for this subtree; `True` / unset runs them. The struct form sets env on `test`/`xtest` run targets, package-scoped only. See below. |
+| `test`            | `bool \| struct(...)` | `False` stops test-target generation for this subtree; `True` / unset runs them. The struct form configures `test`/`xtest` run targets — env vars and pre-run shell lines — package-scoped only. See below. |
 
 ### `test` — skipping and environment
 
@@ -216,7 +216,7 @@ provider_state(
 
 **Struct form** (package-scoped only — does **not** affect descendants):
 
-Sets environment variables on the generated `test`/`xtest` run targets. A struct-form
+Configures the generated `test`/`xtest` run targets. A struct-form
 state also re-enables tests even when an ancestor set `test = False`.
 
 ```python title="BUILD"
@@ -227,6 +227,7 @@ provider_state(
         "pass_env":         ["HOME"],       # hashed; affects the cache key
         "runtime_env":      {"BAR": "2"},   # not hashed; runtime-only
         "runtime_pass_env": ["PATH"],       # not hashed; runtime-only
+        "pre_run":          ["export FOO=bar", "mkdir -p ./scratch"],
     },
 )
 ```
@@ -237,6 +238,7 @@ provider_state(
 | `pass_env`         | `list[string]` | yes    | Names of host env vars forwarded to the test run. |
 | `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
 | `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
+| `pre_run`          | `list[string]` | yes    | Shell lines run before the test binary. When non-empty, the target switches from the `exec` driver to the `bash` driver so the lines execute as shell. |
 
 ### How `go_src`/codegen resolution actually composes
 
