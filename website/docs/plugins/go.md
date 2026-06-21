@@ -123,7 +123,7 @@ generates targets for it — you don't write `target()` calls for Go code. For a
 package it produces:
 
 | Target    | Builds | Labels |
-|-----------|--------|--------|
+|-----------|--------|---------|
 | `:build`  | The library or, for `package main`, the binary. | |
 | `:test`   | The package's tests. | `test`, `go-test` |
 
@@ -290,29 +290,36 @@ graph, never by hand:
 Because the module and version are part of the address, a dependency bump
 changes the address and invalidates only the targets that import it.
 
-## provider_state — per-subtree configuration
+## provider_state — per-package configuration
 
 `provider_state(provider="go", ...)` placed in a BUILD file configures the Go
-provider for that package and every descendant package. When the same key is set
-at multiple depths, the deepest (closest) ancestor wins.
+provider for that package. `go_codegen_root` and `go_codegen_deps` always extend
+to descendant packages. `test` and `link` apply to the exact declaring package by
+default; add `recursive = True` to extend them to descendants. When the same key
+applies at multiple depths, the deepest (closest) declaration wins.
 
 ### Recognized keys
 
 | Key               | Type                  | Effect |
 |-------------------|----------------------|----------|
-| `go_codegen_root` | `bool`                | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here instead of only the leaf package. Use when one generator feeds many descendant packages. |
-| `go_codegen_deps` | `list[string]`        | Explicit codegen target addresses injected into every descendant package's sandbox. For generators not labelled `go_src`. The closest ancestor carrying it wins. |
-| `test`            | `bool \| struct(...)` | Controls test-target generation and configuration for this package and descendants. See below. |
+| `go_codegen_root` | `bool`                | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here instead of only the leaf package. Use when one generator feeds many descendant packages. Always applies to descendants, independent of `recursive`. |
+| `go_codegen_deps` | `list[string]`        | Explicit codegen target addresses injected into every descendant package's sandbox. For generators not labelled `go_src`. The closest ancestor carrying it wins. Always applies to descendants, independent of `recursive`. |
+| `test`            | `bool \| struct(...)` | Controls test-target generation and configuration. Applies to the exact package by default; add `recursive = True` to extend to descendants. See below. |
+| `link`            | `struct(...)`         | Link settings for a `main` package's `build` (binary) target. Applies to the exact package by default; add `recursive = True` to extend to descendants. See [Link configuration](#link-configuration). |
+| `recursive`       | `bool`                | When `True`, extends this state's `test` and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
 
 ### Skipping tests
 
-`test = False` disables test-target generation for this package and all
-descendants. A deeper `test = True` (or the struct form) re-enables them — the
-closest ancestor wins.
+`test = False` disables test-target generation for the exact declaring package.
+Add `recursive = True` to disable across the whole subtree. A deeper `test = True`
+(or the struct form) re-enables them — the closest applicable ancestor wins.
 
 ```python title="BUILD"
-# Disable tests for this subtree:
+# Disable tests for this package only:
 provider_state(provider = "go", test = False)
+
+# Disable tests for this package and all descendants:
+provider_state(provider = "go", recursive = True, test = False)
 
 # Re-enable in a subdirectory:
 provider_state(provider = "go", test = True)
@@ -320,11 +327,10 @@ provider_state(provider = "go", test = True)
 
 ### Test environment
 
-The struct form configures the generated `test`/`xtest` run
-targets. Unlike the boolean form, it is **package-scoped**: it applies only to
-the exact package where the `provider_state` lives — descendants are not
-affected. A struct-form state also re-enables tests even when an ancestor set
-`test = False`.
+The struct form configures the generated `test`/`xtest` run targets. Like the
+boolean form, it applies to the exact declaring package by default. Add
+`recursive = True` to extend it to descendants. A struct-form state also
+re-enables tests even when an ancestor set `test = False`.
 
 ```python title="BUILD"
 provider_state(
@@ -346,6 +352,35 @@ provider_state(
 | `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
 | `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
 | `pre_run`          | `list[string]` | yes    | Shell lines run before the test binary. When non-empty, the target switches from the `exec` driver to the `bash` driver so the lines execute as shell. |
+
+### Link configuration
+
+The `link` struct configures the `build` (binary) target generated for a
+`package main`. It applies to the exact declaring package by default; add
+`recursive = True` to extend it to descendant packages.
+
+When multiple applicable states carry `link`, their values accumulate
+shallow-to-deep: a recursive ancestor's flags, deps, and runtime deps are
+collected first, then the package's own.
+
+```python title="BUILD"
+provider_state(
+    provider = "go",
+    link = {
+        "flags":        ["-X main.version=1.2.3", "-s"],
+        "deps":         ["//embed:assets"],
+        "runtime_deps": ["//data:config"],
+    },
+)
+```
+
+| Field          | Type           | Hashed | Description |
+|----------------|----------------|--------|-------------|
+| `flags`        | `list[string]` | yes    | Extra flags passed verbatim to `go tool link`, inserted before `-o`. Use for `-X` linker vars, stripping flags (`-s`, `-w`), etc. |
+| `deps`         | `list[string]` | yes    | Target addresses staged into the link sandbox as hashed inputs. `flags` can reference their outputs. |
+| `runtime_deps` | `list[string]` | no     | Target addresses staged with the binary at run time only. Not hashed — they do not affect the cache key. |
+
+Unknown keys in the `link` map are rejected with a clear error naming the unrecognized field.
 
 ## Claude Code plugin
 
