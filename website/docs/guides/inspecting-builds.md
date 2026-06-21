@@ -64,6 +64,19 @@ Useful when a provider adds its own callable beyond the core
 [builtins](/docs/plugins/buildfile#authoring-build-files), or to check argument
 names and types before writing a call.
 
+## Reading failure output
+
+When a target fails, heph shows the last 10 trailing lines of its process log in
+the diagnostic box. To see more context:
+
+```bash title="terminal"
+heph run //app:server --log-lines 50
+```
+
+Line numbers in the log box reflect the real position in the full log — the last
+10 lines of a 100-line log show as `91`–`100`, not `1`–`10`. The complete log is
+always saved as the `log.txt` artifact and persists until the target's next run.
+
 ## Reproducing the environment
 
 To go past inspection and actually poke at a failing target, open its
