@@ -64,6 +64,38 @@ Useful when a provider adds its own callable beyond the core
 [builtins](/docs/plugins/buildfile#authoring-build-files), or to check argument
 names and types before writing a call.
 
+## Reading failure output
+
+When a target fails, heph prints a diagnostic box with the trailing lines of its
+process log:
+
+```
+× target failed: //app:server
+╰─▶ exit status: 1
+    ╭─[log]
+  91 │ connecting to db...
+  92 │ FATAL: connection refused
+    ╰────
+```
+
+Line numbers reflect the real position in the full log — the last 10 lines of a
+100-line log are numbered 91–100, not 1–10.
+
+By default, `heph run` shows 10 trailing lines. Use `--log-lines` to show more
+or fewer:
+
+```bash title="terminal"
+heph run //app:server --log-lines 50
+```
+
+The full log is always saved as the `log.txt` artifact regardless of `--log-lines`.
+To read it directly:
+
+```bash title="terminal"
+heph run //app:server --log-lines 0   # suppress the inline tail
+heph run //app:server --cat-out       # print log.txt to stdout after the run
+```
+
 ## Reproducing the environment
 
 To go past inspection and actually poke at a failing target, open its
