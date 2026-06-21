@@ -81,19 +81,20 @@ process log:
 Line numbers reflect the real position in the full log — the last 10 lines of a
 100-line log are numbered 91–100, not 1–10.
 
-By default, `heph run` shows 10 trailing lines. Use `--log-lines` to show more
-or fewer:
+By default, `heph run` shows 10 trailing lines. Use `--log-lines` to see more:
 
 ```bash title="terminal"
 heph run //app:server --log-lines 50
 ```
 
-The full log is always saved as the `log.txt` artifact regardless of `--log-lines`.
-To read it directly:
+The full log is always written to `log.txt` inside the target's sandbox. A
+failed target's sandbox is preserved until its next run, so you can read the
+complete log by opening the sandbox:
 
 ```bash title="terminal"
-heph run //app:server --log-lines 0   # suppress the inline tail
-heph run //app:server --cat-out       # print log.txt to stdout after the run
+heph run //app:server --shell
+# then inside the shell:
+cat log.txt
 ```
 
 ## Reproducing the environment
