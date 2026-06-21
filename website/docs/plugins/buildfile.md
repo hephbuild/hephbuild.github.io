@@ -221,7 +221,7 @@ host platform so targets can vary by operating system or CPU architecture.
 | `heph.core.arch()` | normalized architecture | `"amd64"`, `"arm64"` |
 | `heph.core.os_raw()` | host OS identifier | `"macos"`, `"linux"` |
 | `heph.core.arch_raw()` | host architecture identifier | `"x86_64"`, `"aarch64"` |
-| `heph.core.pkg()` | current package path | `"//tools/build"` |
+| `heph.core.pkg()` | current package path | `"tools/build"` |
 
 `heph.core.os()` and `heph.core.arch()` return normalized names that match
 the conventions used by container registries and most package distribution
