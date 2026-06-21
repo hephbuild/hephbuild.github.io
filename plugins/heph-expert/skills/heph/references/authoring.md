@@ -108,7 +108,7 @@ Available in every BUILD file; use it to vary targets by OS/arch.
 | `heph.core.arch()` | normalized arch | `amd64`, `arm64` |
 | `heph.core.os_raw()` | host OS identifier | `macos`, `linux` |
 | `heph.core.arch_raw()` | host arch identifier | `x86_64`, `aarch64` |
-| `heph.core.pkg()` | current package path | `//tools/build` |
+| `heph.core.pkg()` | current package path | `tools/build` |
 
 Normalized names match container-registry / distribution conventions; use the
 `*_raw()` forms when a tool or URL expects the host's exact identifiers.
