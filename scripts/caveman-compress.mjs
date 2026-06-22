@@ -1,13 +1,14 @@
 // Compress the LLM-facing markdown the build emits, in place, before publish.
 //
-// `docusaurus-plugin-llms` (configured with `generateMarkdownFiles: true`)
-// writes a raw `.md` next to every doc route into website/build/. Those files
-// exist for LLMs and humans fetching the plain markdown of a page — not for the
-// rendered site — so we run them through the vendored caveman-shrink compressor
-// to drop articles/filler/hedging while preserving code, URLs, paths and
-// identifiers byte-for-byte.
+// `docusaurus-plugin-llms` writes, into website/build/:
+//   - a raw `.md` next to every doc route (generateMarkdownFiles), and
+//   - llms-full.txt, the whole docs corpus concatenated for LLM ingestion.
+// These exist for LLMs (and humans fetching plain markdown) — not for the
+// rendered site — so we run them through the caveman-shrink compressor to drop
+// articles/filler/hedging while preserving code, URLs, paths and identifiers
+// byte-for-byte. (llms.txt is just a link index, so it's left alone.)
 //
-// This runs as the last step of `npm run build` (see package.json), so both the
+// Runs as the last step of `npm run build` (see package.json), so both the
 // GitHub Pages deploy and the Cloudflare preview pick it up — they each publish
 // website/build after `build`.
 //
@@ -20,10 +21,13 @@ import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 
 const require = createRequire(import.meta.url);
-const { compress } = require("./vendor/caveman-shrink/compress.cjs");
+const { compress } = require("caveman-shrink");
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BUILD_DIR = join(__dirname, "..", "website", "build");
+
+// Non-.md corpus files (relative to BUILD_DIR) to compress as well.
+const EXTRA_FILES = ["llms-full.txt"];
 
 async function collectMarkdown(dir) {
   const out = [];
@@ -43,9 +47,12 @@ async function main() {
     throw new Error(`Build output not found at ${BUILD_DIR} — run \`build\` first.`);
   }
 
-  const files = await collectMarkdown(BUILD_DIR);
+  const files = [
+    ...await collectMarkdown(BUILD_DIR),
+    ...EXTRA_FILES.map((f) => join(BUILD_DIR, f)).filter(existsSync),
+  ];
   if (files.length === 0) {
-    console.log("caveman: no .md files in build output, nothing to compress.");
+    console.log("caveman: no markdown in build output, nothing to compress.");
     return;
   }
 

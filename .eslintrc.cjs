@@ -46,6 +46,5 @@ module.exports = {
     '*.config.js',
     '*.cjs',
     '.devenv',
-    'scripts/vendor',
   ],
 };

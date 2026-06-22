@@ -12,16 +12,20 @@ heph marketing site + docs. npm workspaces: `uikit` (antd-based UI kit) + `websi
 ## caveman post-build compression
 
 The last step of `npm run build` runs `scripts/caveman-compress.mjs`, which
-rewrites the LLM-facing markdown the build emits — the per-page `.md` files
-`docusaurus-plugin-llms` drops into `website/build/` (`generateMarkdownFiles`) —
-through the vendored [caveman-shrink](https://github.com/JuliusBrussee/caveman)
-compressor (`scripts/vendor/caveman-shrink/compress.cjs`). It strips
-articles/filler/hedging while preserving code, URLs, paths and identifiers, so
-the published `.md` corpus is cheaper for LLMs to ingest. The rendered HTML site
-is untouched — only the raw `.md` files change. Both the Pages deploy and the
-Cloudflare preview run `build`, so both get the compressed corpus. The vendored
-compressor is third-party MIT code copied verbatim — **don't edit it**; see
-`scripts/vendor/caveman-shrink/README.md` to update it.
+rewrites the LLM-facing markdown the build emits through the
+[`caveman-shrink`](https://www.npmjs.com/package/caveman-shrink) compressor (a
+zero-dep devDependency). It strips articles/filler/hedging while preserving
+code, URLs, paths and identifiers, so the published corpus is cheaper for LLMs
+to ingest. It targets, under `website/build/`:
+
+- every per-page `.md` `docusaurus-plugin-llms` drops next to a route
+  (`generateMarkdownFiles`), and
+- `llms-full.txt`, the whole-corpus file (`llms.txt` is just a link index, so
+  it's left alone).
+
+The rendered HTML site is untouched — only those raw files change. Both the
+Pages deploy and the Cloudflare preview run `build`, so both get the compressed
+corpus.
 
 ## Claude Code plugin marketplace
 
