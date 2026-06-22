@@ -10,7 +10,8 @@
   "scripts": {
     "build:uikit": "npm run build --workspace @heph/uikit",
     "build:website": "npm run build --workspace @heph/website",
-    "build": "npm run build:uikit && npm run build:website",
+    "build": "npm run build:uikit && npm run build:website && npm run caveman",
+    "caveman": "node scripts/caveman-compress.mjs",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "prestart": "npm run build:uikit",
