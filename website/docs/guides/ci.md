@@ -11,11 +11,8 @@ few flags make CI runs cleaner and turn heph's guarantees into gates.
 
 ## Plain log output
 
-The interactive TUI assumes a terminal. In CI, force log-only output:
-
-```bash title="terminal"
-heph run //... --no-tui
-```
+The interactive TUI assumes a terminal. In CI, force log-only output with
+`--no-tui`.
 
 ## Fail on stale codegen
 
@@ -31,15 +28,17 @@ If a generated file is missing or out of date, the run exits non-zero with a
 diff — so a contributor who forgot to regenerate gets a red build, not a silent
 drift.
 
-## Check the .gitignore is in sync
+## Validate the workspace
 
-`copy` codegen outputs belong in `.gitignore`, and heph maintains that block for
-you. Make CI fail if it's out of date:
+[`heph validate`](/docs/guides/validate) checks that every target resolves, that
+no two `codegen = copy` targets write to the same path, and that `.gitignore` is
+current — all in one read-only command:
 
 ```bash title="terminal"
-heph tool gen-gitignore
-git diff --exit-code .gitignore
+heph validate
 ```
+
+It reports every problem it finds, not just the first one.
 
 ## Reuse the cache
 
@@ -51,7 +50,7 @@ using your CI's caching mechanism, keyed on your lockfiles.
 ## A representative job
 
 ```bash title="terminal"
-heph run //... --no-tui --frozen        # build everything; fail on stale codegen
-heph run //... --no-tui                 # run tests / checks
-heph tool gen-gitignore && git diff --exit-code .gitignore
+heph run //... --frozen        # build everything; fail on stale codegen
+heph run //...                 # run tests / checks
+heph validate                  # check targets resolve and .gitignore is current
 ```
