@@ -11,14 +11,14 @@ and generates targets for building libraries, binaries, and tests. It reads
 package metadata, resolves source files and module dependencies, and wires up
 the targets needed to compile and run Go code. Four managed drivers do the
 underlying work: toolchain provisioning (`go_toolchain`), package metadata
-analysis (`go_golist`), Go embed processing (`go_embed`), and test main
+analysis (`go_golist`), Go package compilation (`go_compile`), and test main
 generation (`go_testmain`).
 
 ## Driver
 
 A driver is the execution backend that knows how to run a particular kind of
 target. This plugin registers four drivers: `go_toolchain`, `go_golist`,
-`go_embed`, and `go_testmain`. These are internal — you should not interact
+`go_compile`, and `go_testmain`. These are internal — you should not interact
 with them directly.
 
 ## Enabling it
@@ -208,12 +208,13 @@ fixtures a test reads at runtime. You don't wire these into the `:build` and
 `:test` targets by hand. Instead you **label** the target that produces them and
 the provider picks it up automatically.
 
-Two labels are recognized:
+Three labels are recognized:
 
-| Label           | Attach to a target that produces…                  | Pulled into |
-|-----------------|----------------------------------------------------|-------------|
-| `go_src`        | Generated `.go` or embedded files.                 | `:build`, `:build_test` |
-| `go_test_data`  | Files a test reads at runtime (fixtures, goldens). | `:test`, `:xtest`  |
+| Label           | Attach to a target that produces…                                          | Pulled into |
+|-----------------|----------------------------------------------------------------------------|-------------|
+| `go_src`        | Generated `.go` sources (and small embedded files cheap to produce).       | `:build`, `:build_test` |
+| `go_embed_src`  | Embed-only assets for `//go:embed` that should not block `query`/`list`.   | `:build`, `:build_test` |
+| `go_test_data`  | Files a test reads at runtime (fixtures, goldens).                         | `:test`, `:xtest`  |
 
 ### `go_src` — generated source
 
@@ -247,6 +248,42 @@ heph run //api:test      # tests see the generated code too
 Pair `go_src` with `codegen = "copy"` (see [Codegen](../concepts/codegen.md))
 so the generated files also land in the tree for your editor and `gofmt`, and
 `heph tool gen-gitignore` keeps them out of git.
+:::
+
+### `go_embed_src` — embed assets excluded from package analysis
+
+Label a target `go_embed_src` when it produces files referenced by `//go:embed`
+that are expensive to build and should not run during `query`, `list`, or IDE
+metadata operations.
+
+Unlike `go_src`, outputs from `go_embed_src` targets are **not** staged during
+package analysis. `heph query`, `heph list`, and editor integrations complete
+without triggering the asset build. The files are staged only when the package
+actually compiles.
+
+```python title="web/BUILD"
+target(
+    name = "bundle",
+    driver = "bash",
+    labels = ["go_embed_src"],
+    deps = {"src": glob("frontend/**")},
+    out = "dist",
+    run = "npm ci && npm run build -- --outdir=$OUT",
+)
+```
+
+The package's `//go:embed dist/*` directive is satisfied at compile time, without
+a frontend build running during `query` or metadata operations.
+
+`go_embed_src` respects `go_codegen_root`: when an ancestor sets
+`go_codegen_root = True`, embed-src targets are searched by package prefix across
+the whole subtree, the same as `go_src`.
+
+:::tip
+If your embed asset is cheap to produce (a few static templates, a small binary),
+`go_src` works fine — its output tree is staged before both analysis and compile.
+Use `go_embed_src` specifically when the asset build is expensive enough that
+blocking `query` or metadata on it is costly.
 :::
 
 ### `go_test_data` — test fixtures
@@ -302,8 +339,9 @@ applies at multiple depths, the deepest (closest) declaration wins.
 
 | Key               | Type                  | Effect |
 |-------------------|----------------------|----------|
-| `go_codegen_root` | `bool`                | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here instead of only the leaf package. Use when one generator feeds many descendant packages. Always applies to descendants, independent of `recursive`. |
+| `go_codegen_root` | `bool`                | When `True` on an ancestor, `go_src` and `go_embed_src` targets are searched across the whole subtree rooted here instead of only the leaf package. Use when one generator feeds many descendant packages. Always applies to descendants, independent of `recursive`. |
 | `go_codegen_deps` | `list[string]`        | Explicit codegen target addresses injected into every descendant package's sandbox. For generators not labelled `go_src`. The closest ancestor carrying it wins. Always applies to descendants, independent of `recursive`. |
+| `go_embed_deps`   | `list[string]`        | Explicit embed-asset target addresses injected into every descendant package's compile step. The analog of `go_codegen_deps` for the `go_embed_src` lane — for targets that produce embed-only assets but aren't labelled `go_embed_src`. The closest ancestor carrying it wins. |
 | `test`            | `bool \| struct(...)` | Controls test-target generation and configuration. Applies to the exact package by default; add `recursive = True` to extend to descendants. See below. |
 | `link`            | `struct(...)`         | Link settings for a `main` package's `build` (binary) target. Applies to the exact package by default; add `recursive = True` to extend to descendants. See [Link configuration](#link-configuration). |
 | `recursive`       | `bool`                | When `True`, extends this state's `test` and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
@@ -407,7 +445,7 @@ installs the plugin. Restart Claude Code if prompted.
 
 | Piece | What it does |
 |---|---|
-| **Skill `heph-go`** | Auto-activates whenever Claude works on Go under heph — enabling the provider and the `go_golist` / `go_embed` / `go_testmain` drivers, building and testing packages, wiring `go_src` / `go_codegen_root` / `go_codegen_deps` and `go_test_data`, pinning `gotool`, or debugging missing generated code, embeds, modules, or testdata. Carries this page's reference bundled. |
+| **Skill `heph-go`** | Auto-activates whenever Claude works on Go under heph — enabling the provider and the `go_golist` / `go_compile` / `go_testmain` drivers, building and testing packages, wiring `go_src` / `go_embed_src` / `go_codegen_root` / `go_codegen_deps` / `go_embed_deps` and `go_test_data`, pinning `gotool`, or debugging missing generated code, embeds, modules, or testdata. Carries this page's reference bundled. |
 | **Agent `heph-go-expert`** | A specialist subagent for non-trivial Go-in-heph jobs: standing up the provider, wiring cross-package codegen, staging fixtures, or diagnosing why a `:build` / `:test` fails to see what it needs. |
 | **`/heph-go-setup`** | Turn on and configure Go support — provider, the three drivers, `gotool`, and `skip`. |
 | **`/heph-go-codegen`** | Wire generated code and test fixtures into a package via `go_src`, `go_codegen_root`, `go_codegen_deps`, and `go_test_data`. |

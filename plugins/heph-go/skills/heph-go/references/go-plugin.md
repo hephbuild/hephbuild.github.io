@@ -10,12 +10,12 @@ behavior matters, fetch that page (its `.md` twin is indexed at
 generates the targets to build and test them. It registers no driver you call by
 hand. Four **managed drivers** do the underlying work:
 
-| Driver          | Does                                                        |
-|-----------------|-------------------------------------------------------------|
-| `go_toolchain`  | Downloads and provisions the hermetic Go SDK.              |
-| `go_golist`     | Package metadata analysis — the equivalent of `go list`.   |
-| `go_embed`      | `//go:embed` pattern processing.                            |
-| `go_testmain`   | Generates the test `main` for `go test`.                   |
+| Driver          | Does                                                                            |
+|-----------------|---------------------------------------------------------------------------------|
+| `go_toolchain`  | Downloads and provisions the hermetic Go SDK.                                   |
+| `go_golist`     | Package metadata analysis — the equivalent of `go list`.                        |
+| `go_compile`    | Compiles a Go package archive (importcfg, `//go:embed` resolution, asm, pack).  |
+| `go_testmain`   | Generates the test `main` for `go test`.                                        |
 
 You should not interact with these drivers directly; they are internal plumbing.
 
@@ -130,14 +130,15 @@ heph.go.build_addr(pkg, goos, goarch, tags = [])
 
 ## Wiring inputs the provider can't infer
 
-The provider reads hand-written `.go` and resolves imports. Two things it cannot
-infer — generated code and runtime test files — are wired by **labelling** the
-target that produces them.
+The provider reads hand-written `.go` and resolves imports. Three things it cannot
+infer — generated code, embed-only assets, and runtime test files — are wired by
+**labelling** the target that produces them.
 
-| Label          | Attach to a target producing…                 | Pulled into          |
-|----------------|-----------------------------------------------|----------------------|
-| `go_src`       | Generated `.go` or embedded files.            | `:build`, `:build_test` |
-| `go_test_data` | Files a test reads at runtime (fixtures, goldens). | `:test`, `:xtest`   |
+| Label          | Attach to a target producing…                                           | Pulled into          |
+|----------------|-------------------------------------------------------------------------|----------------------|
+| `go_src`       | Generated `.go` sources (and small embedded files cheap to produce).    | `:build`, `:build_test` |
+| `go_embed_src` | Embed-only assets for `//go:embed` that should not block `query`/`list`. | `:build`, `:build_test` |
+| `go_test_data` | Files a test reads at runtime (fixtures, goldens).                      | `:test`, `:xtest`   |
 
 ### `go_src` — generated source compiled into the package
 
@@ -163,6 +164,37 @@ target(
 with `codegen = "copy"` so files also land in the tree for editors/`gofmt`;
 `heph tool gen-gitignore` keeps them untracked.
 
+### `go_embed_src` — embed assets excluded from package analysis
+
+Label a target `go_embed_src` when it produces files referenced by `//go:embed`
+that are expensive to build and should not run during `query`, `list`, or IDE
+metadata operations.
+
+Unlike `go_src`, outputs from `go_embed_src` targets are **not** staged during
+package analysis (`_golist`). `heph query`, `heph list`, and editor integrations
+complete without triggering the asset build. The files are staged only when the
+package actually compiles.
+
+```python title="web/BUILD"
+target(
+    name = "bundle",
+    driver = "bash",
+    labels = ["go_embed_src"],
+    deps = {"src": glob("frontend/**")},
+    out = "dist",
+    run = "npm ci && npm run build -- --outdir=$OUT",
+)
+```
+
+The package's `//go:embed dist/*` is satisfied at compile time, without a frontend
+build running during `query` or metadata operations.
+
+`go_embed_src` respects `go_codegen_root` — embed-src targets are searched by
+package prefix when a root is set, the same as `go_src`.
+
+**Rule of thumb:** cheap assets (a few static files) → `go_src` is fine; expensive
+assets (compiled frontend bundle, large binary) → `go_embed_src`.
+
 ### `go_test_data` — fixtures staged for tests
 
 Labelling a target `go_test_data` stages its outputs into the sandbox next to the
@@ -180,8 +212,7 @@ target(
 )
 ```
 
-**Rule of thumb:** code the package *imports* → `go_src`; files a test *reads* →
-`go_test_data`.
+**Rule of thumb:** code the package *imports* → `go_src`; expensive embed-only assets → `go_embed_src`; files a test *reads* → `go_test_data`.
 
 ## `provider_state` — per-package configuration
 
@@ -204,8 +235,9 @@ provider_state(
 
 | Key               | Type                   | Effect |
 |-------------------|------------------------|--------|
-| `go_codegen_root` | `bool`                 | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here (matched by package prefix) instead of only the leaf package. Use when one generator feeds many descendant packages. The deepest ancestor with this flag whose package is a prefix of the target's package is chosen. Always applies to descendants, independent of `recursive`. |
+| `go_codegen_root` | `bool`                 | When `True` on an ancestor, `go_src` and `go_embed_src` targets are searched across the whole subtree rooted here (matched by package prefix) instead of only the leaf package. Use when one generator feeds many descendant packages. The deepest ancestor with this flag whose package is a prefix of the target's package is chosen. Always applies to descendants, independent of `recursive`. |
 | `go_codegen_deps` | `list[string]`         | Explicit codegen target addresses injected into every descendant package's analysis/build sandbox. For generators that aren't labelled `go_src`. Honored independently of `go_codegen_root` (a BUILD setting only this still injects them). The closest ancestor carrying it wins. Always applies to descendants, independent of `recursive`. |
+| `go_embed_deps`   | `list[string]`         | Explicit embed-asset target addresses injected into every descendant package's compile step. The analog of `go_codegen_deps` for the `go_embed_src` lane — for targets producing embed-only assets not labelled `go_embed_src`. The closest ancestor carrying it wins. |
 | `test`            | `bool \| struct(...)` | `False` stops test-target generation for this package; `True` / unset runs them. The struct form configures `test`/`xtest` run targets — env vars and pre-run shell lines. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
 | `link`            | `struct(...)`          | Link settings for a `main` package's `build` (binary) target: `flags`, `deps`, `runtime_deps`. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
 | `recursive`       | `bool`                 | When `True`, extends this state's `test` and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
@@ -272,19 +304,23 @@ provider_state(
 
 Unknown keys in the `link` map are rejected with a clear error naming the unrecognized field.
 
-### How `go_src`/codegen resolution actually composes
+### How source/embed resolution actually composes
 
-For each package, the package sandbox source set is:
+**Analysis source set** (staged into `_golist` so `go list` sees them):
 
-1. A filesystem glob of all non-`.go` files in the package (checked-in embed
-   assets, etc.).
-2. A `q@label=go_src` query — scoped to the leaf **package**, or to the
-   **package prefix** of the chosen `go_codegen_root` when one is set — whose full
-   output tree is unpacked into the package dir.
+1. A filesystem glob of all non-`.go` files in the package (checked-in assets).
+2. A `label=go_src` query — scoped to the leaf **package**, or the **package
+   prefix** of the chosen `go_codegen_root` — whose full output tree is unpacked.
 3. The `go_codegen_deps` from the closest ancestor BUILD state.
 
-This is shared between `_golist` (so `go list` resolves embeds) and the embed
-driver (so its runtime re-glob matches Go's resolution).
+**Compile embed source set** (staged only at compile time, never in `_golist`):
+
+4. A `label=go_embed_src` query — same scoping rules as step 2.
+5. The `go_embed_deps` from the closest ancestor BUILD state.
+
+Items 4 and 5 are deliberately excluded from `_golist`, so `query`/`list`/IDE
+metadata never trigger expensive asset builds. They only run when `go_compile`
+actually needs the bytes to satisfy `//go:embed` patterns.
 
 ## Troubleshooting
 
@@ -293,7 +329,8 @@ driver (so its runtime re-glob matches Go's resolution).
 | `heph query all <pkg>` shows no `:build`/`:test` | go plugin not registered, or pkg under a `skip` glob | Add the plugin entry; check `options.skip`. |
 | Provider errors: `` `gotool` is required `` | `gotool` option missing | Add `gotool: "<version>"` or `gotool: "host"` to `options`. |
 | Build fails: undefined symbol from generated code | generator not labelled `go_src`, or it's in another package without `go_codegen_root` | Label it `go_src`; if cross-package, add `go_codegen_root=True` at the covering root. |
-| `//go:embed` finds nothing | embedded asset not produced/labelled so it isn't unpacked into the pkg | Produce it under a `go_src` target (its full output tree is unpacked). |
+| `//go:embed` finds nothing | embedded asset not produced/labelled | Label the producing target `go_src` (cheap assets) or `go_embed_src` (expensive assets). |
+| `query`/`list`/IDE is slow because of an embed asset build | embed asset is labelled `go_src` — it runs during analysis | Relabel it `go_embed_src`; the build will only run at actual compile time. |
 | Test panics: open testdata/...: no such file | fixture not staged into the sandbox | Label the producing target `go_test_data`. |
 | Wrong/old third-party version compiled | `go.mod` version drift vs the generated `@version` address | Reconcile `go.mod`; the address (and thus cache key) follows the pinned version. |
 | Non-reproducible builds across machines | using `gotool = "host"` | Switch to a pinned version: `gotool: "1.26.4"` and add `checksums`. |
