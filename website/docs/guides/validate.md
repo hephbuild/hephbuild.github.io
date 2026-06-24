@@ -32,7 +32,7 @@ If any check fails, `heph validate` exits non-zero and lists every problem it fo
 `heph validate` is a natural CI gate: it is read-only, exits non-zero on any problem, and surfaces all failures in one run.
 
 ```bash title="terminal"
-heph validate --no-tui
+heph validate
 ```
 
-Use `--no-tui` to force plain log output in headless environments. See [Using heph in CI](/docs/guides/ci) for a representative CI job.
+See [Using heph in CI](/docs/guides/ci) for a representative CI job.
