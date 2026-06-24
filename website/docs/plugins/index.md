@@ -1,18 +1,19 @@
 ---
 title: Plugins
 sidebar_position: 1
-description: The plugins that supply heph's functionality — the drivers targets execute through and the providers that discover them.
+description: The plugins that supply heph's functionality — the drivers targets execute through, the providers that discover them, and the hooks that observe build events.
 slug: /plugins
 ---
 
 # Plugins
 
-Almost everything heph can do comes from **plugins**. A plugin is either a
-**driver** — a named executor a target references via its `driver` field — or a
-**provider** — it discovers or generates targets. For example, when you write `driver =
-"bash"` in a BUILD file, you are reaching for a driver registered by the
-[Exec](./exec.md) plugin; when heph scans the workspace for BUILD files, that is
-a provider at work.
+Almost everything heph can do comes from **plugins**. Plugins come in three
+kinds: a **driver** is a named executor a target references via its `driver`
+field; a **provider** discovers or generates targets; a **hook** observes the
+engine's build-event stream without producing or running anything. For example,
+when you write `driver = "bash"` in a BUILD file, you are reaching for a driver
+registered by the [Exec](./exec.md) plugin; when heph scans the workspace for
+BUILD files, that is a provider at work.
 
 ## Drivers
 
@@ -46,3 +47,14 @@ so it registers no driver.
 |-----------------------------|------------------------------------------------------------------|
 | [Buildfile](./buildfile.md) | Scans the workspace for BUILD files and parses target definitions. |
 | [Query](./query.md)         | Selects targets dynamically by label, package, prefix, or output.  |
+
+## Hooks
+
+Hook plugins observe the engine's `BuildEvent` stream — targets matched,
+started, finished, cache hits, failures — without producing or running targets.
+They are purely build-event consumers and run in the same process as heph on a
+background thread.
+
+| Plugin                              | Purpose                                                                    |
+|-------------------------------------|----------------------------------------------------------------------------|
+| [GitHub Actions](./gha.md)          | Live PR comment and step summary for GitHub Actions builds.                |
