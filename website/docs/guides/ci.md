@@ -47,6 +47,33 @@ between CI runs turns unchanged targets into instant hits. Cache the heph home
 directory (set with [`homeDir`](/docs/reference/configuration#keys)) across jobs
 using your CI's caching mechanism, keyed on your lockfiles.
 
+## Live build status (GitHub Actions)
+
+The [GitHub Actions hook](../plugins/gha.md) writes a live status comment on the
+pull request under review and a step summary when the command finishes. Load it
+from a `ci.hephconfig` overlay so it only activates in CI:
+
+```yaml title="ci.hephconfig"
+plugins:
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-gha-plugin.json
+```
+
+```yaml title=".github/workflows/build.yml"
+jobs:
+  build:
+    permissions:
+      pull-requests: write   # required for the live PR comment
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        env:
+          HEPH_PROFILES: ci
+        run: heph run //... --no-tui
+```
+
+See the [GitHub Actions plugin page](../plugins/gha.md) for the full options
+reference.
+
 ## A representative job
 
 ```bash title="terminal"

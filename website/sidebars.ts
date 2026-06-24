@@ -47,6 +47,7 @@ const sidebars: SidebarsConfig = {
         'plugins/nix',
         'plugins/query',
         'plugins/textfile',
+        'plugins/gha',
       ],
     },
     {
