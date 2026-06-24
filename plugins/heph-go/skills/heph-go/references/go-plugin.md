@@ -183,12 +183,13 @@ target(
 **Rule of thumb:** code the package *imports* → `go_src`; files a test *reads* →
 `go_test_data`.
 
-## `provider_state` — per-subtree configuration
+## `provider_state` — per-package configuration
 
 `provider_state(provider="go", ...)` placed in a BUILD file configures the go
-provider for that package **and every descendant package**. When the same key is
-set at multiple depths, the **deepest (closest) ancestor wins** — set a default
-high and override it in a leaf.
+provider for that package. `go_codegen_root` and `go_codegen_deps` always extend
+to descendant packages. `test` and `link` apply to the exact declaring package by
+default; set `recursive = True` to extend them to descendants. When the same key
+applies at multiple depths, the **deepest (closest) applicable declaration wins**.
 
 ```python title="BUILD"
 provider_state(
@@ -203,18 +204,20 @@ provider_state(
 
 | Key               | Type                   | Effect |
 |-------------------|------------------------|--------|
-| `go_codegen_root` | `bool`                 | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here (matched by package prefix) instead of only the leaf package. Use when one generator feeds many descendant packages. The deepest ancestor with this flag whose package is a prefix of the target's package is chosen. |
-| `go_codegen_deps` | `list[string]`         | Explicit codegen target addresses injected into every descendant package's analysis/build sandbox. For generators that aren't labelled `go_src`. Honored independently of `go_codegen_root` (a BUILD setting only this still injects them). The closest ancestor carrying it wins. |
-| `test`            | `bool \| struct(...)` | `False` stops test-target generation for this subtree; `True` / unset runs them. The struct form configures `test`/`xtest` run targets — env vars and pre-run shell lines — package-scoped only. See below. |
+| `go_codegen_root` | `bool`                 | When `True` on an ancestor, `go_src` targets are searched across the whole subtree rooted here (matched by package prefix) instead of only the leaf package. Use when one generator feeds many descendant packages. The deepest ancestor with this flag whose package is a prefix of the target's package is chosen. Always applies to descendants, independent of `recursive`. |
+| `go_codegen_deps` | `list[string]`         | Explicit codegen target addresses injected into every descendant package's analysis/build sandbox. For generators that aren't labelled `go_src`. Honored independently of `go_codegen_root` (a BUILD setting only this still injects them). The closest ancestor carrying it wins. Always applies to descendants, independent of `recursive`. |
+| `test`            | `bool \| struct(...)` | `False` stops test-target generation for this package; `True` / unset runs them. The struct form configures `test`/`xtest` run targets — env vars and pre-run shell lines. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
+| `link`            | `struct(...)`          | Link settings for a `main` package's `build` (binary) target: `flags`, `deps`, `runtime_deps`. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
+| `recursive`       | `bool`                 | When `True`, extends this state's `test` and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
 
 ### `test` — skipping and environment
 
-**Bool form** (inherited down the package tree — the deepest ancestor wins):
+**Bool form** (applies to the exact declaring package by default; add `recursive = True` to extend to descendants — the closest applicable declaration wins):
 
-- `test = False` — disables test-target generation for this package and all descendants.
+- `test = False` — disables test-target generation for this package (and descendants if `recursive = True`).
 - `test = True` — (default) enables them. Overrides an ancestor's `test = False`.
 
-**Struct form** (package-scoped only — does **not** affect descendants):
+**Struct form** (applies to the exact declaring package by default; add `recursive = True` to extend to descendants):
 
 Configures the generated `test`/`xtest` run targets. A struct-form
 state also re-enables tests even when an ancestor set `test = False`.
@@ -239,6 +242,35 @@ provider_state(
 | `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
 | `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
 | `pre_run`          | `list[string]` | yes    | Shell lines run before the test binary. When non-empty, the target switches from the `exec` driver to the `bash` driver so the lines execute as shell. |
+
+### `link` — binary link configuration
+
+The `link` struct configures the `build` (binary) target generated for a
+`package main`. Package-scoped by default; add `recursive = True` to extend to
+descendant packages.
+
+When multiple applicable states carry `link`, their values accumulate
+shallow-to-deep: a recursive ancestor's flags, deps, and runtime deps are
+collected first, then the package's own.
+
+```python title="BUILD"
+provider_state(
+    provider = "go",
+    link = {
+        "flags":        ["-X main.version=1.2.3", "-s"],
+        "deps":         ["//embed:assets"],
+        "runtime_deps": ["//data:config"],
+    },
+)
+```
+
+| Field          | Type           | Hashed | Description |
+|----------------|----------------|--------|-------------|
+| `flags`        | `list[string]` | yes    | Extra flags passed verbatim to `go tool link`, inserted before `-o`. Use for `-X` linker vars, stripping flags (`-s`, `-w`), etc. |
+| `deps`         | `list[string]` | yes    | Target addresses staged into the link sandbox as hashed inputs. `flags` can reference their outputs. |
+| `runtime_deps` | `list[string]` | no     | Target addresses staged with the binary at run time only. Not hashed — they do not affect the cache key. |
+
+Unknown keys in the `link` map are rejected with a clear error naming the unrecognized field.
 
 ### How `go_src`/codegen resolution actually composes
 
@@ -266,6 +298,7 @@ driver (so its runtime re-glob matches Go's resolution).
 | Wrong/old third-party version compiled | `go.mod` version drift vs the generated `@version` address | Reconcile `go.mod`; the address (and thus cache key) follows the pinned version. |
 | Non-reproducible builds across machines | using `gotool = "host"` | Switch to a pinned version: `gotool: "1.26.4"` and add `checksums`. |
 | SDK checksum mismatch | `checksums` entry doesn't match the tarball | Look up the correct SHA-256 at https://go.dev/dl/?mode=json. |
+| `test = False` unexpectedly not disabling descendants | missing `recursive = True` | Add `recursive = True` to the `provider_state` to extend to descendants. |
 
 ## Verification commands
 
