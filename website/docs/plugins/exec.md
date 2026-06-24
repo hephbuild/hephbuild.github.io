@@ -93,7 +93,7 @@ The following target config keys are available:
 | `pass_env`         | Host vars passed at parse time and hashed into the cache key. Accepts `["*"]` to pass all. |
 | `runtime_pass_env` | Host vars passed at run time only, not hashed. Accepts `["*"]` to pass all. |
 | `runtime_env`      | Runtime literal environment variables.               |
-| `cache`            | Bool or `{enabled, remote, history}`.                |
+| `cache`            | `True`/`False` toggles local + remote together; dict: `{enabled, remote, history}`. |
 | `codegen`          | Write generated outputs into the source tree (`copy` or `in_place`). |
 
 These environment variables are available inside the sandbox:
@@ -201,6 +201,35 @@ target(
     runtime_pass_env = ["*"],   # full env at run time, not hashed
 )
 ```
+
+## Cache control
+
+`cache` accepts a bare bool or a dict with up to three keys:
+
+| Key | Type | Default | Meaning |
+|-----|------|---------|---------|
+| `enabled` | bool | `true` | Enable local caching for this target. |
+| `remote` | bool | `true` | Enable remote caching for this target. Set `false` when outputs embed host-local paths that cannot be safely shared across machines. |
+| `history` | int | `1` | Number of past revisions to retain in the local cache (minimum `1`). |
+
+A bare `True` sets both `enabled` and `remote` to `true`. A bare `False` disables both.
+
+Use `cache = {"remote": False}` to keep local caching on but opt a specific
+target out of remote push and pull — useful for targets whose outputs reference
+paths that only exist on the machine that built them:
+
+```python title="BUILD"
+target(
+    name = "wrapper",
+    driver = "exec",
+    run = ["./gen-wrapper.sh"],
+    out = "wrapper.sh",
+    cache = {"remote": False},
+)
+```
+
+The target still builds and caches locally; it is never uploaded to or pulled
+from a remote cache.
 
 ## Interactive debugging with `--shell`
 
