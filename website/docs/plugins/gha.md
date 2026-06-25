@@ -126,8 +126,8 @@ While the build runs the comment shows live progress:
 </details>
 ```
 
-The heading emoji reflects the current state: ⏳ while running, ✅ once every
-matched target finishes without error, ❌ as soon as any target fails.
+The heading emoji reflects the current state: ⏳ while the command is running,
+✅ once the command finishes without error, ❌ if any target failed.
 
 A total shown as `~40` means the matcher hasn't resolved all targets yet; the
 tilde drops once resolution is complete.
@@ -137,9 +137,14 @@ address and the first line of its error message.
 
 ## One comment per job, one section per step
 
-The comment is scoped by `GITHUB_JOB` — one comment per CI job, reused across
-reruns (found by a hidden HTML marker, never duplicated). Within the comment,
-each heph invocation owns a section keyed by its command line (the arguments
-passed to `heph`). A job with three separate `heph run` steps produces one
-comment with three independently-updated sections, so earlier steps' results
-are preserved as later steps write theirs.
+The comment is scoped by `GITHUB_JOB` — one comment per CI job, never
+duplicated (found by a hidden HTML marker). Within the comment, each heph
+invocation owns a section keyed by its command line (the arguments passed to
+`heph`). A job with three separate `heph run` steps produces one comment with
+three independently-updated sections, so earlier steps' results are preserved
+as later steps write theirs.
+
+Each new workflow run (identified by `GITHUB_RUN_ID` and `GITHUB_RUN_ATTEMPT`)
+starts the comment fresh — the previous build's sections are cleared when the
+first step of a new run writes to the comment. Steps within the same run
+continue to preserve each other's sections as described above.
