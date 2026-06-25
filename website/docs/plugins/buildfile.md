@@ -150,7 +150,10 @@ target(
 ```
 
 By default paths are resolved relative to the BUILD file's package; pass
-`abs = True` to resolve from the workspace root instead.
+`abs = True` to resolve from the workspace root instead. Paths are lexically
+normalized — `./` prefixes and empty segments are collapsed, `..` components
+resolve against the package path, and a path whose `..` segments escape the
+workspace root is an error.
 
 ### `target()` — what buildfile reads, and what it forwards
 
