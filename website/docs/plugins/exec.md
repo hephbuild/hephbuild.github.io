@@ -163,6 +163,10 @@ target(
 `support_files` declares files a target produces that are **not** outputs — kept
 in the sandbox for the command's own use but not published to dependents.
 
+Output and support-file paths are lexically normalized: `./` prefixes and empty
+segments are stripped, `..` resolves against the package path, and a path that
+escapes the workspace root is an error.
+
 ## Environment passthrough
 
 `pass_env` and `runtime_pass_env` each accept a list of variable names to
@@ -207,7 +211,7 @@ target(
 `cache` accepts a bare bool or a dict with up to three keys:
 
 | Key | Type | Default | Meaning |
-|-----|------|---------|---------|
+|-----|------|---------|--------|
 | `enabled` | bool | `true` | Enable local caching for this target. |
 | `remote` | bool | `true` | Enable remote caching for this target. Set `false` when outputs embed host-local paths that cannot be safely shared across machines. |
 | `history` | int | `1` | Number of past revisions to retain in the local cache (minimum `1`). |
