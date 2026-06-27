@@ -36,6 +36,33 @@ heph inspect deps //app:server
 heph inspect deps //app:server -i      # interactive explorer
 ```
 
+## "Where is this target used?"
+
+The reverse of `deps`: scan the workspace for every target that declares a given
+target as a direct input.
+
+```bash title="terminal"
+heph inspect revdeps //lib:core
+```
+
+Output is one address per line. To narrow the search to a subset of packages,
+pass `--scope` with a package matcher:
+
+```bash title="terminal"
+heph inspect revdeps //lib:core --scope //cmd/...
+```
+
+You can also pass a file path instead of a target address — heph resolves it to
+the corresponding file target automatically:
+
+```bash title="terminal"
+heph inspect revdeps ./config/defaults.yaml
+```
+
+Only direct edges are checked; transitive users are not included. A target that
+uses `//lib:core` indirectly (through another library) does not appear unless it
+also declares `//lib:core` as an explicit input.
+
 ## "What did the provider produce?"
 
 A [provider](/docs/plugins) turns BUILD files (or generated sources) into target
