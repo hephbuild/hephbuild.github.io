@@ -44,9 +44,10 @@ plugins:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `patterns` | `string[]` | `["BUILD"]` | Glob patterns for BUILD file names to recognize. |
+| `patterns` | `string[]` | `["BUILD", "*.BUILD"]` | Glob patterns for BUILD file names to recognize. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from the BUILD file walk. |
 | `defaultDriver` | `string` | `""` | Driver name to use when a target omits `driver`. An explicit `driver` in `target()` always wins. |
+| `indent` | number | `4` | Indentation width in spaces per level, used by [`heph tool build-fmt`](/docs/guides/formatting-build-files). |
 
 ### Skipping directories
 
@@ -161,7 +162,7 @@ workspace root is an error.
 everything else is handed verbatim to the **driver**:
 
 | Field | Required | Meaning |
-|-------|----------|---------|
+|-------|----------|----------|
 | `name` | yes | The target's name within its package. |
 | `driver` | no* | The driver that executes it (`bash`, `go_golist`, `group`, …). Required when `defaultDriver` is not set. |
 | `labels` | no | A label or list of labels, used by [query](./query.md) and matchers. |
