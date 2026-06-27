@@ -1,14 +1,14 @@
 ---
 title: "Editor setup"
 sidebar_position: 6
-description: Connect your editor to heph's language server for completion, hover, and go-to-definition.
+description: Connect your editor to heph's language server for completion, hover, go-to-definition, and formatting.
 ---
 
 # Editor setup
 
 heph ships a language server that connects to any editor supporting the Language
-Server Protocol. It provides completion, hover documentation, and
-go-to-definition.
+Server Protocol. It provides completion, hover documentation, go-to-definition,
+and document formatting.
 
 ## What it provides
 
@@ -17,6 +17,7 @@ go-to-definition.
 | Completion | `target`, `file`, `glob`, `struct`, `provider_state`, `heph.core.*`, and every provider function complete with their signatures and inline docs. Address strings (`//pkg:name`) complete packages and target names as you type. Inside a `target(driver="exec", …)` call, the driver's accepted fields complete with types and descriptions. |
 | Hover | Signature and documentation for any builtin or provider function. Hover a `target()` call to see the addresses it produced. |
 | Go-to-definition | Jump to the BUILD file that defines an address — both `//pkg:name` and relative `:name` forms. |
+| Formatting | Format-on-save rewrites the open BUILD file to canonical style. Uses the same rules as [`heph tool build-fmt`](/docs/guides/formatting-build-files), respecting the workspace `indent` setting and the `# heph:fmt skip-file` directive. |
 
 ## VS Code
 
