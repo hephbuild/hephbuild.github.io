@@ -41,9 +41,6 @@ that matches the current working directory.
 | `./sub:name` | `//current/pkg/sub:name` |
 | `../sibling:name` | `//current/sibling:name` |
 
-Relative addresses work with `heph run`, `heph query`, `heph validate`, and
-the `heph inspect` addr subcommands (`hashin`, `hashout`, `spec`, `def`, `deps`).
-
 See [Buildfile → Relative addresses](/docs/plugins/buildfile#relative-addresses) for examples in BUILD files.
 
 ## Package matchers
