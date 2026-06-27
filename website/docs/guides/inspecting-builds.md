@@ -11,6 +11,11 @@ When a build does something surprising — a target rebuilds when you expected a
 `heph inspect` subcommands show you the engine's view. See the
 [CLI reference](/docs/reference/cli) for full flag detail.
 
+The `hashin`, `hashout`, `spec`, `def`, and `deps` subcommands accept both
+absolute addresses (`//pkg:name`) and
+[relative](/docs/reference/addresses#relative-forms) forms resolved against the
+current working directory's package.
+
 ## "Why did this rebuild?"
 
 A target rebuilds when its input hash changes. Compare the hash across runs to
@@ -18,6 +23,7 @@ find what moved:
 
 ```bash title="terminal"
 heph inspect hashin //app:server
+heph inspect hashin :server        # same, from inside app/
 ```
 
 The input hash (`hashin`) folds in every declared input. If it changed, an input

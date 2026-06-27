@@ -30,9 +30,10 @@ references another.
 
 ## Relative forms
 
-Inside `BUILD` files you can write addresses relative to the current package
-instead of spelling out the full `//package:name` path. heph resolves them
-against the package that owns the `BUILD` file.
+You can write addresses relative to the current package instead of spelling out
+the full `//package:name` path. In BUILD files heph resolves them against the
+package that owns the file; on the command line they resolve against the package
+that matches the current working directory.
 
 | Form | Resolves to |
 |------|-------------|
@@ -40,7 +41,10 @@ against the package that owns the `BUILD` file.
 | `./sub:name` | `//current/pkg/sub:name` |
 | `../sibling:name` | `//current/sibling:name` |
 
-See [Buildfile → Relative addresses](/docs/plugins/buildfile#relative-addresses) for examples.
+Relative addresses work with `heph run`, `heph query`, `heph validate`, and
+the `heph inspect` addr subcommands (`hashin`, `hashout`, `spec`, `def`, `deps`).
+
+See [Buildfile → Relative addresses](/docs/plugins/buildfile#relative-addresses) for examples in BUILD files.
 
 ## Package matchers
 
