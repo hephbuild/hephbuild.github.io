@@ -24,6 +24,7 @@ const sidebars: SidebarsConfig = {
         'concepts/caching',
         'concepts/sandbox',
         'concepts/codegen',
+        'concepts/approval',
       ],
     },
     {

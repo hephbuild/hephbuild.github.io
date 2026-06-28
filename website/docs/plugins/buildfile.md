@@ -162,11 +162,12 @@ workspace root is an error.
 everything else is handed verbatim to the **driver**:
 
 | Field | Required | Meaning |
-|-------|----------|----------|
+|-------|----------|---------|
 | `name` | yes | The target's name within its package. |
 | `driver` | no* | The driver that executes it (`bash`, `go_golist`, `group`, …). Required when `defaultDriver` is not set. |
 | `labels` | no | A label or list of labels, used by [query](./query.md) and matchers. |
 | `transitive` | no | Sandbox settings propagated to targets that depend on this one. |
+| `approval` | no | `True`, or `{"required": True, "notice": [...]}` to gate execution on explicit user confirmation. See [Approval gates](/docs/concepts/approval). |
 
 :::note
 Any other keyword (`run`, `deps`, `out`, `env`, `cache`, `codegen`, …) is
