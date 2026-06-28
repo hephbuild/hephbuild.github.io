@@ -287,11 +287,9 @@ in-process (useful for ephemeral or single-process runs).
 
 ## `telemetry` — usage reporting
 
-heph collects anonymous, aggregate usage data to guide development. No target
+heph collects anonymous product metrics to guide development. No target
 addresses, file paths, labels, or any user-identifying information is ever
-reported — only coarse facts like OS, architecture, version, command name,
-aggregate counters (targets resolved, cache hits, artifact count), and an
-anonymous repo fingerprint.
+reported.
 
 Telemetry is **on by default** (opt-out). To disable it, add to `.hephconfig`:
 
