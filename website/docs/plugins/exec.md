@@ -127,12 +127,17 @@ target(
 )
 ```
 
+Group names are uppercased, and any character that isn't a letter, digit, or
+underscore becomes `_` — a group named `my-group` surfaces as `$SRC_MY_GROUP`,
+not `$SRC_MY-GROUP` (which isn't a valid environment variable name). The same
+rule applies to `out` and `tools` group names.
+
 A plain list lands in the default group, available as `$SRC` and `$LIST_SRC`.
 
 heph distinguishes three dependency kinds by how they affect the cache:
 
 | Field          | Hashed into the key? | Present in the sandbox? | Use for |
-|----------------|----------------------|-------------------------|--------|
+|----------------|----------------------|--------------------------|--------|
 | `deps`         | yes                  | yes                     | Normal build inputs. |
 | `hash_deps`    | yes                  | no                      | Inputs that must invalidate the cache but the command never reads. |
 | `runtime_deps` | no                   | yes (at run only)       | Things needed to *run* an output, not to build it — changing them is a cache hit. |

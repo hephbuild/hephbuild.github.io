@@ -188,6 +188,10 @@ as `$SRC` / `$OUT`) or a **dict** (named groups, exposed as `$SRC_<GROUP>` /
 `$OUT_<GROUP>`). `$LIST_SRC` / `$LIST_SRC_<GROUP>` is a file listing every path
 in the group — handy when a group expands to many files.
 
+Group names are uppercased and sanitized into a valid env var name: any
+character outside `A-Z`, `0-9`, `_` becomes `_` (`my-group` → `$SRC_MY_GROUP`).
+Same rule for `tools` and `out` group names.
+
 ```python title="BUILD"
 target(
     name = "bundle",
