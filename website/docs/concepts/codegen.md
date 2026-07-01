@@ -1,3 +1,4 @@
+---
 sidebar_position: 3
 title: Codegen
 description: How codegen targets write generated outputs back into your source tree, and when to copy vs. rewrite in place.
