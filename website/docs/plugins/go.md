@@ -399,7 +399,8 @@ The `link` struct configures the `build` (binary) target generated for a
 
 When multiple applicable states carry `link`, their values accumulate
 shallow-to-deep: a recursive ancestor's flags, deps, and runtime deps are
-collected first, then the package's own.
+collected first, then the package's own. For `deps` and `runtime_deps`,
+accumulation happens per dep group — see [Naming dep groups](#naming-dep-groups).
 
 ```python title="BUILD"
 provider_state(
@@ -412,13 +413,50 @@ provider_state(
 )
 ```
 
-| Field          | Type           | Hashed | Description |
-|----------------|----------------|--------|-------------|
-| `flags`        | `list[string]` | yes    | Extra flags passed verbatim to `go tool link`, inserted before `-o`. Use for `-X` linker vars, stripping flags (`-s`, `-w`), etc. |
-| `deps`         | `list[string]` | yes    | Target addresses staged into the link sandbox as hashed inputs. `flags` can reference their outputs. |
-| `runtime_deps` | `list[string]` | no     | Target addresses staged with the binary at run time only. Not hashed — they do not affect the cache key. |
+| Field          | Type                                                            | Hashed | Description |
+|----------------|------------------------------------------------------------------|--------|-------------|
+| `flags`        | `list[string]`                                                    | yes    | Extra flags passed verbatim to `go tool link`, inserted before `-o`. Use for `-X` linker vars, stripping flags (`-s`, `-w`), etc. |
+| `deps`         | `string \| list[string] \| map[string, string \| list[string]]`   | yes    | Target addresses staged into the link sandbox as hashed inputs. `flags` can reference their outputs. |
+| `runtime_deps` | `string \| list[string] \| map[string, string \| list[string]]`   | no     | Target addresses staged with the binary at run time only. Not hashed — they do not affect the cache key. |
 
 Unknown keys in the `link` map are rejected with a clear error naming the unrecognized field.
+
+#### Naming dep groups
+
+A single address, or a list of addresses, lands in the default group and is
+staged in the sandbox under the `link_deps` / `link_runtime_deps` key:
+
+```python title="BUILD"
+provider_state(
+    provider = "go",
+    link = {"deps": ["//embed:assets", "//embed:more"]},
+)
+```
+
+Pass a map instead to split `deps` or `runtime_deps` into named groups. Each
+key is used verbatim as the sandbox key its addresses are staged under, and a
+map value can be a single address string or a list:
+
+```python title="BUILD"
+provider_state(
+    provider = "go",
+    link = {
+        "deps": {
+            "assets": ["//embed:assets"],
+            "icons":  "//embed:icons",   # a bare string is a single-address group
+        },
+    },
+)
+```
+
+The same group name declared on a recursive ancestor and on the package itself
+merges shallow-to-deep; different group names stay separate.
+
+:::note
+Named groups are staged verbatim, so avoid reusing the plugin's own internal
+group names (`link_deps`, `link_runtime_deps`, `lib_*`, `gosdk`) — a collision
+merges your addresses into that internal group instead of a distinct one.
+:::
 
 ## Claude Code plugin
 
