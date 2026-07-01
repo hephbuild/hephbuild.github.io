@@ -1,4 +1,3 @@
----
 sidebar_position: 3
 title: Codegen
 description: How codegen targets write generated outputs back into your source tree, and when to copy vs. rewrite in place.
@@ -99,13 +98,19 @@ heph tool gen-gitignore
 ```
 
 scans the workspace for **every** `codegen = "copy"` output and writes them into
-a managed block in the root `.gitignore`:
+a managed block in the root `.gitignore`, pairing each pattern with a comment
+naming the target that emits it:
 
 ```text title=".gitignore"
 # BEGIN heph-generated (managed by `heph tool gen-gitignore` — do not edit)
+# //fmt:generated
 /fmt/generated.txt
 # END heph-generated
 ```
+
+The attribution comment always sits on its own line directly above the pattern
+it names — never trailing on the same line — since git only treats a `#` as a
+comment when it starts the line.
 
 The command is:
 
