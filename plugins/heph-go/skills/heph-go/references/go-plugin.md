@@ -70,7 +70,7 @@ vendored packages. Example: `["vendor", "internal/generated/**"]`.
 For a normal package the provider produces (the two you reference directly):
 
 | Target   | Builds                                          | Labels            |
-|----------|-------------------------------------------------|-------------------|
+|----------|---------------------------------------------------|-------------------|
 | `:build` | The library, or binary for `package main`.      | —                 |
 | `:test`  | The package's in-package tests.                 | `test`, `go-test` |
 
@@ -135,7 +135,7 @@ infer — generated code, embed-only assets, and runtime test files — are wire
 **labelling** the target that produces them.
 
 | Label          | Attach to a target producing…                                           | Pulled into          |
-|----------------|-------------------------------------------------------------------------|----------------------|
+|----------------|-------------------------------------------------------------------------|-----------------------|
 | `go_src`       | Generated `.go` sources (and small embedded files cheap to produce).    | `:build`, `:build_test` |
 | `go_embed_src` | Embed-only assets for `//go:embed` that should not block `query`/`list`. | `:build`, `:build_test` |
 | `go_test_data` | Files a test reads at runtime (fixtures, goldens).                      | `:test`, `:xtest`   |
@@ -283,7 +283,8 @@ descendant packages.
 
 When multiple applicable states carry `link`, their values accumulate
 shallow-to-deep: a recursive ancestor's flags, deps, and runtime deps are
-collected first, then the package's own.
+collected first, then the package's own. `deps`/`runtime_deps` accumulate per
+dep group (see "Naming dep groups" below).
 
 ```python title="BUILD"
 provider_state(
@@ -296,13 +297,38 @@ provider_state(
 )
 ```
 
-| Field          | Type           | Hashed | Description |
-|----------------|----------------|--------|-------------|
-| `flags`        | `list[string]` | yes    | Extra flags passed verbatim to `go tool link`, inserted before `-o`. Use for `-X` linker vars, stripping flags (`-s`, `-w`), etc. |
-| `deps`         | `list[string]` | yes    | Target addresses staged into the link sandbox as hashed inputs. `flags` can reference their outputs. |
-| `runtime_deps` | `list[string]` | no     | Target addresses staged with the binary at run time only. Not hashed — they do not affect the cache key. |
+| Field          | Type                                                            | Hashed | Description |
+|----------------|------------------------------------------------------------------|--------|-------------|
+| `flags`        | `list[string]`                                                    | yes    | Extra flags passed verbatim to `go tool link`, inserted before `-o`. Use for `-X` linker vars, stripping flags (`-s`, `-w`), etc. |
+| `deps`         | `string \| list[string] \| map[string, string \| list[string]]`   | yes    | Target addresses staged into the link sandbox as hashed inputs. `flags` can reference their outputs. |
+| `runtime_deps` | `string \| list[string] \| map[string, string \| list[string]]`   | no     | Target addresses staged with the binary at run time only. Not hashed — they do not affect the cache key. |
 
 Unknown keys in the `link` map are rejected with a clear error naming the unrecognized field.
+
+**Naming dep groups:** a bare string or a list lands in the default group,
+staged in the sandbox under the `link_deps` / `link_runtime_deps` key. Pass a
+map instead to split `deps`/`runtime_deps` into named groups — each key is
+used **verbatim** as the sandbox key its addresses are staged under, and a map
+value can itself be a bare string (single address) or a list:
+
+```python title="BUILD"
+provider_state(
+    provider = "go",
+    link = {
+        "deps": {
+            "assets": ["//embed:assets"],
+            "icons":  "//embed:icons",   # bare string == single-address group
+        },
+    },
+)
+```
+
+The same group name declared on a recursive ancestor and on the package itself
+merges shallow-to-deep; different group names stay separate. Because named
+groups are staged verbatim (not namespaced), avoid reusing the plugin's own
+internal group names (`link_deps`, `link_runtime_deps`, `lib_*`, `gosdk`) — a
+collision merges your addresses into that internal group instead of a distinct
+one.
 
 ### How source/embed resolution actually composes
 
@@ -336,6 +362,7 @@ actually needs the bytes to satisfy `//go:embed` patterns.
 | Non-reproducible builds across machines | using `gotool = "host"` | Switch to a pinned version: `gotool: "1.26.4"` and add `checksums`. |
 | SDK checksum mismatch | `checksums` entry doesn't match the tarball | Look up the correct SHA-256 at https://go.dev/dl/?mode=json. |
 | `test = False` unexpectedly not disabling descendants | missing `recursive = True` | Add `recursive = True` to the `provider_state` to extend to descendants. |
+| A named `link` dep group ends up merged with the plugin's own deps | named group reused an internal group name (`link_deps`, `lib_*`, `gosdk`, …) | Rename the group — named groups are staged verbatim, not namespaced. |
 
 ## Verification commands
 
