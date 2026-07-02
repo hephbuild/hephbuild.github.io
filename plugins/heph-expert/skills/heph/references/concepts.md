@@ -149,6 +149,12 @@ field on an exec target, choosing **how** outputs land:
 - `in_place` transforms tracked files in place; keep them **idempotent** (run
   twice = same bytes) so output stays reproducible and diffs stay stable.
 
+**`in_place` vs. `copy` ownership:** an `in_place` target never writes into a
+file a `copy` target owns (stamped output). A colliding path is left
+untouched — the `copy` target's content survives, only that file is skipped.
+`--frozen` applies the same exemption. Point `copy` and `in_place` targets at
+disjoint files rather than relying on this.
+
 **Conflict detection:** two `copy` targets must never claim overlapping output
 paths (including containment, e.g. a dir output that encompasses a file output).
 `heph validate` flags these across the workspace.

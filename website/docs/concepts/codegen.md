@@ -89,6 +89,16 @@ the same bytes as running them once. That keeps the output reproducible and the
 diff stable.
 :::
 
+:::note
+An `in_place` target never writes into a file a `copy` target owns. If an
+`in_place` output path collides with a `copy` target's output, heph leaves
+that file untouched — the `copy` target's content stays intact, and only that
+file is skipped (any other files the `in_place` target also writes are still
+updated). `--frozen` applies the same exemption, so a `copy`-owned file never
+fails an `in_place` frozen check. Point `copy` and `in_place` targets at
+disjoint files rather than relying on this.
+:::
+
 ## Keeping `.gitignore` in sync: `heph tool gen-gitignore`
 
 `copy` outputs should never be committed, so heph can maintain the `.gitignore`

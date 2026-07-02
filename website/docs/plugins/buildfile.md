@@ -227,6 +227,8 @@ host platform so targets can vary by operating system or CPU architecture.
 | `heph.core.os_raw()` | host OS identifier | `"macos"`, `"linux"` |
 | `heph.core.arch_raw()` | host architecture identifier | `"x86_64"`, `"aarch64"` |
 | `heph.core.pkg()` | current package path | `"tools/build"` |
+| `heph.core.num_cpu()` | CPUs available to the process | `8` |
+| `heph.core.packages(matcher)` | matching workspace package paths | `["tools", "tools/build"]` |
 
 `heph.core.os()` and `heph.core.arch()` return normalized names that match
 the conventions used by container registries and most package distribution
@@ -258,6 +260,36 @@ if heph.core.os() == "linux":
     target(name = "bundle", driver = "exec", run = ["./package-linux.sh"], out = "bundle")
 else:
     target(name = "bundle", driver = "exec", run = ["./package-mac.sh"], out = "bundle")
+```
+
+`heph.core.num_cpu()` returns the number of CPUs available to the process,
+falling back to `1` if the host count can't be determined. Use it to size a
+tool's own parallelism flag instead of hardcoding a number:
+
+```python title="BUILD"
+target(
+    name = "test",
+    driver = "exec",
+    run = ["go test -p {} ./...".format(heph.core.num_cpu())],
+)
+```
+
+`heph.core.packages(matcher)` returns the sorted list of workspace package
+paths matching a [query](./query.md) matcher string — `//foo`, `//foo/...`, or
+a combination joined with `&&`, `||`, `!`. Relative forms (`./`, `..`, `.`)
+resolve against the current package. The matcher is evaluated per package, so
+only package-level matchers are supported; one that needs target-level
+information (`label(...)`, `//pkg:name`) errors instead of silently matching
+nothing.
+
+```python title="BUILD"
+# One check target per package under services/.
+for pkg in heph.core.packages("//services/..."):
+    target(
+        name = "check-" + heph.fs.base(pkg),
+        driver = "exec",
+        run = ["./check.sh " + pkg],
+    )
 ```
 
 ### Sharing symbols with `load()`
