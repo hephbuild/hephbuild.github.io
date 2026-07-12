@@ -41,6 +41,7 @@ lists of strings), not target addresses.
 | `heph.fs.join` | `join(*elems: string) -> string` | Join path elements with `/` and clean the result (Go `path.Join` semantics). |
 | `heph.fs.dir` | `dir(path: string) -> string` | Directory component of `path`. |
 | `heph.fs.base` | `base(path: string) -> string` | Base name of `path`. |
+| `heph.fs.parent` | `parent(filename: string) -> string \| None` | Workspace-root-relative path of the closest `filename`, searching the current package's directory and each ancestor up to the workspace root. `None` if no ancestor has it. |
 
 ```python title="BUILD"
 target(
@@ -58,7 +59,16 @@ _target address_ for use as a build input. Use `heph.fs.glob` when you need
 path strings, and `glob()` when you need a build dependency.
 :::
 
-All four functions enforce their argument types: wrong type, missing required
+`heph.fs.parent` takes a bare file name only — a name containing `/` is an
+error, since a nested path would make "closest parent" ambiguous. It's useful
+for finding a module or config root from a nested package:
+
+```python title="BUILD"
+# Locate the nearest go.mod, e.g. to compute a module-relative path.
+mod = heph.fs.parent("go.mod")  # None if no ancestor package has one
+```
+
+All five functions enforce their argument types: wrong type, missing required
 argument, or unknown keyword produce a clear error naming the function and the
 offending argument.
 

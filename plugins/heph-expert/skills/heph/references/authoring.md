@@ -90,8 +90,9 @@ addresses) and are useful for computing paths at BUILD-eval time.
 | `heph.fs.join(*elems)` | `join(*elems: string) -> string` | Join path elements (`path.Join` semantics). |
 | `heph.fs.dir(path)` | `dir(path: string) -> string` | Directory component of `path`. |
 | `heph.fs.base(path)` | `base(path: string) -> string` | Base name of `path`. |
+| `heph.fs.parent(filename)` | `parent(filename: string) -> string \| None` | Workspace-root-relative path of the closest `filename`, searching the current package's directory then each ancestor up to the workspace root. `None` if no ancestor has it. Bare file name only — `/` in `filename` is an error. |
 
-All four enforce their argument types. Wrong type, missing required arg, or
+All five enforce their argument types. Wrong type, missing required arg, or
 unknown keyword → hard error naming the function and the offending argument.
 
 Note: `heph.fs.glob(pattern)` returns a `list[string]` of path strings; the
@@ -109,9 +110,17 @@ Available in every BUILD file; use it to vary targets by OS/arch.
 | `heph.core.os_raw()` | host OS identifier | `macos`, `linux` |
 | `heph.core.arch_raw()` | host arch identifier | `x86_64`, `aarch64` |
 | `heph.core.pkg()` | current package path | `tools/build` |
+| `heph.core.num_cpu()` | CPUs available to the process (>=1) | `8` |
+| `heph.core.packages(matcher)` | sorted matching workspace package paths | `["tools", "tools/build"]` |
 
 Normalized names match container-registry / distribution conventions; use the
 `*_raw()` forms when a tool or URL expects the host's exact identifiers.
+
+`heph.core.packages(matcher)` takes a query matcher string (`//foo`,
+`//foo/...`, combined with `&&`/`||`/`!`; relative forms resolve against the
+current package) and is evaluated per package — only package-level matchers
+work, a target-level one (`label(...)`, `//pkg:name`) errors instead of
+matching nothing.
 
 ```python title="BUILD"
 target(
