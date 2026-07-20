@@ -45,6 +45,7 @@ const sidebars: SidebarsConfig = {
         'plugins/go',
         'plugins/group',
         'plugins/hostbin',
+        'plugins/http-fetch',
         'plugins/nix',
         'plugins/query',
         'plugins/textfile',

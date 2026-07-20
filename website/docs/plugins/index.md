@@ -26,6 +26,7 @@ through.
 | [Filesystem](./fs.md)   | `fs`                                     | References workspace files and globs as build inputs.                |
 | [Group](./group.md)     | `group`                                  | Bundles targets transparently with no extra work.                    |
 | [Hostbin](./hostbin.md) | `hostbin`                                | Wraps host `PATH` binaries as targets for the build system.          |
+| [HTTP Fetch](./http-fetch.md) | `http_fetch`                       | Downloads a URL, templated over the target's address args, into a cacheable file output. |
 | [Nix](./nix.md)         | `nix`                                    | Builds reproducible tool environments via Nix flakes.                |
 | [Textfile](./textfile.md) | `textfile`                             | Generates text files with optional executable permissions.           |
 

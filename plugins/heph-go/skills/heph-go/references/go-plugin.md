@@ -8,7 +8,7 @@ behavior matters, fetch that page (its `.md` twin is indexed at
 
 `go` is a **provider**: it discovers Go packages (by `go.mod` + sources) and
 generates the targets to build and test them. It registers no driver you call by
-hand. Four **managed drivers** do the underlying work:
+hand. Nine **managed drivers** do the underlying work:
 
 | Driver          | Does                                                                            |
 |-----------------|---------------------------------------------------------------------------------|
@@ -16,6 +16,11 @@ hand. Four **managed drivers** do the underlying work:
 | `go_golist`     | Package metadata analysis — the equivalent of `go list`.                        |
 | `go_compile`    | Compiles a Go package archive (importcfg, `//go:embed` resolution, asm, pack).  |
 | `go_testmain`   | Generates the test `main` for `go test`.                                        |
+| `go_lint`       | Analyze unit: runs `heph-govet`, produces facts + a lint report (backs the internal `_lint-analyze` target). |
+| `go_lint_gate`  | Fails the build on lint findings (backs `lint-check`).                          |
+| `go_lint_fix`   | Applies suggested fixes in place (backs `lint`).                                |
+| `go_format`     | Reformats sources in place (backs `format`).                                    |
+| `go_format_check` | Fails the build if sources aren't formatted (backs `format-check`).           |
 
 You should not interact with these drivers directly; they are internal plumbing.
 
@@ -40,7 +45,8 @@ plugins:
 | Option     | Type                 | Default      | Description |
 |------------|----------------------|--------------|-------------|
 | `gotool`   | `string`             | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` (hermetic SDK downloaded from `go.dev/dl`) or `"host"` (use the `go` binary already on the host's `PATH`). |
-| `checksums` | `map[string, string]` | `{}`        | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`). Look up values at https://go.dev/dl/?mode=json. Without an entry the SDK downloads unverified (warning logged). No effect when `gotool = "host"`. |
+| `govet`    | `string` (target addr) | the plugin's own published `heph-govet` build | The `heph-govet` binary lint/format targets run — see "Linting and formatting" below. |
+| `checksums` | `map[string, string]` | `{}`        | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at https://go.dev/dl/?mode=json. Without an entry the download is unverified (warning logged). SDK entries have no effect when `gotool = "host"`. |
 | `skip`     | `string[]`           | `[]`         | Workspace-relative glob patterns for directories to exclude from Go package discovery. Each pattern is matched against the directory's workspace-relative path. |
 | `walk_db`  | path                 | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
@@ -99,6 +105,51 @@ only read these (e.g. in a dep graph); never write them by hand.
 
 Because module + version are part of the address, a dependency bump changes the
 address and invalidates only the targets importing it.
+
+## Linting and formatting
+
+A Go module gets `lint-check`, `lint`, `format-check`, and `format` targets the
+moment it has a `.golangci.yml`/`.golangci.yaml` at its module (`go.mod`) root
+— no `provider_state` toggle needed. No config file → none of the four exist;
+`:build`/`:test` are unaffected either way. Lint analysis sees the module's
+whole first-party dep graph (via per-package serialized facts), not just the
+package being linted, so interprocedural checks stay accurate across package
+boundaries.
+
+| Target | Driver | Does |
+|---|---|---|
+| `lint-check` | `go_lint_gate` | Gate: fails on lint findings. Reports only. |
+| `lint` | `go_lint_fix` | Fixer: applies suggested fixes back into sources (in-place codegen). |
+| `format-check` | `go_format_check` | Gate: fails if any file isn't formatted. Reports only. |
+| `format` | `go_format` | Fixer: reformats sources in place (in-place codegen). |
+
+Four linters selectable via `.golangci.yml` `linters.default`/`enable`/`disable`:
+`govet` (standard `go vet` set; opt-in extras `shadow`/`fieldalignment`/`nilness`/
+`sortslice`/`unusedwrite` via `linters.settings.govet.enable`), `staticcheck`
+(`SA*`), `gosimple` (`S*`), `stylecheck` (`ST*`) — `checks` patterns per family
+via `linters.settings.{staticcheck,gosimple,stylecheck}.checks`. `default:
+standard` (govet only, the default) / `all` / `none`. `unused` is NOT available
+(needs whole-program analysis, incompatible with the per-package model).
+
+Suppression: `//nolint[:linter1,linter2]` (own line covers next line; trailing
+covers that line; bare/`:all` covers everything — match `staticcheck` for any
+staticcheck/gosimple/stylecheck finding, golangci folds those three into one
+name) and `.golangci.yml` `linters.exclusions` (`generated: lax|strict|disable`,
+`presets: [comments, common-false-positives, legacy, std-error-handling]`,
+`rules: [{linters, path, path-except, text}]`, `paths`/`paths-except`).
+
+Formatters (`formatters:` block): `enable: [gofmt|gofumpt|goimports]` (default
+`gofmt` when unset; applied imports → gofmt → gofumpt regardless of listing
+order); `settings.gofmt.{simplify,rewrite-rules}`; `settings.gofumpt.{module-path,
+extra-rules}`; `settings.goimports.local-prefixes` (sorts/groups only — does not
+add missing imports); `exclusions.{generated,paths}` same shape as linter
+exclusions.
+
+`heph-govet` (the analyzer/formatter binary) downloads automatically via a
+built-in `http_fetch` target — nothing to configure by default. Point the
+`govet` provider option at another target address (e.g. a local build) to use
+a different binary; pin a non-default release download with a
+`"govet/<tag>/<goos>/<goarch>"` entry in `checksums`.
 
 ## Provider functions & `heph.go.build_addr`
 
@@ -363,6 +414,9 @@ actually needs the bytes to satisfy `//go:embed` patterns.
 | SDK checksum mismatch | `checksums` entry doesn't match the tarball | Look up the correct SHA-256 at https://go.dev/dl/?mode=json. |
 | `test = False` unexpectedly not disabling descendants | missing `recursive = True` | Add `recursive = True` to the `provider_state` to extend to descendants. |
 | A named `link` dep group ends up merged with the plugin's own deps | named group reused an internal group name (`link_deps`, `lib_*`, `gosdk`, …) | Rename the group — named groups are staged verbatim, not namespaced. |
+| `heph query all <pkg>` shows no `lint-check`/`lint`/`format-check`/`format` | no `.golangci.yml`/`.golangci.yaml` at the package's module root | Add one — even an empty `linters:\n  default: standard` opts the module in. |
+| `lint`/`format` targets fail to resolve; error mentions `govet` | the `govet` option addr can't be built/fetched (e.g. a release asset that doesn't exist) | Point `govet` at a working target address, or clear an incorrect override so the default download is used. |
+| Suppressed finding still reports | `//nolint` used the registry linter name instead of the golangci name | For staticcheck/gosimple/stylecheck findings, match `//nolint:staticcheck` — golangci folds all three into that one name. |
 
 ## Verification commands
 
