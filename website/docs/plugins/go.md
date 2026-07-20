@@ -9,17 +9,19 @@ description: Go language support — analyze packages and generate library, bina
 Provides Go language support for heph. The `go` provider analyzes Go packages
 and generates targets for building libraries, binaries, and tests. It reads
 package metadata, resolves source files and module dependencies, and wires up
-the targets needed to compile and run Go code. Four managed drivers do the
+the targets needed to compile and run Go code. Managed drivers do the
 underlying work: toolchain provisioning (`go_toolchain`), package metadata
-analysis (`go_golist`), Go package compilation (`go_compile`), and test main
-generation (`go_testmain`).
+analysis (`go_golist`), Go package compilation (`go_compile`), test main
+generation (`go_testmain`), and per-package lint/format analysis (`go_lint`,
+`go_lint_gate`, `go_lint_fix`, `go_format`, `go_format_check`).
 
 ## Driver
 
 A driver is the execution backend that knows how to run a particular kind of
-target. This plugin registers four drivers: `go_toolchain`, `go_golist`,
-`go_compile`, and `go_testmain`. These are internal — you should not interact
-with them directly.
+target. This plugin registers nine drivers: `go_toolchain`, `go_golist`,
+`go_compile`, `go_testmain`, `go_lint`, `go_lint_gate`, `go_lint_fix`,
+`go_format`, and `go_format_check`. These are internal — you should not
+interact with them directly.
 
 ## Enabling it
 
@@ -60,7 +62,8 @@ plugins:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `gotool` | `string` | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` to download the SDK hermetically from `go.dev/dl`, or `"host"` to use the `go` binary already on the host's `PATH`. |
-| `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`). Look up values at [go.dev/dl/?mode=json](https://go.dev/dl/?mode=json). When a key is missing the SDK downloads unverified (a warning is logged). Has no effect when `gotool = "host"`. |
+| `govet` | `string` (target address) | the plugin's own published `heph-govet` build | The `heph-govet` binary that [lint and format targets](#linting-and-formatting) run. See [Pinning the analyzer binary](#pinning-the-analyzer-binary). |
+| `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at [go.dev/dl/?mode=json](https://go.dev/dl/?mode=json). When a key is missing the download is unverified (a warning is logged). SDK checksums have no effect when `gotool = "host"`. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
 | `walk_db` | path | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
@@ -139,6 +142,164 @@ Then build or test by address:
 heph run //cmd/server:build     # compile the binary
 heph run //lib/auth:test        # run the package's tests
 ```
+
+## Linting and formatting
+
+A Go module gets four extra targets the moment it has a `.golangci.yml` (or
+`.golangci.yaml`) at its module root — no `provider_state` toggle needed. Lint
+analysis sees the module's whole first-party dependency graph, not just the
+package being linted, so interprocedural checks (a `printf`-style wrapper, a
+context that's never cancelled, …) stay accurate across package boundaries.
+
+| Target | Does |
+|--------|------|
+| `lint-check` | Fails the build if the package has lint findings. Reports only, writes nothing. |
+| `lint` | Applies the linter's suggested fixes back into the package's sources. |
+| `format-check` | Fails the build if any file in the package isn't formatted. Reports only, writes nothing. |
+| `format` | Reformats the package's sources in place. |
+
+```bash title="terminal"
+heph run //lib/auth:lint-check      # gate: fails on findings
+heph run //lib/auth:lint            # fixer: applies suggested fixes
+heph run //lib/auth:format-check    # gate: fails if unformatted
+heph run //lib/auth:format          # fixer: reformats in place
+```
+
+`lint` and `format` rewrite files in the package directory — the same
+in-place rewrite behavior as any [codegen](../concepts/codegen.md) fixer
+target. A package whose module has no `.golangci.yml` gets none of these four
+targets; `:build` and `:test` are unaffected either way.
+
+### Selecting and configuring linters
+
+`linters.default`/`enable`/`disable` in `.golangci.yml` select among four
+available linters:
+
+| Linter | Covers |
+|--------|--------|
+| `govet` | The standard `go vet` analyzers, plus opt-in ones (`shadow`, `fieldalignment`, `nilness`, `sortslice`, `unusedwrite`). |
+| `staticcheck` | staticcheck (`SA*`) checks. |
+| `gosimple` | gosimple (`S*`) checks. |
+| `stylecheck` | stylecheck (`ST*`) checks. |
+
+```yaml title=".golangci.yml"
+linters:
+  default: standard   # "standard" (govet only, the default), "all", or "none"
+  enable:
+    - staticcheck
+  settings:
+    govet:
+      enable: [shadow]
+      settings:
+        printf:
+          funcs: [Wrapf]
+    staticcheck:
+      checks: [all, -ST1000]
+```
+
+| Key | Effect |
+|-----|--------|
+| `linters.default` | `standard` (`govet` only — the default), `all` (all four linters), or `none`. |
+| `linters.enable` / `linters.disable` | Add or remove linters from the default set, by name. |
+| `linters.settings.govet.enable` / `.disable` / `.enable-all` / `.disable-all` | Turn individual vet analyzers on or off. |
+| `linters.settings.govet.settings.<analyzer>.<flag>` | Per-analyzer flags, e.g. `printf.funcs`, `shadow.strict`. |
+| `linters.settings.{staticcheck,gosimple,stylecheck}.checks` | Check patterns to include, e.g. `all`, `SA1000`, `-ST1003`, `SA1*`. |
+| `linters.settings.stylecheck.initialisms` / `.dot-import-whitelist` / `.http-status-code-whitelist` | Config consumed by specific stylecheck checks. |
+
+:::note
+`unused` needs whole-program analysis and isn't available in this per-package
+model.
+:::
+
+### Suppressing findings
+
+```go title="handler.go"
+func handle() { //nolint:staticcheck
+	...
+}
+```
+
+`//nolint[:linter1,linter2]` on its own line covers the next line of code;
+trailing at the end of a line of code covers that line; bare `//nolint` (or
+`//nolint:all`) covers every linter. Match against `staticcheck` for any
+`staticcheck`/`gosimple`/`stylecheck` finding — golangci-lint folds those
+three into one linter name.
+
+`linters.exclusions` suppresses by rule instead of by comment:
+
+```yaml title=".golangci.yml"
+linters:
+  exclusions:
+    generated: lax        # lax (default) | strict | disable
+    presets:
+      - common-false-positives
+    rules:
+      - linters: [staticcheck]
+        path: "_test\\.go$"
+        text: "S1002"
+    paths:
+      - "third_party/.*"
+```
+
+| Key | Effect |
+|-----|--------|
+| `generated` | Whether findings in generated files are excluded: `lax` (default), `strict`, or `disable`. |
+| `presets` | Built-in exclude patterns: `comments`, `common-false-positives`, `legacy`, `std-error-handling`. |
+| `rules` | Per-rule `linters` / `path` / `path-except` / `text` filters — all present conditions on a rule must match. |
+| `paths` / `paths-except` | Whole-file regexes to exclude (or to exclusively include). |
+
+### Formatters
+
+`format` and `format-check` default to `gofmt` when `.golangci.yml` sets no
+`formatters`. Enable `gofumpt` and/or `goimports` (import sorting only — it
+does not add missing imports) and tune their settings:
+
+```yaml title=".golangci.yml"
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    gofumpt:
+      extra-rules: true
+    goimports:
+      local-prefixes: [github.com/myorg/myrepo]
+  exclusions:
+    generated: lax
+    paths:
+      - "_gen\\.go$"
+```
+
+| Key | Effect |
+|-----|--------|
+| `formatters.enable` | `gofmt` (default), `gofumpt`, `goimports`. Applied imports → gofmt → gofumpt regardless of listing order. |
+| `formatters.settings.gofmt.simplify` / `.rewrite-rules` | `gofmt -s` simplification and rewrite rules. |
+| `formatters.settings.gofumpt.module-path` / `.extra-rules` | gofumpt options. |
+| `formatters.settings.goimports.local-prefixes` | Import groups treated as "local" when sorting. |
+| `formatters.exclusions.generated` / `.paths` | Same shape as the linter exclusions, applied to formatting instead. |
+
+### Pinning the analyzer binary
+
+Lint and format targets run through `heph-govet`, a binary the plugin
+downloads and verifies automatically the first time it's needed — nothing to
+configure by default. The default download is itself an [HTTP Fetch](./http-fetch.md)
+target, checksum-verified against a digest baked into the plugin at release
+time.
+
+Point the `govet` option at a different target address to use another build
+instead — for example one that compiles `heph-govet` from a local source
+tree:
+
+```yaml title=".hephconfig"
+options:
+  gotool: "1.26.4"
+  govet: "//tools/heph-govet:build"
+```
+
+Add a `"govet/<tag>/<goos>/<goarch>"` entry to `checksums` to verify a pinned
+`govet` release download other than the plugin's own build.
 
 ## Provider functions
 
