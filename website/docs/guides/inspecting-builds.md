@@ -89,6 +89,8 @@ the fully resolved form the engine executes.
 heph inspect packages              # all packages
 heph inspect packages cmd/...      # packages under a matcher
 heph inspect functions             # provider-exposed BUILD functions
+heph inspect labels                # every label declared across the workspace
+heph inspect labels //cmd/...      # labels scoped to a matcher
 ```
 
 `functions` lists every provider function available in BUILD files, with its
@@ -96,6 +98,10 @@ typed signature — for example `fs.glob(pattern: string) -> list[string]`.
 Useful when a provider adds its own callable beyond the core
 [builtins](/docs/plugins/buildfile#authoring-build-files), or to check argument
 names and types before writing a call.
+
+`labels` prints the sorted, deduplicated set of labels declared across every
+matching target — a quick way to see what labels exist in a package before
+writing a [query](/docs/plugins/query) predicate against them.
 
 ## Reproducing the environment
 
