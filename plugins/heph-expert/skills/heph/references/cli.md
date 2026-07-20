@@ -45,6 +45,7 @@ must run a target to answer the query.
 | Subcommand | Prints |
 |---|---|
 | `heph inspect packages [MATCHER]` | Packages matching a matcher (all if omitted), one per line. |
+| `heph inspect labels [MATCHER]` | Unique labels declared across targets matching a matcher (all if omitted), sorted, one per line. |
 | `heph inspect hashin <ADDR>` | The target's input hash — the cache key. Does not run the target. |
 | `heph inspect hashout <ADDR>` | Content hash of each output artifact (runs or reads cache). |
 | `heph inspect spec <ADDR>` | The raw, unresolved spec a provider returns, as pretty JSON. |
