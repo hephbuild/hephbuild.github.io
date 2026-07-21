@@ -54,6 +54,36 @@ not a silent fetch of the wrong file.
 | `sha256` | `string` | none | Expected SHA-256 of the downloaded bytes, in hex. When set, a mismatch fails the build. When omitted, the file is fetched **unverified** — the target is only as reproducible as the remote server, and a warning naming the actual hash is logged so you can pin it. |
 | `out` | `string` | the URL's last path segment | Output filename, relative to the target's package. Required when the URL has no usable last segment (for example one ending in `/`). |
 | `executable` | `bool` | `false` | Mark the fetched file executable. |
+| `cache` | `bool` or dict | both tiers on | Caching for the fetched file. See [Cache control](#cache-control). |
+
+## Cache control
+
+A fetch is content-addressed — pinned by `sha256` when set — so it's safe to
+share, and `http_fetch` targets cache in both the local and remote cache by
+default.
+
+`cache` accepts a bare bool or a dict with up to three keys:
+
+| Key | Type | Default | Meaning |
+|-----|------|---------|--------|
+| `enabled` | bool | `true` | Enable local caching for this target. |
+| `remote` | bool | `true` | Enable remote caching for this target. |
+| `history` | int | `1` | Number of past revisions to retain in the local cache (minimum `1`). |
+
+A bare `True` sets both `enabled` and `remote` to `true`. A bare `False`
+disables both. Use the dict form to toggle a tier independently, for example
+keeping a fetch local-only:
+
+```python title="BUILD"
+target(
+    name = "dl",
+    driver = "http_fetch",
+    url = "https://example.com/releases/v1.2.3/tool_{goos}_{goarch}",
+    sha256 = "<sha256hex>",
+    executable = True,
+    cache = {"remote": False},   # keep local-only
+)
+```
 
 ## Notes
 
