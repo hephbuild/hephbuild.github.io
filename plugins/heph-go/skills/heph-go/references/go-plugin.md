@@ -33,7 +33,7 @@ single `plugins:` entry loads the provider and all four drivers:
 plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
-      gotool: "1.26.4"       # required — pinned version or "host"
+      gotool: "1.26.4"       # required — pinned version, "host", or a target address
       skip: []               # optional
       checksums:             # optional; recommended for supply-chain verification
         "1.26.4/linux/amd64": "<sha256hex>"
@@ -44,7 +44,7 @@ plugins:
 
 | Option     | Type                 | Default      | Description |
 |------------|----------------------|--------------|-------------|
-| `gotool`   | `string`             | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` (hermetic SDK downloaded from `go.dev/dl`) or `"host"` (use the `go` binary already on the host's `PATH`). |
+| `gotool`   | `string`             | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` (hermetic SDK downloaded from `go.dev/dl`), `"host"` (use the `go` binary already on the host's `PATH`), or a target address like `"//@heph/bin:go"` (use the toolchain a target produces). |
 | `govet`    | `string` (target addr) | the plugin's own published `heph-govet` build | The `heph-govet` binary lint/format targets run — see "Linting and formatting" below. |
 | `checksums` | `map[string, string]` | `{}`        | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at https://go.dev/dl/?mode=json. Without an entry the download is unverified (warning logged). SDK entries have no effect when `gotool = "host"`. |
 | `skip`     | `string[]`           | `[]`         | Workspace-relative glob patterns for directories to exclude from Go package discovery. Each pattern is matched against the directory's workspace-relative path. |
@@ -70,6 +70,15 @@ vendored packages. Example: `["vendor", "internal/generated/**"]`.
 
 - Uses the `go` binary found on `PATH` inside the sandbox. Non-hermetic:
   different Go versions across machines produce different builds.
+
+**Target** — `gotool` is a target address (e.g. `"//@heph/bin:go"`):
+
+- The plugin builds the given target and uses its output as the Go toolchain —
+  for example a `go` binary exposed by the `hostbin` provider, or a `go` built
+  by a `nix` target.
+- The target must produce a single output: either a `go` binary file, or a
+  directory containing `bin/go`.
+- Reproducibility depends entirely on what the target produces.
 
 ## Generated targets
 

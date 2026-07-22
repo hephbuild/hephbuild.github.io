@@ -50,7 +50,7 @@ plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
     checksum: sha256:<hex>   # optional
     options:
-      gotool: "1.26.4"       # required — pinned version or "host"
+      gotool: "1.26.4"       # required — pinned version, "host", or a target address
       skip: []               # optional
       checksums:             # optional; recommended for supply-chain verification
         "1.26.4/linux/amd64": "<sha256hex>"
@@ -61,7 +61,7 @@ plugins:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `gotool` | `string` | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` to download the SDK hermetically from `go.dev/dl`, or `"host"` to use the `go` binary already on the host's `PATH`. |
+| `gotool` | `string` | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` to download the SDK hermetically from `go.dev/dl`, `"host"` to use the `go` binary already on the host's `PATH`, or a target address like `"//@heph/bin:go"` to use the toolchain a target produces. |
 | `govet` | `string` (target address) | the plugin's own published `heph-govet` build | The `heph-govet` binary that [lint and format targets](#linting-and-formatting) run. See [Pinning the analyzer binary](#pinning-the-analyzer-binary). |
 | `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at [go.dev/dl/?mode=json](https://go.dev/dl/?mode=json). When a key is missing the download is unverified (a warning is logged). SDK checksums have no effect when `gotool = "host"`. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
@@ -94,6 +94,19 @@ options:
 
 The plugin uses the `go` binary found on the host's `PATH`. Builds are not
 reproducible across machines with different Go versions.
+
+**Target** — set `gotool` to a target address:
+
+```yaml title=".hephconfig"
+options:
+  gotool: "//@heph/bin:go"
+```
+
+The plugin builds the given target and uses its output as the Go toolchain —
+for example a `go` binary exposed by the [hostbin](./hostbin.md) provider, or
+a `go` built by a [nix](./nix.md) target. The target must produce a single
+output: either a `go` binary file, or a directory containing `bin/go`.
+Reproducibility depends entirely on what the target produces.
 
 ### Skipping directories
 
