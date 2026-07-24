@@ -11,8 +11,8 @@ few flags make CI runs cleaner and turn heph's guarantees into gates.
 
 ## Plain log output
 
-The interactive TUI assumes a terminal. In CI, force log-only output with
-`--no-tui`.
+The [interactive TUI](./interactive-tui.md) assumes a terminal. In CI, force
+log-only output with `--no-tui`.
 
 ## Fail on stale codegen
 
