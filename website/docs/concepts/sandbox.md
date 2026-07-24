@@ -42,6 +42,40 @@ for production builds.
 `auto` lets the engine choose per target. The sandbox's contents are identical
 either way — only how the files get there differs.
 
+## Output collisions
+
+Every file in a sandbox has exactly one owner. If two different dependencies
+each try to place a file at the same path, the build fails instead of
+silently picking one:
+
+```text
+output collision: pkg/go.mod is produced by two different targets
+(//pkg:_a and //pkg:_b); a sandbox file may be provided by only one target
+```
+
+The check runs before the sandbox is assembled, so a conflict is caught
+immediately rather than producing a sandbox whose contents depend on
+materialization order.
+
+A dependency reached more than once — through a diamond in the build graph, or
+by listing the same target twice — is not a collision: the same target
+claiming the same path repeatedly still resolves to one file. Two targets are
+also free to populate different files under a shared parent directory; only
+the file paths themselves are compared.
+
+To resolve a real collision, narrow one dependency so it no longer overlaps
+the other — for example, exclude the conflicting path from a
+[glob](/docs/plugins/fs), or depend on a single named
+[output group](/docs/concepts/dependencies#outputs-and-groups) instead of a
+target's full output:
+
+```python title="BUILD"
+deps = [
+    glob("**/*", exclude = ["go.mod", "go.sum"]),
+    ":go_mod",   # already provides go.mod and go.sum
+],
+```
+
 ## Inspecting a sandbox
 
 When a target fails, step inside its sandbox with the exact inputs, tools, and
