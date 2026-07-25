@@ -15,8 +15,10 @@ already built — without re-executing.
 1. A machine builds a target and writes the artifacts to its local cache.
 2. heph pushes those artifacts to the remote cache on a background task — the
    build's critical path does not wait on the network.
-3. A second machine with the same inputs misses locally, pulls the artifacts
-   from the remote, and returns them as a cache hit without re-executing.
+3. A second machine with the same inputs misses locally and checks the remote.
+   A matching entry there is enough to call it a cache hit and skip
+   re-executing — the actual output bytes download afterward, lazily, and
+   only for the outputs something reads.
 
 Uploads are best-effort: a remote failure logs a warning but never fails the
 build. After three consecutive failures a cache is skipped for the rest of
