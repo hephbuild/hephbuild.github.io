@@ -222,7 +222,7 @@ caches:
     uri: s3://my-bucket/heph-cache
     read: true    # default
     write: true   # default
-    concurrency: 10  # default
+    concurrency: 256  # default
 ```
 
 Multiple caches are allowed. heph writes to all writable caches in parallel
@@ -234,7 +234,7 @@ loaded from a persisted file) and refreshed when the definitions change.
 | `uri` | string | — | Backend URI. The scheme selects the backend (see table below). |
 | `read` | bool | `true` | Whether to consult this cache on a local miss. |
 | `write` | bool | `true` | Whether to push artifacts here after a local write. Writes happen on a background task — the build does not wait on the network. |
-| `concurrency` | number | `10` | Maximum in-flight requests to this cache at once. |
+| `concurrency` | number | `256` | Maximum in-flight requests to this cache at once. This is a shared ceiling across every target's pull/push against this cache, not a per-target limit. |
 
 Supported URI schemes:
 
