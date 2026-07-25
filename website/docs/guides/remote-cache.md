@@ -22,6 +22,26 @@ Uploads are best-effort: a remote failure logs a warning but never fails the
 build. After three consecutive failures a cache is skipped for the rest of
 the run.
 
+## Bucket layout
+
+Objects are keyed by target address, so a bucket browses like the source
+tree — inspecting it in the S3/GCS console shows which target owns which
+artifact:
+
+| Target | Object key |
+|---|---|
+| `//some/pkg:tgt` | `some/pkg/tgt/<inputhash>/out.tar` |
+| `//some/pkg:tgt@v=linux,vp=arm64` | `some/pkg/tgt@v=linux,vp=arm64/<inputhash>/out.tar` |
+| `//:root_tgt` | `root_tgt/<inputhash>/out.tar` |
+
+`<inputhash>` is the target's input hash — the same value that drives local
+cache hits.
+
+Treat the layout as read-only: don't script against it, since it's not a
+part of heph's stable API and can change between versions. If it does
+change, existing objects are simply never read again — the next build
+repopulates the cache under the new layout, no cleanup needed.
+
 ## Setting up S3
 
 Add a `caches:` block to `.hephconfig`:
