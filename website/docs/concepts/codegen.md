@@ -155,6 +155,14 @@ same-named directory (trailing slash ignored) also conflict.
 Only conflicts between *different* targets are reported — a single target that
 declares both a directory output and a file inside it is valid.
 
+:::note
+An overlap between two [`file()`/`glob()`](/docs/plugins/fs) references is not
+flagged either. Both expose existing workspace source rather than
+materializing new content, so a broad glob and a specific file — or two
+overlapping globs — covering the same path is a normal dependency pattern, not
+a clobber.
+:::
+
 Run `heph validate` in CI alongside `heph tool gen-gitignore` to ensure no two targets
 compete for the same part of the source tree.
 

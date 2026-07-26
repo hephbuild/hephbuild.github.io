@@ -63,6 +63,15 @@ claiming the same path repeatedly still resolves to one file. Two targets are
 also free to populate different files under a shared parent directory; only
 the file paths themselves are compared.
 
+:::note
+Two [`file()`/`glob()`](/docs/plugins/fs) dependencies overlapping is not a
+collision either. The fs provider only surfaces files that already exist in
+the workspace — it never materializes or overwrites — so a broad
+`glob("*.json")` and a specific `file("x.json")` covering the same path carry
+identical bytes and are allowed to share it. A collision between an fs
+dependency and any other target's output is still rejected.
+:::
+
 To resolve a real collision, narrow one dependency so it no longer overlaps
 the other — for example, exclude the conflicting path from a
 [glob](/docs/plugins/fs), or depend on a single named
