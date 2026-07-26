@@ -39,23 +39,12 @@ const config: Config = {
 
   onBrokenLinks: 'throw',
 
-  // Binds "/" to focus the navbar search — the key-hint chip the blueprint
-  // DocTopNav shows inside the search field.
-  clientModules: ['./src/searchHotkey.ts'],
-
-  // Client-side full-text search (lunr). The plugin crawls the built docs and
-  // ships a static index, so search works on GitHub Pages with no backend. The
-  // navbar search box it injects is restyled to the blueprint DocTopNav search
-  // field (mono placeholder + "/" key hint) in src/css/custom.css.
   plugins: [
-    [
-      'docusaurus-lunr-search',
-      {
-        // The landing page ('/') is bespoke marketing chrome, not searchable
-        // prose — keep the index scoped to the docs.
-        excludeRoutes: ['/'],
-      },
-    ],
+    // Local hybrid search. Docs are chunked and embedded at build time; the
+    // browser runs BM25 and vector similarity together over a static index, with
+    // the model served from this origin — no search backend, no third party.
+    // The navbar field it renders is styled in src/css/custom.css.
+    './plugins/orama-search/index.ts',
     // Blueprint OpenGraph cards, rendered per-page at build time (postBuild)
     // via Satori. PNGs land in build/img/og/ and the og:image / twitter:image
     // meta tags are rewritten to absolute URLs under `url`. See src/og/render.ts.

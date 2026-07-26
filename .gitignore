@@ -19,3 +19,7 @@ build/
 .devenv.flake.nix
 devenv.local.nix
 .direnv/
+
+# generated search index + self-hosted embedding model / wasm runtime
+website/static/search/
+website/.search-cache/

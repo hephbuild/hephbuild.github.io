@@ -1,0 +1,272 @@
+/**
+ * Results panel for the docs search field.
+ *
+ * The field itself inherits the blueprint DocTopNav styling from the theme
+ * bridge (`src/css/custom.css`, `.navbar__search*`); everything here is the
+ * dropdown: a flat paper sheet on a hairline, square corners, mono eyebrows for
+ * page groups, cobalt for matches and the active row.
+ */
+
+.search {
+  position: relative;
+}
+
+.input {
+  /* The panel is absolutely positioned against the field, so the field has to
+     win the stacking contest against the article below it. */
+  position: relative;
+  z-index: 2;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 3;
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  border: 1px solid var(--hair-2);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+}
+
+/* Page group eyebrow — the sidebar's faint mono caps label. */
+.group {
+  position: sticky;
+  top: 0;
+  padding: 8px 14px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--hair);
+  border-top: 1px solid var(--hair);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.panel > div:first-child .group {
+  border-top: none;
+}
+/* Last row sits directly on the footer's own hairline — one rule, not two. */
+.panel > div:nth-last-child(2) .hit {
+  border-bottom: none;
+}
+
+.hit {
+  display: block;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--hair);
+  text-decoration: none;
+  /* Flush 2px accent rule slides in on the active row — reserve the space so
+     rows do not shift. */
+  box-shadow: inset 2px 0 0 transparent;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.hit:hover {
+  text-decoration: none;
+}
+
+.hitActive {
+  background: var(--ac-soft);
+  box-shadow: inset 2px 0 0 var(--ac);
+}
+
+.hitTitle {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.hitText {
+  display: block;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.mark {
+  padding: 0 1px;
+  background: var(--ac-soft);
+  color: var(--ac);
+  font-weight: var(--weight-medium);
+}
+
+/* "searching…" / "no matches" — one centred band, same height as a row pair. */
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 0 16px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+.status strong {
+  color: var(--ink);
+  font-weight: var(--weight-semibold);
+}
+
+/* Footer — which ranking answered the query, and the key hints. Sticky so it
+   stays readable while scrolling a long result list. */
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 14px;
+  background: var(--bg-1);
+  border-top: 1px solid var(--hair);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--faint);
+}
+
+.mode {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The semantic half's state is secondary to how the shown results were ranked. */
+.pending {
+  color: var(--steel-300);
+}
+
+.keys {
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Compact (≤996px) — magnifier button + full-screen sheet.
+
+   An inline field cannot share a 390px bar with the hamburger and the wordmark,
+   and a dropdown anchored to it is wider than the screen. So the field collapses
+   to a single tap target and search takes over the viewport while it is open.
+   ========================================================================== */
+
+/* Tap target is 40px square — the visible glyph is 18px. */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--ink-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.toggle:active {
+  color: var(--ac);
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  /* Above the navbar (Infima puts it at 200). */
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  /* dvh, not vh: the mobile URL bar otherwise crops the footer off-screen. */
+  height: 100dvh;
+  background: var(--paper);
+  font-family: var(--font-sans);
+}
+
+.sheetHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 8px 10px 8px 12px;
+  border-bottom: 1px solid var(--hair-2);
+  /* Keeps the field clear of the notch / status bar. */
+  padding-top: calc(8px + env(safe-area-inset-top));
+}
+
+.sheetIcon {
+  display: flex;
+  flex: none;
+  color: var(--faint);
+}
+
+.sheetInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  /* 16px exactly: anything smaller makes iOS Safari zoom the page on focus. */
+  font-size: 16px;
+}
+.sheetInput::placeholder {
+  color: var(--faint);
+  opacity: 1;
+}
+.sheetInput:focus {
+  outline: none;
+}
+.sheetInput::-webkit-search-cancel-button,
+.sheetInput::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.cancel {
+  flex: none;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  color: var(--ac);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sheetBody {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  /* Momentum scrolling without dragging the page underneath. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 996px) {
+  /* Rows are the tap targets here — give them room, and drop the hover tint
+     that a touch device leaves stuck on after a tap. */
+  .hit {
+    padding: 12px 14px;
+  }
+  .hitActive {
+    background: none;
+    box-shadow: inset 2px 0 0 transparent;
+  }
+  .hit:active {
+    background: var(--ac-soft);
+  }
+  .footer {
+    flex: none;
+    padding-bottom: calc(7px + env(safe-area-inset-bottom));
+  }
+  /* No arrow keys, no escape key. */
+  .keys {
+    display: none;
+  }
+}
