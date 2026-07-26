@@ -21,8 +21,9 @@ already built — without re-executing.
    only for the outputs something reads.
 
 Uploads are best-effort: a remote failure logs a warning but never fails the
-build. After three consecutive failures a cache is skipped for the rest of
-the run.
+build. After three consecutive failures a cache is paused with an
+exponential backoff, and automatically resumes on its own the next time a
+request to it succeeds.
 
 ## Bucket layout
 
