@@ -43,10 +43,21 @@ upgrades, because the download cannot be cancelled through transformers.js.
 The panel footer always states which ranking produced the results on screen, so
 any change here must keep that label honest.
 
-Ranking knobs (`BOOST`, `HYBRID_WEIGHTS`, `MIN_SIMILARITY`) and `MODEL_DEADLINE_MS`
-are constants at the top of `engine.ts`; the model and chunk sizes are plugin
-options. Chunk order feeds the cache digest — keep it deterministic or every
-build re-embeds the corpus.
+**Stop-words are deliberately not removed.** An English stop-word list eats
+`out`, `on`, `off`, `all` and `no` — BUILD fields and config values here, not
+filler — and searching `out` then returns nothing. BM25 already discounts words
+that appear everywhere. For the same reason typo tolerance is opt-in per query:
+edit-distance slack on every term wrecks short ones, so a query runs exact first
+and only retries fuzzy when it found nothing at all.
+
+`?search=keyword|hybrid` pins the ranking, so a change can be judged against the
+same query both ways. It also overrides the download heuristics: `keyword` skips
+the model entirely, `hybrid` forces it.
+
+Ranking knobs (`BOOST`, `HYBRID_WEIGHTS`, `MIN_SIMILARITY`, `TYPO_TOLERANCE`) and
+`MODEL_DEADLINE_MS` are constants at the top of `engine.ts`; the model and chunk
+sizes are plugin options. Chunk order feeds the cache digest — keep it
+deterministic or every build re-embeds the corpus.
 
 ## Claude Code plugin marketplace
 

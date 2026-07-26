@@ -20,6 +20,12 @@ import type { SearchHit, SearchResult, SemanticStatus } from './engine';
 import { snippet } from './highlight';
 import styles from './styles.module.css';
 
+/** Footer wording per ranking — `?search=` can pin either. */
+const MODE_LABEL = {
+  hybrid: 'keyword + semantic',
+  keyword: 'keyword',
+} as const;
+
 const MAX_HITS = 8;
 /** Keystroke settling time before a query runs. */
 const DEBOUNCE_MS = 120;
@@ -172,9 +178,12 @@ export default function SearchBar(): JSX.Element {
           )}
           {hits?.length === 0 && (
             <div className={styles.status}>
-              no matches for
-              {' '}
-              <strong>{term.trim()}</strong>
+              {/* One inline child: `.status` is a flex container, and a bare
+                  {' '} between items is whitespace-only, so it never renders. */}
+              <span>
+                {'no matches for '}
+                <strong>{term.trim()}</strong>
+              </span>
             </div>
           )}
 
@@ -214,9 +223,12 @@ export default function SearchBar(): JSX.Element {
               or a mode this browser/connection is not getting. */}
           <div className={styles.footer}>
             <span className={styles.mode}>
-              {result && result !== 'broken' && result.mode === 'hybrid'
-                ? 'ranked by keyword + semantic'
+              {result && result !== 'broken'
+                ? `ranked by ${MODE_LABEL[result.mode]}`
                 : 'ranked by keyword'}
+              {result && result !== 'broken' && result.degraded && (
+                <span className={styles.pending}> · pinned mode not ready</span>
+              )}
               {semantic.state === 'loading' && (
                 <span className={styles.pending}>
                   {` · semantic model ${Math.round(semantic.progress * 100)}%`}

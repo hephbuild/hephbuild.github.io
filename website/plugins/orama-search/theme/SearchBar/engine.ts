@@ -29,8 +29,23 @@ const BOOST = { t: 2.5, b: 2, c: 1 };
  */
 const HYBRID_WEIGHTS = { text: 0.6, vector: 0.4 };
 
-/** Below this cosine similarity a chunk is unrelated, not merely a weak match. */
+/**
+ * Below this cosine similarity a chunk is unrelated, not merely a weak match.
+ * Tuned for hybrid, where BM25 carries keyword-shaped queries and the vector
+ * half only has to add recall — "out" embeds nowhere near 0.55 of any chunk.
+ */
 const MIN_SIMILARITY = 0.55;
+
+/**
+ * Typo tolerance is opt-in per query, not a standing setting.
+ *
+ * Edit distance applied to every term wrecks short ones — with slack on, `out`
+ * also matches `our`, `but` and `output`, and the real hits drown. So a query
+ * runs exact first, and only a query that finds nothing at all is retried with
+ * enough slack to cover a genuine misspelling (`cahce` → `cache` is two edits;
+ * one is not enough).
+ */
+const TYPO_TOLERANCE = 2;
 
 export interface SearchHit {
   url: string;
@@ -52,6 +67,23 @@ const FAILURE_KEY = 'heph-search-semantic-unavailable';
 
 /** What the semantic half is doing. `'off'` means nobody has searched yet. */
 export type Semantic = 'off' | 'loading' | 'ready' | 'unavailable';
+
+/** How a query was, or must be, answered. */
+export type Mode = 'hybrid' | 'keyword';
+
+/**
+ * `?search=keyword|hybrid` pins the ranking, so a change can be judged against
+ * the same query both ways. Absent, the engine picks for itself: keyword until
+ * the model is live, hybrid after.
+ *
+ * Pinning is read as intent, so it also overrides the download heuristics —
+ * `hybrid` forces the model even on a metered connection, `keyword` skips it
+ * outright.
+ */
+export function pinnedMode(): Mode | null {
+  const value = new URLSearchParams(window.location.search).get('search');
+  return value === 'hybrid' || value === 'keyword' ? value : null;
+}
 
 export interface SemanticStatus {
   state: Semantic;
@@ -106,8 +138,13 @@ export function subscribeSemantic(listener: (status: SemanticStatus) => void): (
  * requirement, so anything that says "this will hurt" means we skip it.
  */
 function shouldLoadModel(): boolean {
-  // No WebAssembly, no ONNX runtime.
+  // No WebAssembly, no ONNX runtime — not negotiable, not even by ?search=.
   if (typeof WebAssembly === 'undefined') return false;
+
+  const pinned = pinnedMode();
+  if (pinned === 'keyword') return false;
+  // An explicit ?search=vector|hybrid outranks every heuristic below.
+  if (pinned) return true;
 
   const { connection } = navigator as Navigator & { connection?: Connection };
   // Data Saver is an explicit "do not spend my bandwidth".
@@ -138,15 +175,16 @@ async function buildDb(baseUrl: string): Promise<AnyOrama | null> {
 
   const { create, insertMultiple } = await import('@orama/orama');
   const { stemmer } = await import('@orama/stemmers/english');
-  const { stopwords } = await import('@orama/stopwords/english');
 
   const db = create({
     schema: {
       t: 'string', b: 'string', c: 'string', e: `vector[${file.dim}]`,
     },
-    // Stemming lets "caching" match "cache"; dropping stop-words keeps "how do
-    // I…" from steering the score.
-    components: { tokenizer: { stemming: true, stemmer, stopWords: stopwords } },
+    // Stemming lets "caching" match "cache". Stop-words are deliberately NOT
+    // removed: an English stop-word list eats `out`, `on`, `off`, `all` and
+    // `no`, which in these docs are BUILD fields and config values, not filler.
+    // BM25 already discounts words that appear everywhere.
+    components: { tokenizer: { stemming: true, stemmer } },
   } as Parameters<typeof create>[0]);
 
   await insertMultiple(db, file.chunks.map((chunk) => ({ ...chunk, e: dequantize(chunk.e) })));
@@ -243,7 +281,10 @@ export interface SearchResult {
   /** Which ranking answered *these* hits — not the engine's overall state. A
    *  query fired while the model is still downloading is `'keyword'` even
    *  though the next one may be `'hybrid'`. */
-  mode: 'hybrid' | 'keyword';
+  mode: Mode;
+  /** Set when `?search=` asked for a mode the engine could not deliver, i.e.
+   *  vector or hybrid before the model is live. */
+  degraded: boolean;
   hits: SearchHit[];
 }
 
@@ -261,21 +302,35 @@ export async function runSearch(
     // Over-fetch so the per-anchor de-duplication below still fills the panel.
     limit: limit * 3,
     boost: BOOST,
-    // One edit of slack absorbs typos without dragging in unrelated words.
-    tolerance: 1,
     properties: ['t', 'b', 'c'],
   };
-  const vector = embed ? await embed(term) : null;
+
+  // Decide tolerance on the keyword signal alone. In hybrid mode the vector
+  // half always returns something, so asking "did this query match anything?"
+  // of the merged result would never come back empty and typos would never be
+  // forgiven. Both passes are in-memory and cost well under a frame.
+  const probe = (await search(db, {
+    ...common, mode: 'fulltext', limit: 1, tolerance: 0,
+  } as Parameters<typeof search>[1])) as Results<SearchChunk>;
+  const tolerance = probe.count > 0 ? 0 : TYPO_TOLERANCE;
+
+  const pinned = pinnedMode();
+  const vector = embed && pinned !== 'keyword' ? await embed(term) : null;
+  // Asking for hybrid before the model is live gets keyword results, flagged
+  // rather than silently substituted.
+  const mode: Mode = vector ? 'hybrid' : 'keyword';
+  const degraded = pinned !== null && pinned !== mode;
 
   const params = vector
     ? {
       ...common,
+      tolerance,
       mode: 'hybrid',
       vector: { value: vector, property: 'e' },
       hybridWeights: HYBRID_WEIGHTS,
       similarity: MIN_SIMILARITY,
     }
-    : { ...common, mode: 'fulltext' };
+    : { ...common, tolerance, mode: 'fulltext' };
 
   const results = (await search(
     db,
@@ -307,5 +362,5 @@ export async function runSearch(
     else byPage.set(hit.title, [hit]);
   });
 
-  return { mode: vector ? 'hybrid' : 'keyword', hits: [...byPage.values()].flat() };
+  return { mode, degraded, hits: [...byPage.values()].flat() };
 }
