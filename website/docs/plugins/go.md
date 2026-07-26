@@ -509,6 +509,13 @@ to descendant packages. `test` and `link` apply to the exact declaring package b
 default; add `recursive = True` to extend them to descendants. When the same key
 applies at multiple depths, the deepest (closest) declaration wins.
 
+:::tip
+`heph inspect states //pkg --inherited` prints every `provider_state`
+declaration a package inherits, root first — a quick way to check what a
+package actually sees before chasing it through the BUILD file tree. See
+[Inspecting builds](/docs/guides/inspecting-builds#what-provider_state-applies-to-this-package).
+:::
+
 ### Recognized keys
 
 | Key               | Type                  | Effect |

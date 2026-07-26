@@ -282,6 +282,10 @@ to descendant packages. `test` and `link` apply to the exact declaring package b
 default; set `recursive = True` to extend them to descendants. When the same key
 applies at multiple depths, the **deepest (closest) applicable declaration wins**.
 
+`heph inspect states //pkg --inherited` prints every `provider_state`
+declaration a package inherits, root first — check what a package actually
+sees before chasing it through the BUILD tree by hand.
+
 ```python title="BUILD"
 provider_state(
     provider = "go",
@@ -422,6 +426,7 @@ actually needs the bytes to satisfy `//go:embed` patterns.
 | Non-reproducible builds across machines | using `gotool = "host"` | Switch to a pinned version: `gotool: "1.26.4"` and add `checksums`. |
 | SDK checksum mismatch | `checksums` entry doesn't match the tarball | Look up the correct SHA-256 at https://go.dev/dl/?mode=json. |
 | `test = False` unexpectedly not disabling descendants | missing `recursive = True` | Add `recursive = True` to the `provider_state` to extend to descendants. |
+| Unsure which `provider_state` a package actually sees | multiple ancestors declare the same key | Run `heph inspect states //pkg --inherited` to see the whole chain, root first. |
 | A named `link` dep group ends up merged with the plugin's own deps | named group reused an internal group name (`link_deps`, `lib_*`, `gosdk`, …) | Rename the group — named groups are staged verbatim, not namespaced. |
 | `heph query all <pkg>` shows no `lint-check`/`lint`/`format-check`/`format` | no `.golangci.yml`/`.golangci.yaml` at the package's module root | Add one — even an empty `linters:\n  default: standard` opts the module in. |
 | `lint`/`format` targets fail to resolve; error mentions `govet` | the `govet` option addr can't be built/fetched (e.g. a release asset that doesn't exist) | Point `govet` at a working target address, or clear an incorrect override so the default download is used. |
@@ -433,6 +438,7 @@ actually needs the bytes to satisfy `//go:embed` patterns.
 heph query all //pkg                 # what the provider generated
 heph inspect deps //pkg:build        # are go_src / std / thirdparty edges present?
 heph inspect hashin //pkg:build      # what makes up the cache key
+heph inspect states //pkg --inherited # provider_state declarations this package inherits
 heph run //pkg:build                 # compile
 heph run //pkg:test                  # in-package tests
 heph run //pkg:xtest                 # external tests
