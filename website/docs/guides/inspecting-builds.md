@@ -69,6 +69,23 @@ Only direct edges are checked; transitive users are not included. A target that
 uses `//lib:core` indirectly (through another library) does not appear unless it
 also declares `//lib:core` as an explicit input.
 
+## "How are these two targets connected?"
+
+`deps` and `revdeps` show a target's immediate neighbors. When you need to know
+*how* two targets relate several hops apart, `path` prints the shortest chain
+linking them:
+
+```bash title="terminal"
+heph inspect path //cmd/server:bin //lib:core
+```
+
+Argument order doesn't matter — heph searches both directions and always prints
+the chain from the dependent to the dependency, one address per line. Like
+`revdeps`, it also accepts a file path in place of either address.
+
+If the two targets aren't connected, stdout stays empty and the reason is
+logged instead — useful when scripting a check for "is A reachable from B?".
+
 ## "What did the provider produce?"
 
 A [provider](/docs/plugins) turns BUILD files (or generated sources) into target
