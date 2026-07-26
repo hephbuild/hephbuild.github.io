@@ -128,7 +128,9 @@ The command is:
 - **Scoped.** Only `copy` outputs are listed — `in_place` rewrites are tracked
   sources and never appear.
 - **Anchored.** Paths are workspace-root-relative, so a file becomes
-  `/foo/bar.go`, a directory `/foo/gen/`, and a glob `/foo/gen/**/*.go`.
+  `/foo/bar.go`, a directory `/foo/gen`, and a glob `/foo/gen/**/*.go`. Directory
+  patterns carry no trailing slash, since a `copy` directory output lands in the
+  tree as a symlink — a plain `/foo/gen/` pattern would not match it.
 - **Idempotent & non-destructive.** Only the marked block is rewritten; anything
   you put outside the markers is preserved verbatim. Output is sorted and
   deduplicated, so re-running it produces a stable, diffable result.
@@ -148,9 +150,9 @@ heph validate
 ```
 
 Overlap means more than identical paths. heph also flags **containment**: if one
-target claims the directory `/gen/` and another claims the file `/gen/a.go`,
+target claims the directory `/gen` and another claims the file `/gen/a.go`,
 they overlap because the directory output encompasses the file. A file and a
-same-named directory (trailing slash ignored) also conflict.
+same-named directory also conflict.
 
 Only conflicts between *different* targets are reported — a single target that
 declares both a directory output and a file inside it is valid.
