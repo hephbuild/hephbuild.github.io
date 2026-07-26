@@ -131,6 +131,17 @@
   color: var(--faint);
 }
 
+.mode {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The semantic half's state is secondary to how the shown results were ranked. */
+.pending {
+  color: var(--steel-300);
+}
+
 .keys {
   white-space: nowrap;
 }

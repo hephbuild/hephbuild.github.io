@@ -13,11 +13,12 @@ heph marketing site + docs. npm workspaces: `uikit` (antd-based UI kit) + `websi
 
 Local hybrid search — BM25 + vector similarity via Orama, no backend and no
 third-party service. The plugin chunks `website/docs/**` at its headings, embeds
-each chunk with `Xenova/gte-small` at build time, quantises to int8 and writes:
+each chunk with `Xenova/all-MiniLM-L6-v2` at build time, quantises to int8 and
+writes:
 
 ```
 website/static/search/index.json          # ~270 kB — chunks + embeddings
-website/static/search/models/<model>/…    # ~34 MB — the ONNX weights we self-host
+website/static/search/models/<model>/…    # ~23 MB — the ONNX weights we self-host
 website/static/search/ort/…               # ~31 MB — the ONNX WebAssembly runtime
 ```
 
@@ -33,8 +34,19 @@ upgrade to hybrid when the model lands. Keep it that way — everything heavy is
 behind a dynamic `import()` in `theme/SearchBar/engine.ts`, and the server
 webpack build aliases transformers.js away (it is browser-only).
 
-Ranking knobs (`BOOST`, `HYBRID_WEIGHTS`, `MIN_SIMILARITY`) are constants at the
-top of `engine.ts`; the model and chunk sizes are plugin options.
+**Keyword search is the degraded mode**, and it is a full engine (BM25,
+stemming, stop-words, field boosts, typo tolerance) — not a stub, and not
+something to replace with a second library. The model is skipped outright on
+Data Saver, a 2G connection, no WebAssembly, or after a failure earlier in the
+session; past a 25 s deadline the UI stops promising it. A late arrival still
+upgrades, because the download cannot be cancelled through transformers.js.
+The panel footer always states which ranking produced the results on screen, so
+any change here must keep that label honest.
+
+Ranking knobs (`BOOST`, `HYBRID_WEIGHTS`, `MIN_SIMILARITY`) and `MODEL_DEADLINE_MS`
+are constants at the top of `engine.ts`; the model and chunk sizes are plugin
+options. Chunk order feeds the cache digest — keep it deterministic or every
+build re-embeds the corpus.
 
 ## Claude Code plugin marketplace
 

@@ -32,7 +32,10 @@ export interface OramaSearchOptions {
 }
 
 const DEFAULTS = {
-  model: 'Xenova/gte-small',
+  // 23 MB quantised, 384 dimensions. Every visitor who searches pays for this
+  // download, so it is deliberately the small end of the useful range — a
+  // stronger model like Xenova/gte-small costs 34 MB for a modest gain.
+  model: 'Xenova/all-MiniLM-L6-v2',
   dim: 384,
   batchSize: 16,
 } satisfies Required<OramaSearchOptions>;
@@ -173,29 +176,30 @@ export default function oramaSearchPlugin(
       const docs = collectDocs(allContent as Record<string, Record<string, unknown>>);
       if (docs.length === 0) return;
 
-      const chunks: Omit<SearchChunk, 'e'>[] = [];
-      const texts: string[] = [];
-
-      await Promise.all(docs.map(async (doc) => {
+      // Read concurrently but keep the result ordered by permalink: the chunk
+      // order feeds the cache digest, so interleaved pushes would change the
+      // hash on every build and re-embed the whole corpus for nothing.
+      const ordered = [...docs].sort((a, b) => a.permalink.localeCompare(b.permalink));
+      const perDoc = await Promise.all(ordered.map(async (doc) => {
         const file = doc.source.replace(/^@site\//, `${siteDir}/`);
         const markdown = await fs.readFile(file, 'utf8');
 
-        chunkMarkdown(markdown).forEach((chunk) => {
-          chunks.push({
-            u: chunk.anchor ? `${doc.permalink}#${chunk.anchor}` : doc.permalink,
-            t: doc.title,
-            h: chunk.heading,
-            b: chunk.breadcrumb,
-            c: chunk.content,
-          });
-        });
+        return chunkMarkdown(markdown).map((chunk) => ({
+          u: chunk.anchor ? `${doc.permalink}#${chunk.anchor}` : doc.permalink,
+          t: doc.title,
+          h: chunk.heading,
+          b: chunk.breadcrumb,
+          c: chunk.content,
+        }));
       }));
+
+      const chunks: Omit<SearchChunk, 'e'>[] = perDoc.flat();
 
       // The heading trail goes into the embedding: a chunk read on its own is
       // often ambiguous, the same chunk under "Remote cache > Concurrency" is not.
-      chunks.forEach((chunk) => {
+      const texts = chunks.map((chunk) => {
         const trail = [chunk.t, chunk.b].filter(Boolean).join(' > ');
-        texts.push(`${trail}\n${chunk.c}`);
+        return `${trail}\n${chunk.c}`;
       });
 
       const hash = createHash('sha256')
@@ -209,6 +213,9 @@ export default function oramaSearchPlugin(
         if (existing.hash === hash) return;
       }
 
+      // Wipe first: the output is keyed by model id, so switching models would
+      // otherwise leave the old weights behind and ship both.
+      await fs.rm(outDir, { recursive: true, force: true });
       await fs.mkdir(outDir, { recursive: true });
       await copyModelAssets(model, cacheDir, outDir);
       await copyRuntimeAssets(siteDir, outDir);

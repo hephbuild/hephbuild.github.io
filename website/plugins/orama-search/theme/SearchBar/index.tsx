@@ -13,8 +13,10 @@ import {
 import clsx from 'clsx';
 import { useHistory } from '@docusaurus/router';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import { runSearch, warmEmbedder, warmIndex } from './engine';
-import type { SearchHit } from './engine';
+import {
+  runSearch, subscribeSemantic, warmEmbedder, warmIndex,
+} from './engine';
+import type { SearchHit, SearchResult, SemanticStatus } from './engine';
 import { snippet } from './highlight';
 import styles from './styles.module.css';
 
@@ -37,10 +39,18 @@ export default function SearchBar(): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [term, setTerm] = useState('');
-  const [hits, setHits] = useState<SearchHit[] | null>(null);
+  /** `null` while a query is in flight, `'broken'` if the index would not load. */
+  const [result, setResult] = useState<SearchResult | 'broken' | null>(null);
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
-  const [semantic, setSemantic] = useState(false);
+  const [semantic, setSemantic] = useState<SemanticStatus>({ state: 'off', progress: 0 });
+
+  const hits = result && result !== 'broken' ? result.hits : null;
+  const semanticReady = semantic.state === 'ready';
+
+  // The model's state is owned by the engine, not this component — it can land
+  // long after the query that asked for it.
+  useEffect(() => subscribeSemantic(setSemantic), []);
 
   // Pull the index down while the browser is idle: ~100 kB, so the first query
   // answers immediately. The model is not touched here — 34 MB is not something
@@ -54,19 +64,20 @@ export default function SearchBar(): JSX.Element {
   useEffect(() => {
     const query = term.trim();
     if (query.length < MIN_TERM) {
-      setHits(null);
+      setResult(null);
       return undefined;
     }
 
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      // First real query starts the model download in the background; this
-      // query is answered on keywords alone and re-runs when the model lands.
-      warmEmbedder(baseUrl).then((ready) => !cancelled && setSemantic(ready));
+      // The first real query starts the model download in the background. This
+      // query is answered on keywords alone; the effect re-runs once the model
+      // goes live, so the same term is re-ranked without the user retyping.
+      warmEmbedder(baseUrl);
 
       runSearch(baseUrl, query, MAX_HITS).then((results) => {
         if (cancelled) return;
-        setHits(results ?? []);
+        setResult(results ?? 'broken');
         setActive(0);
       });
     }, DEBOUNCE_MS);
@@ -75,7 +86,9 @@ export default function SearchBar(): JSX.Element {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [term, baseUrl, semantic]);
+    // `semanticReady` — not `semantic` — so that only the model going live
+    // re-runs the query; "loading" and "unavailable" must not cancel it.
+  }, [term, baseUrl, semanticReady]);
 
   // Click outside dismisses the panel.
   useEffect(() => {
@@ -151,7 +164,12 @@ export default function SearchBar(): JSX.Element {
 
       {showPanel && (
         <div className={styles.panel}>
-          {hits === null && <div className={styles.status}>searching…</div>}
+          {result === null && <div className={styles.status}>searching…</div>}
+          {/* An index that will not load is a broken deploy, not an empty
+              result — say so instead of claiming the docs have no match. */}
+          {result === 'broken' && (
+            <div className={styles.status}>search index unavailable — try reloading</div>
+          )}
           {hits?.length === 0 && (
             <div className={styles.status}>
               no matches for
@@ -191,8 +209,23 @@ export default function SearchBar(): JSX.Element {
             );
           })}
 
+          {/* Left half states how these results were ranked and what the
+              semantic half is doing — a download in progress, a live upgrade,
+              or a mode this browser/connection is not getting. */}
           <div className={styles.footer}>
-            <span>{semantic ? 'keyword + semantic' : 'keyword · semantic loading…'}</span>
+            <span className={styles.mode}>
+              {result && result !== 'broken' && result.mode === 'hybrid'
+                ? 'ranked by keyword + semantic'
+                : 'ranked by keyword'}
+              {semantic.state === 'loading' && (
+                <span className={styles.pending}>
+                  {` · semantic model ${Math.round(semantic.progress * 100)}%`}
+                </span>
+              )}
+              {semantic.state === 'unavailable' && (
+                <span className={styles.pending}> · semantic unavailable</span>
+              )}
+            </span>
             <span className={styles.keys}>↑↓ move · ↵ open · esc close</span>
           </div>
         </div>
