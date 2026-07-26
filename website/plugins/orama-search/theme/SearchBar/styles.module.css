@@ -1,0 +1,145 @@
+/**
+ * Results panel for the docs search field.
+ *
+ * The field itself inherits the blueprint DocTopNav styling from the theme
+ * bridge (`src/css/custom.css`, `.navbar__search*`); everything here is the
+ * dropdown: a flat paper sheet on a hairline, square corners, mono eyebrows for
+ * page groups, cobalt for matches and the active row.
+ */
+
+.search {
+  position: relative;
+}
+
+.input {
+  /* The panel is absolutely positioned against the field, so the field has to
+     win the stacking contest against the article below it. */
+  position: relative;
+  z-index: 2;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 3;
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  border: 1px solid var(--hair-2);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+}
+
+/* Page group eyebrow — the sidebar's faint mono caps label. */
+.group {
+  position: sticky;
+  top: 0;
+  padding: 8px 14px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--hair);
+  border-top: 1px solid var(--hair);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.panel > div:first-child .group {
+  border-top: none;
+}
+/* Last row sits directly on the footer's own hairline — one rule, not two. */
+.panel > div:nth-last-child(2) .hit {
+  border-bottom: none;
+}
+
+.hit {
+  display: block;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--hair);
+  text-decoration: none;
+  /* Flush 2px accent rule slides in on the active row — reserve the space so
+     rows do not shift. */
+  box-shadow: inset 2px 0 0 transparent;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.hit:hover {
+  text-decoration: none;
+}
+
+.hitActive {
+  background: var(--ac-soft);
+  box-shadow: inset 2px 0 0 var(--ac);
+}
+
+.hitTitle {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.hitText {
+  display: block;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.mark {
+  padding: 0 1px;
+  background: var(--ac-soft);
+  color: var(--ac);
+  font-weight: var(--weight-medium);
+}
+
+/* "searching…" / "no matches" — one centred band, same height as a row pair. */
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 0 16px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+.status strong {
+  color: var(--ink);
+  font-weight: var(--weight-semibold);
+}
+
+/* Footer — which ranking answered the query, and the key hints. Sticky so it
+   stays readable while scrolling a long result list. */
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 14px;
+  background: var(--bg-1);
+  border-top: 1px solid var(--hair);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--faint);
+}
+
+.keys {
+  white-space: nowrap;
+}
+
+@media (max-width: 996px) {
+  .panel {
+    width: calc(100vw - 32px);
+  }
+  .keys {
+    display: none;
+  }
+}
