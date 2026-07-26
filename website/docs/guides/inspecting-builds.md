@@ -83,15 +83,6 @@ Argument order doesn't matter — heph searches both directions and always print
 the chain from the dependent to the dependency, one address per line. Like
 `revdeps`, it also accepts a file path in place of either address.
 
-Hops follow each target's fully resolved dependencies, including ones another
-dependency contributes only through its
-[transitive sandbox](/docs/concepts/sandbox) rather than a direct declaration.
-Pass `--no-transitive` to follow only the directly declared deps:
-
-```bash title="terminal"
-heph inspect path //cmd/server:bin //lib:core --no-transitive
-```
-
 If the two targets aren't connected, stdout stays empty and the reason is
 logged instead — useful when scripting a check for "is A reachable from B?".
 
