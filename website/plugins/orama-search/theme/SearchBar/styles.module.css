@@ -146,10 +146,126 @@
   white-space: nowrap;
 }
 
+/* ==========================================================================
+   Compact (≤996px) — magnifier button + full-screen sheet.
+
+   An inline field cannot share a 390px bar with the hamburger and the wordmark,
+   and a dropdown anchored to it is wider than the screen. So the field collapses
+   to a single tap target and search takes over the viewport while it is open.
+   ========================================================================== */
+
+/* Tap target is 40px square — the visible glyph is 18px. */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--ink-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.toggle:active {
+  color: var(--ac);
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  /* Above the navbar (Infima puts it at 200). */
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  /* dvh, not vh: the mobile URL bar otherwise crops the footer off-screen. */
+  height: 100dvh;
+  background: var(--paper);
+  font-family: var(--font-sans);
+}
+
+.sheetHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 8px 10px 8px 12px;
+  border-bottom: 1px solid var(--hair-2);
+  /* Keeps the field clear of the notch / status bar. */
+  padding-top: calc(8px + env(safe-area-inset-top));
+}
+
+.sheetIcon {
+  display: flex;
+  flex: none;
+  color: var(--faint);
+}
+
+.sheetInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  /* 16px exactly: anything smaller makes iOS Safari zoom the page on focus. */
+  font-size: 16px;
+}
+.sheetInput::placeholder {
+  color: var(--faint);
+  opacity: 1;
+}
+.sheetInput:focus {
+  outline: none;
+}
+.sheetInput::-webkit-search-cancel-button,
+.sheetInput::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.cancel {
+  flex: none;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  color: var(--ac);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sheetBody {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  /* Momentum scrolling without dragging the page underneath. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 996px) {
-  .panel {
-    width: calc(100vw - 32px);
+  /* Rows are the tap targets here — give them room, and drop the hover tint
+     that a touch device leaves stuck on after a tap. */
+  .hit {
+    padding: 12px 14px;
   }
+  .hitActive {
+    background: none;
+    box-shadow: inset 2px 0 0 transparent;
+  }
+  .hit:active {
+    background: var(--ac-soft);
+  }
+  .footer {
+    flex: none;
+    padding-bottom: calc(7px + env(safe-area-inset-bottom));
+  }
+  /* No arrow keys, no escape key. */
   .keys {
     display: none;
   }

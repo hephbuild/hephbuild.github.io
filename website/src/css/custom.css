@@ -201,13 +201,46 @@ article header h1 {
   text-decoration-color: var(--ac-line);
 }
 
-/* Tables: hairline grid with a mono uppercase header band. */
+/* Tables: hairline grid with a mono uppercase header band.
+
+   `display: table` replaces Infima's scrollable default, so wide reference
+   tables get a scroll container of their own instead (the `table` override in
+   src/theme/MDXComponents.tsx). The table still fills the measure when it fits;
+   when a cell holds something unbreakable it scrolls here rather than pushing
+   the article sideways. */
+.markdownTableScroll {
+  max-width: 100%;
+  overflow-x: auto;
+  /* Don't hand an over-scroll at the table's edge to the page behind it. */
+  overscroll-behavior-x: contain;
+  margin: 0 0 20px;
+}
+.theme-doc-markdown.markdown .markdownTableScroll table {
+  margin-bottom: 0;
+}
+/* On a phone, letting a 4-column reference table compress to 358px gives each
+   column a couple of characters and stacks every cell into a tower of one-word
+   lines. Hold the same 760px measure the table gets on desktop and scroll
+   instead: identical proportions everywhere, and the description column stays
+   the width it was written for. */
+@media (max-width: 996px) {
+  .theme-doc-markdown.markdown .markdownTableScroll table {
+    min-width: 760px;
+  }
+}
 .theme-doc-markdown.markdown table {
   display: table;
   width: 100%;
   border: 1px solid var(--hair);
   border-radius: var(--r-md);
   overflow: hidden;
+}
+/* Reference tables pair a one-word cell with a paragraph-long one. Centring
+   leaves the short cells floating in the middle of a tall row; align to the top
+   so every column starts on the same line. */
+.theme-doc-markdown.markdown table th,
+.theme-doc-markdown.markdown table td {
+  vertical-align: top;
 }
 .theme-doc-markdown.markdown table thead th {
   background: var(--bg-3);
@@ -711,22 +744,12 @@ body:has(.theme-doc-markdown) .navbar__brand::after {
   opacity: 0;
 }
 
-/* On mobile the field shares the bar with the hamburger and the wordmark. The
-   "Source" button is reachable from the hamburger sidebar, so drop it from the
-   bar here; otherwise the search field (position: left) grows into it and the
-   two overlap. */
+/* Below 996px the field is not rendered at all — the search component swaps to
+   a magnifier button and a full-screen sheet (see plugins/orama-search).
+   Docusaurus pins the search container to the right edge of the bar at this
+   width, which is exactly where the "Source" button sits, so drop it here; it
+   is still in the hamburger sidebar. */
 @media (max-width: 996px) {
-  /* Let the field fill the row's leftover space instead of a fixed 260px that
-     overflows narrow phones. */
-  .navbar__search {
-    flex: 1 1 auto;
-    min-width: 0;
-    margin-left: 12px;
-  }
-  .navbar__search-input {
-    width: 100%;
-    max-width: none;
-  }
   .navbar__items--right a.navbar-source {
     display: none;
   }
