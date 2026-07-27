@@ -160,32 +160,74 @@ built-in `http_fetch` target — nothing to configure by default. Point the
 a different binary; pin a non-default release download with a
 `"govet/<tag>/<goos>/<goarch>"` entry in `checksums`.
 
-## Provider functions & `heph.go.build_addr`
+## Build variants
 
-| Function | Signature | Returns |
-|---|---|---|
-| `heph.go.build_addr` | `build_addr(pkg: string, goos: string, goarch: string, tags: list[string]) -> string` | Canonical target address for building `pkg` on the given platform. |
+Go targets compile against a named **build variant** — a reusable factor set
+(`goos`, `goarch`, plus optional `tags`, `goexperiment`, `gcflags`, `ldflags`)
+declared once via `provider_state` and selected by name from an address. No
+implicit default exists; declare at least one variant before building.
 
-All arguments are type-enforced: wrong type, missing required arg, or unknown
-keyword → hard error naming the function and the offending argument.
+Declare, scoped to a Go module (the `go.mod` directory):
 
-Go targets are parameterized by platform via address arguments: `:build` with no
-args builds for the host; `//cmd/server:build@goarch=amd64,goos=linux` (plus
-optional `tags="a,b"`) cross-compiles. In BUILD files, format these addresses
-with `heph.go.build_addr` instead of assembling strings:
-
-```python
-heph.go.build_addr(pkg, goos, goarch, tags = [])
-# heph.go.build_addr("cmd/server", "linux", "amd64")
-#   -> "//cmd/server:build@goarch=amd64,goos=linux"
+```python title="BUILD"
+provider_state(provider = "go", variants = {
+    "base": {"goos": "linux", "goarch": "amd64"},
+    "release": {
+        "inherit": "base",
+        "goexperiment": ["arenas"],
+        "gcflags": ["-l"],
+        "ldflags": ["-s", "-w"],
+        "tags": ["prod"],
+    },
+})
 ```
 
-- `pkg` — the addr's package: `"cmd/server"`, `"@heph/go/std/fmt"`, or a
-  thirdparty `@heph/go/thirdparty/<module>@<version>` path.
-- `tags` are sorted into the address.
-- Pure string formatting — resolves and builds nothing. The result is the
-  canonical address the provider serves, ready for a `deps` field (e.g. embed a
-  linux/amd64 binary in a container image built on a darwin host).
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `goos` | `string` | yes (directly or via `inherit`) | Target OS, e.g. `"linux"`. |
+| `goarch` | `string` | yes (directly or via `inherit`) | Target arch, e.g. `"amd64"`. |
+| `tags` | `list[string]` | no | Build tags. |
+| `goexperiment` | `list[string]` | no | `GOEXPERIMENT` values. |
+| `gcflags` | `list[string]` | no | Extra `go tool compile` flags. |
+| `ldflags` | `list[string]` | no | Extra `go tool link` flags. |
+| `inherit` | `string` | no | Another variant name in the same map to start from. |
+
+No `cgo` field — every heph-built Go target has `CGO_ENABLED=0` unconditionally.
+`inherit` overlays declared fields onto the resolved base; list fields
+(`tags`/`goexperiment`/`gcflags`/`ldflags`) are **replaced wholesale, not
+merged**; `goos`/`goarch` may be omitted when the base sets them; inheritance
+cycles error.
+
+Select with `@v=NAME` on the address:
+
+```bash
+heph run //cmd/server:build@v=release
+heph run //cmd/server:test@v=base
+```
+
+Resolution walks from the target's package up to its module root — closest
+declaring ancestor wins; a `variants` map above the module root (a different
+`go.mod`) doesn't apply. No matching `@v=` → error listing the variant names
+available at that point in the tree.
+
+`:build` on a `package main` target also accepts the plain address (no `@v=`
+at all) as a shortcut: it forwards to whichever declared ancestor variant's
+`goos`/`goarch` match the machine running the command, or fails to resolve if
+none match. Library targets have no such shortcut — always give them `@v=NAME`.
+
+`heph.go.build_addr` formats these addresses instead of hand-assembling them:
+
+```python
+heph.go.build_addr(pkg, variant = "")
+# heph.go.build_addr("cmd/server", "release") -> "//cmd/server:build@v=release"
+# heph.go.build_addr("cmd/server")            -> "//cmd/server:build"
+```
+
+- `pkg` required; `variant` optional, defaults to `""` (plain address).
+- All arguments are type-enforced: wrong type, missing required arg, or
+  unknown keyword → hard error naming the function and the offending argument.
+- Pure string formatting — resolves and builds nothing, and doesn't check that
+  the variant is actually declared.
 - `heph inspect functions` lists every provider-exposed BUILD function.
 
 ## Wiring inputs the provider can't infer
@@ -302,6 +344,7 @@ provider_state(
 | `go_codegen_root` | `bool`                 | When `True` on an ancestor, `go_src` and `go_embed_src` targets are searched across the whole subtree rooted here (matched by package prefix) instead of only the leaf package. Use when one generator feeds many descendant packages. The deepest ancestor with this flag whose package is a prefix of the target's package is chosen. Always applies to descendants, independent of `recursive`. |
 | `go_codegen_deps` | `list[string]`         | Explicit codegen target addresses injected into every descendant package's analysis/build sandbox. For generators that aren't labelled `go_src`. Honored independently of `go_codegen_root` (a BUILD setting only this still injects them). The closest ancestor carrying it wins. Always applies to descendants, independent of `recursive`. |
 | `go_embed_deps`   | `list[string]`         | Explicit embed-asset target addresses injected into every descendant package's compile step. The analog of `go_codegen_deps` for the `go_embed_src` lane — for targets producing embed-only assets not labelled `go_embed_src`. The closest ancestor carrying it wins. |
+| `variants`        | `map[string, struct(...)]` | Declares named [build variants](#build-variants) that this package and its descendants select with `@v=NAME`, bounded to the enclosing Go module. |
 | `test`            | `bool \| struct(...)` | `False` stops test-target generation for this package; `True` / unset runs them. The struct form configures `test`/`xtest` run targets — env vars and pre-run shell lines. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
 | `link`            | `struct(...)`          | Link settings for a `main` package's `build` (binary) target: `flags`, `deps`, `runtime_deps`. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
 | `recursive`       | `bool`                 | When `True`, extends this state's `test` and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
