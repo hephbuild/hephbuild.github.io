@@ -47,6 +47,33 @@ between CI runs turns unchanged targets into instant hits. Cache the heph home
 directory (set with [`homeDir`](/docs/reference/configuration#keys)) across jobs
 using your CI's caching mechanism, keyed on your lockfiles.
 
+## Diagnosing a build that stops making progress
+
+If a run goes quiet — nothing advances for a while even though work is still
+outstanding — heph appends a paragraph naming what's open, for how long, and
+whether any bytes are moving to `<homeDir>/diag/stall-<pid>.log`, and logs the
+path:
+
+```
+WARN No progress; wrote a stall diagnostic path=.heph3/diag/stall-4711.log quiet_for_s=512 open=98
+```
+
+The report itself goes to the file rather than the log stream, so it doesn't
+bury the build output it's meant to annotate. It's appended rather than
+overwritten on each escalation, so the file keeps the full history — an early
+"quiet for 60s" line followed by a later "quiet for 512s" line for the same
+targets says wedged, where either alone just says slow.
+
+Tune or disable it with `--stall-notice`:
+
+```bash title="terminal"
+heph run //... --stall-notice=5m   # only report after 5 minutes without progress
+heph run //... --stall-notice=off  # disable
+```
+
+Default threshold is 60s. The report is a diagnostic, not a stable interface —
+don't parse it.
+
 ## Live build status (GitHub Actions)
 
 The [GitHub Actions hook](../plugins/gha.md) writes a live status comment on the
