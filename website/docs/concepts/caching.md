@@ -83,7 +83,8 @@ is measured once per process (or loaded from a persisted file) and refreshed
 when the cache definitions change.
 
 A failing remote never fails the build — errors are logged once and, after three
-consecutive failures, that cache is skipped for the rest of the run.
+consecutive failures, that cache is paused with an exponential backoff. It
+resumes automatically the next time a request to it succeeds.
 
 For the full set of options and supported backends, see
 [`caches` in the configuration reference](/docs/reference/configuration#caches--remote-shared-caches).
