@@ -86,6 +86,28 @@ the chain from the dependent to the dependency, one address per line. Like
 If the two targets aren't connected, stdout stays empty and the reason is
 logged instead — useful when scripting a check for "is A reachable from B?".
 
+## "What provider_state applies to this package?"
+
+A BUILD file can call `provider_state(provider="X", ...)` to configure a
+provider for its package — and, depending on the provider, for descendant
+packages too. `heph inspect states` shows where those declarations live and
+what reaches a given package:
+
+```bash title="terminal"
+heph inspect states                           # every declaration in the workspace
+heph inspect states //cmd/...                 # scoped to a matcher
+heph inspect states //cmd/server --inherited  # the whole chain //cmd/server is handed
+heph inspect states -p go --json              # narrow to one provider, machine-readable
+```
+
+Packages that declare nothing are omitted, so empty output means "no state
+here". Add `--inherited` to also see what a package picks up from its
+ancestors — each line is tagged with the package that declared it, root
+first. Which of two declarations wins when they share a key is the
+provider's own policy (the [Go plugin](/docs/plugins/go#provider_state--per-package-configuration),
+for example, applies its own `recursive` and closest-wins rules); this
+command only reports what applies, not who wins.
+
 ## "What did the provider produce?"
 
 A [provider](/docs/plugins) turns BUILD files (or generated sources) into target
