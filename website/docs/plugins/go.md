@@ -321,54 +321,107 @@ namespace.
 
 | Function | Signature | Returns |
 |----------|-----------|-------|
-| `heph.go.build_addr` | `build_addr(pkg: string, goos: string, goarch: string, tags: list[string]) -> string` | The canonical target address for building `pkg` on the given platform. |
+| `heph.go.build_addr` | `build_addr(pkg: string, variant: string = "") -> string` | The address of `pkg`'s `build` target, optionally pinned to a named [build variant](#build-variants). |
 
 The function enforces its argument types: wrong type, missing required argument,
 or unknown keyword produces a clear error.
 
-See [Targeting another platform](#targeting-another-platform) for usage details.
+See [Build variants](#build-variants) for usage details.
 
-## Targeting another platform
+## Build variants
 
-Go targets are parameterized by platform through address arguments. An address
-without arguments builds for the host; add `goos` and `goarch` (and optionally
-`tags`) to cross-compile:
+Go targets compile against a **build variant**: a named, reusable set of
+factors — target OS/architecture, build tags, `GOEXPERIMENT`, extra compiler
+and linker flags — declared once and selected by name from an address. There
+is no implicit variant, so declare at least one before building.
 
-```bash title="terminal"
-heph run //cmd/server:build                            # host platform
-heph run //cmd/server:build@goarch=amd64,goos=linux    # cross-compile
-```
-
-In a BUILD file, don't assemble these address strings by hand — the provider
-exposes `heph.go.build_addr()` to format them:
+Declare variants with `provider_state`, scoped to a Go **module** (the
+directory containing `go.mod`):
 
 ```python title="BUILD"
-heph.go.build_addr(pkg, goos, goarch, tags = [])
+provider_state(provider = "go", variants = {
+    "base": {"goos": "linux", "goarch": "amd64"},
+    "release": {
+        "inherit": "base",
+        "goexperiment": ["arenas"],
+        "gcflags": ["-l"],
+        "ldflags": ["-s", "-w"],
+        "tags": ["prod"],
+    },
+})
 ```
 
-| Argument | Default   | Meaning |
-|----------|-----------|-------|
-| `pkg`    | required  | The target's package, e.g. `"cmd/server"`. |
-| `goos`   | required  | Target operating system, e.g. `"linux"`. |
-| `goarch` | required  | Target architecture, e.g. `"amd64"`. |
-| `tags`   | `[]`      | Build tags to compile with. |
+| Field          | Type           | Required                       | Meaning |
+|----------------|----------------|---------------------------------|---------|
+| `goos`         | `string`       | yes (directly or via `inherit`) | Target operating system, e.g. `"linux"`. |
+| `goarch`       | `string`       | yes (directly or via `inherit`) | Target architecture, e.g. `"amd64"`. |
+| `tags`         | `list[string]` | no                               | Build tags to compile with. |
+| `goexperiment` | `list[string]` | no                               | `GOEXPERIMENT` values to enable. |
+| `gcflags`      | `list[string]` | no                               | Extra flags passed to `go tool compile`. |
+| `ldflags`      | `list[string]` | no                               | Extra flags passed to `go tool link`. |
+| `inherit`      | `string`       | no                               | Name of another variant in the same map to start from. |
 
-It returns the canonical address string — exactly the address the provider
-generates for that package — ready to drop into a dependency field:
+`cgo` is not a variant field — every heph-built Go target compiles with
+`CGO_ENABLED=0`, unconditionally.
+
+`inherit` resolves the named variant first, then overlays the fields you set
+on top of it. List fields (`tags`, `goexperiment`, `gcflags`, `ldflags`) are
+**replaced**, not merged — in the example above, `release` ends with
+`tags = ["prod"]`, not `["prod", ...]` plus whatever `base` had. `goos` and
+`goarch` can be omitted when inheriting from a variant that already sets them.
+Inheritance cycles are rejected with an error.
+
+### Selecting a variant
+
+Add `@v=NAME` to a target address:
+
+```bash title="terminal"
+heph run //cmd/server:build@v=release     # compile with the "release" variant
+heph run //cmd/server:test@v=base         # run tests under "base"
+```
+
+A variant is resolved by walking from the target's package up to its module
+root — the closest ancestor package that declares `NAME` wins. A `variants`
+map declared outside the target's module (above its `go.mod`) doesn't apply
+to it. An address with no matching `@v=` fails with the list of variant names
+available at that point in the tree.
+
+A `package main` target's `:build` also accepts the plain address, with no
+`@v=` at all, as a shortcut: it forwards to whichever declared ancestor
+variant's `goos`/`goarch` match the machine running the command.
+
+```bash title="terminal"
+heph run //cmd/server:build     # forwards to a variant matching this machine, if one exists
+```
+
+If no declared variant matches the host, the plain address doesn't resolve.
+Library targets have no such shortcut — always give them `@v=NAME`.
+
+In a BUILD file, don't assemble these address strings by hand — use
+`heph.go.build_addr()`:
+
+```python title="BUILD"
+heph.go.build_addr(pkg, variant = "")
+```
+
+| Argument  | Default | Meaning |
+|-----------|---------|---------|
+| `pkg`     | required | The target's package, e.g. `"cmd/server"`. |
+| `variant` | `""`     | The variant name. Omit (or pass `""`) for the plain, unparameterized address. |
 
 ```python title="cmd/server/BUILD"
 target(
     name = "image",
     driver = "bash",
-    deps = {"bin": heph.go.build_addr("cmd/server", "linux", "amd64")},
+    deps = {"bin": heph.go.build_addr("cmd/server", "release")},
     run = "./package-image.sh $SRC_BIN $OUT",
     out = "image.tar",
 )
 ```
 
-The image target now embeds the linux/amd64 binary regardless of the machine
-running the build. Calling `build_addr` only formats the address — it does not
-resolve or build anything.
+The image target now embeds the `release`-variant binary. Calling `build_addr`
+only formats the address — it does not resolve or build anything, and it does
+not check that the variant is actually declared.
 
 :::note
 List every provider-exposed BUILD function with `heph inspect functions`.
@@ -523,6 +576,7 @@ package actually sees before chasing it through the BUILD file tree. See
 | `go_codegen_root` | `bool`                | When `True` on an ancestor, `go_src` and `go_embed_src` targets are searched across the whole subtree rooted here instead of only the leaf package. Use when one generator feeds many descendant packages. Always applies to descendants, independent of `recursive`. |
 | `go_codegen_deps` | `list[string]`        | Explicit codegen target addresses injected into every descendant package's sandbox. For generators not labelled `go_src`. The closest ancestor carrying it wins. Always applies to descendants, independent of `recursive`. |
 | `go_embed_deps`   | `list[string]`        | Explicit embed-asset target addresses injected into every descendant package's compile step. The analog of `go_codegen_deps` for the `go_embed_src` lane — for targets that produce embed-only assets but aren't labelled `go_embed_src`. The closest ancestor carrying it wins. |
+| `variants`        | `map[string, struct(...)]` | Declares named [build variants](#build-variants) that this package and its descendants select with `@v=NAME`, bounded to the enclosing Go module. |
 | `test`            | `bool \| struct(...)` | Controls test-target generation and configuration. Applies to the exact package by default; add `recursive = True` to extend to descendants. See below. |
 | `link`            | `struct(...)`         | Link settings for a `main` package's `build` (binary) target. Applies to the exact package by default; add `recursive = True` to extend to descendants. See [Link configuration](#link-configuration). |
 | `recursive`       | `bool`                | When `True`, extends this state's `test` and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
