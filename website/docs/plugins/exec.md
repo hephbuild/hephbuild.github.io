@@ -252,3 +252,10 @@ heph run //app:server --shell
 The `bash` and `sh` drivers allocate a PTY and start an interactive shell inside
 the prepared sandbox, so you can inspect `$SRC_*`, re-run the command by hand,
 and see why it broke.
+
+`--shell` needs a single target to attach to: it works on one address, and on
+a [group](/docs/plugins/group) whose single member forwards through to that
+member. It is rejected on a selection that matches more than one target, and
+on a group with more than one member — a group's members are its consumers'
+dependencies, not interactive targets in their own right, so at most one
+target per run can ever hold the terminal.

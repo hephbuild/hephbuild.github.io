@@ -30,3 +30,28 @@ target(
     deps = ["t1", "t2"],
 )
 ```
+
+## Members are dependencies
+
+A group's members are dependencies of whatever depends on the group. They
+run like any other dependency and never receive the interactive terminal,
+even when the group itself is run from an interactive terminal.
+
+A group with **exactly one** member is just an alias: running or shelling
+into the group behaves exactly like running or shelling into that member —
+including through nested groups, where a group of one group of one target
+still forwards through to the target at the bottom.
+
+A group with **two or more** members is not a single target, so
+[`--shell`](/docs/plugins/exec#interactive-debugging-with---shell) on it is
+rejected with an error naming the members and the target to shell into
+instead:
+
+```bash title="terminal"
+$ heph run //pkg:g --shell
+--shell needs exactly one target; //pkg:g is a group with 2 members
+  members: //pkg:t1, //pkg:t2
+  try: heph run --shell //pkg:t1
+```
+
+Plain `heph run //pkg:g` (without `--shell`) still runs every member.
