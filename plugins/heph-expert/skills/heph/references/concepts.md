@@ -113,8 +113,10 @@ edits always trigger a re-scan. Transparent, no configuration. To rule it out
 while debugging, set `HEPH_DEBUG_CACHED_WALKER=0` (every scan reads the
 filesystem directly).
 
-**Reclaim space:** `heph tool gc` sweeps the on-disk cache and removes artifacts
-no longer reachable from any current target.
+**Reclaim space:** a target's revisions beyond its configured `history` count
+are trimmed automatically at the end of the run that writes the new one — no
+action needed. `heph tool gc` sweeps everything else no longer reachable from
+any current target (removed targets, orphaned entries).
 
 ## Reproducibility
 
