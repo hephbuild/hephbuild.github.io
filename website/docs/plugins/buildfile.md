@@ -282,6 +282,11 @@ only package-level matchers are supported; one that needs target-level
 information (`label(...)`, `//pkg:name`) errors instead of silently matching
 nothing.
 
+The list is a snapshot of the workspace taken once per `heph` invocation and
+reused by every package that calls it in that run. A package created earlier
+in the same invocation — for example by a codegen target that writes a new
+BUILD file — isn't visible until the next invocation.
+
 ```python title="BUILD"
 # One check target per package under services/.
 for pkg in heph.core.packages("//services/..."):

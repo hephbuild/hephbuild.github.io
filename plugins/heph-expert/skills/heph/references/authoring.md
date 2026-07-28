@@ -122,6 +122,10 @@ current package) and is evaluated per package — only package-level matchers
 work, a target-level one (`label(...)`, `//pkg:name`) errors instead of
 matching nothing.
 
+The list is a snapshot taken once per `heph` invocation and shared by every
+call in that run — a package created earlier in the same invocation (e.g. by
+a codegen target) isn't visible until the next invocation.
+
 ```python title="BUILD"
 target(
     name = "tool",
