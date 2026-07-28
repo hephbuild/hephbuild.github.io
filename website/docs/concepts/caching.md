@@ -105,8 +105,12 @@ with no caching at all.
 
 ## Reclaiming space
 
-The on-disk cache grows as inputs change. Garbage-collect entries that are no
-longer reachable:
+A target's revisions beyond its configured [`history`](/docs/plugins/exec#cache-control)
+count are trimmed automatically at the end of the run that writes the new one —
+there's nothing to run for that.
+
+The on-disk cache still grows as inputs change. Garbage-collect everything else
+that's no longer reachable (removed targets, orphaned entries):
 
 ```bash title="terminal"
 heph tool gc
