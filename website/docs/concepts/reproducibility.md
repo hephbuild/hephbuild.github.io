@@ -21,3 +21,23 @@ trustworthy — a cache hit is provably the artifact you would have built.
 :::warning
 Non-hermetic targets opt out of caching guarantees. Use them sparingly.
 :::
+
+## Path names must be UTF-8
+
+Every path heph reads — a package directory, a source file matched by a
+`glob()`, an entry discovered while walking the tree — must be valid UTF-8.
+A name that isn't fails the build instead of being silently skipped:
+
+```text
+directory entry name is not valid UTF-8: ... heph paths must be UTF-8 —
+rename it, or `fs.skip` the containing directory
+```
+
+Rename the entry, or add its directory to
+[`fs.skip`](/docs/reference/configuration#fs--workspace-ignore-patterns) to
+exclude it from every walk.
+
+heph does not apply Unicode normalization to path names either: two
+differently-encoded spellings of the same characters (e.g. composed vs.
+decomposed accents) are treated as distinct names, matching what the
+filesystem itself stores.
