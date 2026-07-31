@@ -16,6 +16,7 @@ plugins:
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `version` | semver string | — | Pins the heph release that runs this workspace, so every machine/CI job resolves the same toolchain. Set it once at the top. |
+| `versionFlavour` | string | `""` (std) | Which release flavour self-upgrade downloads: `""` for the default stripped "std" build, or `debug` for the unstripped build (symbolicated backtraces). |
 | `plugins` | list of plugin entries | `[]` | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map. |
 | `homeDir` | path | unset | Where heph keeps its home and cache. |
 | `memCache` | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
