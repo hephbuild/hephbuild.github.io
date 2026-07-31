@@ -321,7 +321,7 @@ namespace.
 
 | Function | Signature | Returns |
 |----------|-----------|-------|
-| `heph.go.build_addr` | `build_addr(pkg: string, variant: string = "") -> string` | The address of `pkg`'s `build` target, optionally pinned to a named [build variant](#build-variants). |
+| `heph.go.build_addr` | `build_addr(pkg: string, variant: string = "") -> string` | The address of `pkg`'s `build` target, optionally pinned to a named [build variant](#build-variants). `pkg` accepts a package path or a path relative to the calling BUILD file's package. |
 
 The function enforces its argument types: wrong type, missing required argument,
 or unknown keyword produces a clear error.
@@ -406,7 +406,7 @@ heph.go.build_addr(pkg, variant = "")
 
 | Argument  | Default | Meaning |
 |-----------|---------|---------|
-| `pkg`     | required | The target's package, e.g. `"cmd/server"`. |
+| `pkg`     | required | The target's package, e.g. `"cmd/server"`. Starting with `./` or `../`, it resolves relative to the calling BUILD file's package instead — same rules as [relative addresses](../reference/addresses.md#relative-forms). A path that resolves outside the workspace is an error. |
 | `variant` | `""`     | The variant name. Omit (or pass `""`) for the plain, unparameterized address. |
 
 ```python title="cmd/server/BUILD"
@@ -422,6 +422,13 @@ target(
 The image target now embeds the `release`-variant binary. Calling `build_addr`
 only formats the address — it does not resolve or build anything, and it does
 not check that the variant is actually declared.
+
+`pkg` can also be given relative to the calling package:
+
+```python title="cmd/server/BUILD"
+heph.go.build_addr("./worker", "release")   # -> //cmd/server/worker:build@v=release
+heph.go.build_addr("../shared")             # -> //cmd/shared:build
+```
 
 :::note
 List every provider-exposed BUILD function with `heph inspect functions`.
