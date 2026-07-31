@@ -40,6 +40,27 @@ heph run //...
 This is useful in sandboxed environments or where you manage toolchains
 yourself.
 
+### Pinning a release flavour
+
+Each release publishes two flavours of the `heph` binary:
+
+- **std** — the default. Small; stripped of debug symbols.
+- **debug** — same behavior, but keeps symbols so in-process backtraces
+  (`--diag-backtrace`, panic backtraces) resolve to function names and
+  file/line instead of raw addresses.
+
+`versionFlavour` selects which one self-upgrade downloads:
+
+```yaml title=".hephconfig"
+version: v1.2.3
+versionFlavour: debug
+```
+
+Changing `versionFlavour` alone — without bumping `version` — is enough to
+trigger a re-download on the next run. `heph version` reports the running
+flavour as part of the build metadata (e.g. `v1.2.3+gcf0045d9.debug`); the
+std flavour reports nothing extra.
+
 ## Keys
 
 Every key below is optional.
@@ -47,6 +68,7 @@ Every key below is optional.
 | Key         | Type                          | Default | Description |
 |-------------|-------------------------------|---------|-------------|
 | `version`   | string                        | unset   | Pins the heph release for this workspace. When set, heph automatically downloads and re-execs into the pinned version on startup. See [Pinning the version](#pinning-the-version). |
+| `versionFlavour` | string                   | `""` (std) | Selects which release flavour self-upgrade downloads: `""` for std, or `debug` for the unstripped build. See [Pinning a release flavour](#pinning-a-release-flavour). |
 | `plugins`   | list of plugin entries        | `[]`    | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map and, for `url:` entries, an optional `checksum`. |
 | `homeDir`   | path                          | unset   | Where heph keeps its home and cache. |
 | `fs`        | `{skip: string[]}`            | `{}`    | Workspace-wide ignore patterns shared with all tree-walking plugins. |
