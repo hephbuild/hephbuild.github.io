@@ -1,1 +1,310 @@
-LS0tCnRpdGxlOiAiQnVpbGRmaWxlIgpzaWRlYmFyX3Bvc2l0aW9uOiAyCmRlc2NyaXB0aW9uOiBQYWNrYWdlIHByb3ZpZGVyIHRoYXQgc2NhbnMgdGhlIHdvcmtzcGFjZSBmb3IgU3RhcmxhcmsgQlVJTEQgZmlsZXMgYW5kIHBhcnNlcyB0YXJnZXQgZGVmaW5pdGlvbnMgZnJvbSB0aGVtLgotLS0KCiMgQnVpbGRmaWxlCgpUaGUgYnVpbGRmaWxlIHBsdWdpbiBpcyBhIHBhY2thZ2UgcHJvdmlkZXIgdGhhdCBzY2FucyB0aGUgd29ya3NwYWNlIGZvciBCVUlMRApmaWxlcyBjb250YWluaW5nIFN0YXJsYXJrIGNvZGUgYW5kIHBhcnNlcyB0YXJnZXQgZGVmaW5pdGlvbnMgZnJvbSB0aGVtLiBJdApldmFsdWF0ZXMgZWFjaCBCVUlMRCBmaWxlIGFzIFN0YXJsYXJrIHRvIGV4dHJhY3QgdGFyZ2V0cyBhbG9uZyB3aXRoIHRoZWlyCmRyaXZlcnMsIGNvbmZpZ3VyYXRpb24sIGxhYmVscywgYW5kIHRyYW5zaXRpdmUgZGVwZW5kZW5jaWVzLCB0aGVuIGhhbmRzIHRob3NlCnRhcmdldHMgdG8gdGhlIGJ1aWxkIGVuZ2luZS4gQlVJTEQgZmlsZSBuYW1pbmcgaXMgY3VzdG9taXphYmxlIHRocm91Z2ggZ2xvYgpwYXR0ZXJucywgYW5kIGBsb2FkKClgIHN0YXRlbWVudHMgbGV0IHlvdSBzaGFyZSBzeW1ib2xzIGFjcm9zcyBCVUlMRCBmaWxlcyBzbwpjb21tb24gZGVmaW5pdGlvbnMgY2FuIGJlIHJldXNlZCB0aHJvdWdob3V0IHRoZSB3b3Jrc3BhY2UuCgojIyBQcm92aWRlcgoKQSBwcm92aWRlciBkaXNjb3ZlcnMgdGFyZ2V0cyBhbmQgbWFrZXMgdGhlbSBhdmFpbGFibGUgdG8gdGhlIGJ1aWxkIGVuZ2luZQp3aXRob3V0IHJ1bm5pbmcgYW55IG9mIHRoZSB3b3JrIGl0c2VsZjsgdGhlIGFjdHVhbCBleGVjdXRpb24gaXMgZGVsZWdhdGVkIHRvCndoYXRldmVyIGRyaXZlciBlYWNoIHRhcmdldCBuYW1lcy4KCiMjIEVuYWJsaW5nIGl0CgpCdWlsdC1pbi4gUmVnaXN0ZXIgaW4gYC5oZXBoY29uZmlnYCB1bmRlciBgcGx1Z2luc2Agd2l0aCBgYnVpbHRpbjogYnVpbGRmaWxlYC4KVGhlIHBsdWdpbiBzY2FucyB0aGUgd29ya3NwYWNlIGZvciBCVUlMRCBmaWxlcyAob3IgY3VzdG9tIHBhdHRlcm5zKSBhbmQKYXV0b21hdGljYWxseSBtYWtlcyB0aG9zZSB0YXJnZXRzIGF2YWlsYWJsZSB0byB0aGUgYnVpbGQgZW5naW5lLgoKIyMgQ29uZmlndXJhdGlvbgoKUmVnaXN0ZXIgdGhlIHByb3ZpZGVyIGFuZCwgb3B0aW9uYWxseSwgdHVuZSB3aGljaCBmaWxlIG5hbWVzIGl0IHRyZWF0cyBhcyBCVUlMRApmaWxlczoKCmBgYHlhbWwgdGl0bGU9Ii5oZXBoY29uZmlnIgpwbHVnaW5zOgogIC0gYnVpbHRpbjogYnVpbGRmaWxlCiAgICBvcHRpb25zOgogICAgICBwYXR0ZXJuczoKICAgICAgICAtIEJVSUxECiAgICAgICAgLSAiKi5CVUlMRCIKYGBgCgojIyMgT3B0aW9ucwoKfCBPcHRpb24gfCBUeXBlIHwgRGVmYXVsdCB8IERlc2NyaXB0aW9uIHwKfC0tLS0tLS0tfC0tLS0tLXwtLS0tLS0tLS18LS0tLS0tLS0tLS0tLXwKfCBgcGF0dGVybnNgIHwgYHN0cmluZ1tdYCB8IGBbIkJVSUxEIiwgIiouQlVJTEQiXWAgfCBHbG9iIHBhdHRlcm5zIGZvciBCVUlMRCBmaWxlIG5hbWVzIHRvIHJlY29nbml6ZS4gfAp8IGBza2lwYCB8IGBzdHJpbmdbXWAgfCBgW11gIHwgV29ya3NwYWNlLXJlbGF0aXZlIGdsb2IgcGF0dGVybnMgZm9yIGRpcmVjdG9yaWVzIHRvIGV4Y2x1ZGUgZnJvbSB0aGUgQlVJTEQgZmlsZSB3YWxrLiB8CnwgYGRlZmF1bHREcml2ZXJgIHwgYHN0cmluZ2AgfCBgIiJgIHwgRHJpdmVyIG5hbWUgdG8gdXNlIHdoZW4gYSB0YXJnZXQgb21pdHMgYGRyaXZlcmAuIEFuIGV4cGxpY2l0IGBkcml2ZXJgIGluIGB0YXJnZXQoKWAgYWx3YXlzIHdpbnMuIHwKfCBgaW5kZW50YCB8IG51bWJlciB8IGA0YCB8IEluZGVudGF0aW9uIHdpZHRoIGluIHNwYWNlcyBwZXIgbGV2ZWwsIHVzZWQgYnkgW2BoZXBoIHRvb2wgYnVpbGQtZm10YF0oL2RvY3MvZ3VpZGVzL2Zvcm1hdHRpbmctYnVpbGQtZmlsZXMpLiB8CgojIyMgU2tpcHBpbmcgZGlyZWN0b3JpZXMKClVzZSBgc2tpcGAgdG8gcHJldmVudCB0aGUgcHJvdmlkZXIgZnJvbSBkZXNjZW5kaW5nIGludG8gZGlyZWN0b3JpZXMgeW91IGRvbid0CndhbnQgc2Nhbm5lZCDigJQgdmVuZG9yZWQgY29kZSwgZ2VuZXJhdGVkIG91dHB1dCB0cmVlcywgbGFyZ2UgdGhpcmQtcGFydHkKc3VidHJlZXMsIGV0Yy4gRWFjaCBwYXR0ZXJuIGlzIG1hdGNoZWQgYWdhaW5zdCB0aGUgd29ya3NwYWNlLXJlbGF0aXZlIHBhdGggb2YKdGhlIGRpcmVjdG9yeS4KCmBgYHlhbWwgdGl0bGU9Ii5oZXBoY29uZmlnIgpwbHVnaW5zOgogIC0gYnVpbHRpbjogYnVpbGRmaWxlCiAgICBvcHRpb25zOgogICAgICBza2lwOgogICAgICAgIC0gdmVuZG9yCiAgICAgICAgLSAidGhpcmRfcGFydHkvKioiCiAgICAgICAgLSAiZ2VuZXJhdGVkLyoiCmBgYAoKYHNraXBgIGlzIGEgaGFyZCBib3VuZGFyeTogaXQgYXBwbGllcyB0byBkaXNjb3ZlcnkgKmFuZCogdG8gZGlyZWN0IHRhcmdldApyZXNvbHV0aW9uLiBBZGRyZXNzaW5nIGEgdGFyZ2V0IGluc2lkZSBhIHNraXBwZWQgc3VidHJlZSDigJQgZm9yIGV4YW1wbGUKYGhlcGggcnVuIC8vdmVuZG9yL3BrZzpsaWJgIOKAlCByZXR1cm5zIG5vdCBmb3VuZCwgdGhlIHNhbWUgYXMgaWYgdGhlIEJVSUxECmZpbGUgd2VyZSBuZXZlciB0aGVyZS4KCiMjIyBEZWZhdWx0IGRyaXZlcgoKSWYgbW9zdCB0YXJnZXRzIGluIHlvdXIgd29ya3NwYWNlIHVzZSB0aGUgc2FtZSBkcml2ZXIsIHNldCBgZGVmYXVsdERyaXZlcmAgc28KYHRhcmdldCgpYCBjYWxscyBjYW4gb21pdCB0aGUgYGRyaXZlcmAgZmllbGQ6CgpgYGB5YW1sIHRpdGxlPSIuaGVwaGNvbmZpZyIKcGx1Z2luczoKICAtIGJ1aWx0aW46IGJ1aWxkZmlsZQogICAgb3B0aW9uczoKICAgICAgZGVmYXVsdERyaXZlcjogYmFzaApgYGAKCmBgYHB5dGhvbiB0aXRsZT0iQlVJTEQiCiMgZHJpdmVyIGlzIG9taXR0ZWQg4oCUIGZhbGxzIGJhY2sgdG8gImJhc2giCnRhcmdldCgKICAgIG5hbWUgPSAiaGVsbG8iLAogICAgcnVuID0gWyJlY2hvIGhlbGxvIl0sCiAgICBvdXQgPSAiaGVsbG8udHh0IiwKKQoKIyBleHBsaWNpdCBkcml2ZXIgYWx3YXlzIHdpbnMKdGFyZ2V0KAogICAgbmFtZSA9ICJnZW4iLAogICAgZHJpdmVyID0gImV4ZWMiLAogICAgcnVuID0gWyIuL2dlbi5zaCJdLAogICAgb3V0ID0gImdlbi50eHQiLAopCmBgYAoKQSB0YXJnZXQgdGhhdCBvbWl0cyBgZHJpdmVyYCB3aGVuIG5vIGBkZWZhdWx0RHJpdmVyYCBpcyBjb25maWd1cmVkIGlzIGFuIGVycm9yLgoKIyMgVXNhZ2UKCkEgbWF0Y2hpbmcgQlVJTEQgZmlsZSBkZWZpbmVzIHRhcmdldHMgYnkgY2FsbGluZyBgdGFyZ2V0KClgIGluIFN0YXJsYXJrOgoKYGBgcHl0aG9uIHRpdGxlPSJCVUlMRCIKdGFyZ2V0KAogICAgbmFtZSA9ICJoZWxsbyIsCiAgICBkcml2ZXIgPSAic2giLAogICAgcnVuID0gWyJlY2hvIGhlbGxvIl0sCikKYGBgCgojIyBBdXRob3JpbmcgQlVJTEQgZmlsZXMKCkJVSUxEIGZpbGVzIGFyZSB3cml0dGVuIGluIFN0YXJsYXJrIOKAlCBhIHNtYWxsLCBkZXRlcm1pbmlzdGljIGRpYWxlY3Qgb2YgUHl0aG9uLgpUaGUgcGx1Z2luIGV4cG9zZXMgYSBmaXhlZCBzZXQgb2YgYnVpbHRpbnM6Cgp8IEJ1aWx0aW4gfCBSZXR1cm5zIHwgUHVycG9zZSB8CnwtLS0tLS0tLS18LS0tLS0tLS0tfC0tLS0tLS0tLS18CnwgYHRhcmdldChuYW1lLCBkcml2ZXIsICoqa3dhcmdzKWAgfCB0aGUgdGFyZ2V0J3MgYWRkcmVzcyB8IERlY2xhcmUgYSB0YXJnZXQuIHwKfCBgZmlsZShwYXRoLCBhYnM9RmFsc2UpYCB8IGEgZmlsZSBhZGRyZXNzIHwgUmVmZXJlbmNlIG9uZSB3b3Jrc3BhY2UgZmlsZSBhcyBhbiBpbnB1dC4gfAp8IGBnbG9iKHBhdHRlcm4sIGV4Y2x1ZGU9Tm9uZSwgYWJzPUZhbHNlKWAgfCBhIGdsb2IgYWRkcmVzcyB8IFJlZmVyZW5jZSBtYW55IGZpbGVzIGJ5IHBhdHRlcm4uIHwKfCBgcXVlcnkoZXhwcilgIHwgYSBxdWVyeSBhZGRyZXNzIHwgUmVmZXJlbmNlIGFsbCB0YXJnZXRzIG1hdGNoaW5nIGEgW3F1ZXJ5IGV4cHJlc3Npb25dKC9kb2NzL3BsdWdpbnMvcXVlcnkpLiB8CnwgYHN0cnVjdCgqKmt3YXJncylgIHwgYSBzdHJ1Y3QgfCBCdW5kbGUgbmFtZWQgdmFsdWVzIHRvIHBhc3MgaW50byBhIGZpZWxkLiB8CnwgYGdldF9wa2coKWAgfCB0aGUgY3VycmVudCBwYWNrYWdlIHBhdGggfCBDb21wdXRlIGFkZHJlc3NlcyByZWxhdGl2ZSB0byB3aGVyZSB0aGUgQlVJTEQgZmlsZSBsaXZlcy4gUHJlZmVyIGBoZXBoLmNvcmUucGtnKClgLiB8CnwgYHByb3ZpZGVyX3N0YXRlKHByb3ZpZGVyLCAqKmt3YXJncylgIHwg4oCUIHwgSGFuZCBwYWNrYWdlLWxldmVsIHN0YXRlIHRvIGEgcHJvdmlkZXIuIHwKfCBgaGVwaC5jb3JlYCB8IG5hbWVzcGFjZSB8IEhvc3QgcGxhdGZvcm0gaW5mbyBhbmQgY3VycmVudCBwYWNrYWdlLiBTZWUgW2JlbG93XSgjaGVwaGNvcmUtLWhvc3QtcGxhdGZvcm0pLiB8CgpgZmlsZSgpYCBhbmQgYGdsb2IoKWAgcmVzb2x2ZSB0byBbZmlsZXN5c3RlbV0oLi9mcy5tZCkgYWRkcmVzc2VzOyBgcXVlcnkoKWAKcmVzb2x2ZXMgdG8gYSBbcXVlcnldKC4vcXVlcnkubWQpIGFkZHJlc3MuIEFsbCB0aHJlZSBkcm9wIHN0cmFpZ2h0IGludG8gYQpkZXBlbmRlbmN5IGZpZWxkOgoKYGBgcHl0aG9uIHRpdGxlPSJCVUlMRCIKdGFyZ2V0KAogICAgbmFtZSA9ICJsaW50IiwKICAgIGRyaXZlciA9ICJncm91cCIsCiAgICBkZXBzID0gW3F1ZXJ5KCIvLy4uLiAmJiBsYWJlbChsaW50KSIpXSwKKQoKdGFyZ2V0KAogICAgbmFtZSA9ICJsaWIiLAogICAgZHJpdmVyID0gImJhc2giLAogICAgZGVwcyA9IFtnbG9iKCJzcmMvKiovKi5nbyIsIGV4Y2x1ZGUgPSAic3JjLyoqLypfdGVzdC5nbyIpXSwKICAgIHJ1biA9ICJnbyBidWlsZCAtbyAkT1VUIC4vc3JjIiwKICAgIG91dCA9ICJsaWIiLAopCmBgYAoKQnkgZGVmYXVsdCBwYXRocyBhcmUgcmVzb2x2ZWQgcmVsYXRpdmUgdG8gdGhlIEJVSUxEIGZpbGUncyBwYWNrYWdlOyBwYXNzCmBhYnMgPSBUcnVlYCB0byByZXNvbHZlIGZyb20gdGhlIHdvcmtzcGFjZSByb290IGluc3RlYWQuIFBhdGhzIGFyZSBsZXhpY2FsbHkKbm9ybWFsaXplZCDigJQgYC4vYCBwcmVmaXhlcyBhbmQgZW1wdHkgc2VnbWVudHMgYXJlIGNvbGxhcHNlZCwgYC4uYCBjb21wb25lbnRzCnJlc29sdmUgYWdhaW5zdCB0aGUgcGFja2FnZSBwYXRoLCBhbmQgYSBwYXRoIHdob3NlIGAuLmAgc2VnbWVudHMgZXNjYXBlIHRoZQp3b3Jrc3BhY2Ugcm9vdCBpcyBhbiBlcnJvci4KCiMjIyBgdGFyZ2V0KClgIOKAlCB3aGF0IGJ1aWxkZmlsZSByZWFkcywgYW5kIHdoYXQgaXQgZm9yd2FyZHMKCmB0YXJnZXQoKWAgaW50ZXJwcmV0cyBvbmx5IHRoZSBmaWVsZHMgdGhhdCBkZXNjcmliZSB0aGUgdGFyZ2V0IHRvIHRoZSBlbmdpbmUg4oCUCmV2ZXJ5dGhpbmcgZWxzZSBpcyBoYW5kZWQgdmVyYmF0aW0gdG8gdGhlICoqZHJpdmVyKio6Cgp8IEZpZWxkIHwgUmVxdWlyZWQgfCBNZWFuaW5nIHwKfC0tLS0tLS18LS0tLS0tLS0tLXwtLS0tLS0tLS18CnwgYG5hbWVgIHwgeWVzIHwgVGhlIHRhcmdldCdzIG5hbWUgd2l0aGluIGl0cyBwYWNrYWdlLiB8CnwgYGRyaXZlcmAgfCBubyogfCBUaGUgZHJpdmVyIHRoYXQgZXhlY3V0ZXMgaXQgKGBiYXNoYCwgYGdvX2dvbGlzdGAsIGBncm91cGAsIOKApikuIFJlcXVpcmVkIHdoZW4gYGRlZmF1bHREcml2ZXJgIGlzIG5vdCBzZXQuIHwKfCBgbGFiZWxzYCB8IG5vIHwgQSBsYWJlbCBvciBsaXN0IG9mIGxhYmVscywgdXNlZCBieSBbcXVlcnldKC4vcXVlcnkubWQpIGFuZCBtYXRjaGVycy4gfAp8IGB0cmFuc2l0aXZlYCB8IG5vIHwgU2FuZGJveCBzZXR0aW5ncyBwcm9wYWdhdGVkIHRvIHRhcmdldHMgdGhhdCBkZXBlbmQgb24gdGhpcyBvbmUuIHwKfCBgYXBwcm92YWxgIHwgbm8gfCBgVHJ1ZWAsIG9yIGB7InJlcXVpcmVkIjogVHJ1ZSwgIm5vdGljZSI6IFsuLi5dfWAgdG8gZ2F0ZSBleGVjdXRpb24gb24gZXhwbGljaXQgdXNlciBjb25maXJtYXRpb24uIFNlZSBbQXBwcm92YWwgZ2F0ZXNdKC9kb2NzL2NvbmNlcHRzL2FwcHJvdmFsKS4gfAoKOjo6bm90ZQpBbnkgb3RoZXIga2V5d29yZCAoYHJ1bmAsIGBkZXBzYCwgYG91dGAsIGBlbnZgLCBgY2FjaGVgLCBgY29kZWdlbmAsIOKApikgaXMKKipkcml2ZXItZGVmaW5lZCoqLiBidWlsZGZpbGUgZG9lcyBub3QgaW50ZXJwcmV0IGl0IOKAlCBpdCBmb3J3YXJkcyB0aGUgdmFsdWUgdG8KdGhlIG5hbWVkIGRyaXZlciwgd2hpY2ggZGVjaWRlcyB3aGF0IGl0IG1lYW5zLiBGb3IgdGhlIGZpZWxkcyBhIGdpdmVuIGRyaXZlcgphY2NlcHRzLCBzZWUgdGhhdCBkcml2ZXIncyBwYWdlLCBlLmcuIFtFeGVjXSguL2V4ZWMubWQpIGZvciBgYmFzaGAvYHNoYC9gZXhlY2AuCjo6OgoKYHRhcmdldCgpYCByZXR1cm5zIHRoZSBuZXcgdGFyZ2V0J3MgYWRkcmVzcywgc28geW91IGNhbiBiaW5kIGl0IHRvIGEgdmFyaWFibGUKYW5kIHJlZmVyZW5jZSBpdCBmcm9tIGFub3RoZXIgdGFyZ2V0IGluc3RlYWQgb2YgcmV0eXBpbmcgdGhlIGFkZHJlc3M6CgpgYGBweXRob24gdGl0bGU9IkJVSUxEIgpsaWIgPSB0YXJnZXQobmFtZSA9ICJsaWIiLCBkcml2ZXIgPSAiYmFzaCIsIHJ1biA9ICJnbyBidWlsZCAtbyAkT1VUIC4iLCBvdXQgPSAibGliIikKCnRhcmdldCgKICAgIG5hbWUgPSAiaW1hZ2UiLAogICAgZHJpdmVyID0gImJhc2giLAogICAgZGVwcyA9IHsiYmluIjogbGlifSwKICAgIHJ1biA9ICJjcCAkU1JDX0JJTiAkT1VUIiwKICAgIG91dCA9ICJpbWFnZSIsCikKYGBgCgojIyMgUmVsYXRpdmUgYWRkcmVzc2VzCgpJbnNpZGUgYSBCVUlMRCBmaWxlLCBgZGVwc2AgKGFuZCBhbnkgb3RoZXIgYWRkcmVzcyBmaWVsZCkgYWNjZXB0IHJlbGF0aXZlCmFkZHJlc3MgZm9ybXMgcmVzb2x2ZWQgYWdhaW5zdCB0aGUgQlVJTEQgZmlsZSdzIG93biBwYWNrYWdlLiBUaGlzIGF2b2lkcwpyZXBlYXRpbmcgdGhlIHBhY2thZ2UgcGF0aCBmb3IgdGFyZ2V0cyB0aGF0IGxpdmUgbmVhcmJ5LgoKYGBgcHl0aG9uIHRpdGxlPSJhcHAvQlVJTEQiCnV0aWwgPSB0YXJnZXQobmFtZSA9ICJ1dGlsIiwgZHJpdmVyID0gImV4ZWMiLCBydW4gPSAiLi4uIiwgb3V0ID0gInV0aWwiKQoKdGFyZ2V0KAogICAgbmFtZSA9ICJzZXJ2ZXIiLAogICAgZHJpdmVyID0gImV4ZWMiLAogICAgZGVwcyA9IFsKICAgICAgICAiOnV0aWwiLCAgICAgICAgICAjIHNhbWUgYXMgLy9hcHA6dXRpbAogICAgICAgICIuL3Byb3RvOmFwaSIsICAgICMgc2FtZSBhcyAvL2FwcC9wcm90bzphcGkKICAgICAgICAiLi4vc2hhcmVkOmxpYiIsICAjIHNhbWUgYXMgLy9zaGFyZWQ6bGliCiAgICBdLAogICAgcnVuID0gIi4uLiIsCiAgICBvdXQgPSAic2VydmVyIiwKKQpgYGAKClNlZSBbQWRkcmVzc2VzIOKGkiBSZWxhdGl2ZSBmb3Jtc10oL2RvY3MvcmVmZXJlbmNlL2FkZHJlc3NlcyNyZWxhdGl2ZS1mb3JtcykgZm9yIHRoZSBmdWxsIHJlZmVyZW5jZSB0YWJsZS4KCiMjIyBgaGVwaC5jb3JlYCDigJQgaG9zdCBwbGF0Zm9ybQoKYGhlcGguY29yZWAgaXMgYSBuYW1lc3BhY2UgYXZhaWxhYmxlIGluIGV2ZXJ5IEJVSUxEIGZpbGUuIFVzZSBpdCB0byByZWFkIHRoZQpob3N0IHBsYXRmb3JtIHNvIHRhcmdldHMgY2FuIHZhcnkgYnkgb3BlcmF0aW5nIHN5c3RlbSBvciBDUFUgYXJjaGl0ZWN0dXJlLgoKfCBGdW5jdGlvbiB8IFJldHVybnMgfCBFeGFtcGxlIHZhbHVlcyB8CnwtLS0tLS0tLS0tfC0tLS0tLS0tLXwtLS0tLS0tLS0tLS0tLS0tfAp8IGBoZXBoLmNvcmUub3MoKWAgfCBub3JtYWxpemVkIE9TIG5hbWUgfCBgImRhcndpbiJgLCBgImxpbnV4ImAsIGAid2luZG93cyJgIHwKfCBgaGVwaC5jb3JlLmFyY2goKWAgfCBub3JtYWxpemVkIGFyY2hpdGVjdHVyZSB8IGAiYW1kNjQiYCwgYCJhcm02NCJgIHwKfCBgaGVwaC5jb3JlLm9zX3JhdygpYCB8IGhvc3QgT1MgaWRlbnRpZmllciB8IGAibWFjb3MiYCwgYCJsaW51eCJgIHwKfCBgaGVwaC5jb3JlLmFyY2hfcmF3KClgIHwgaG9zdCBhcmNoaXRlY3R1cmUgaWRlbnRpZmllciB8IGAieDg2XzY0ImAsIGAiYWFyY2g2NCJgIHwKfCBgaGVwaC5jb3JlLnBrZygpYCB8IGN1cnJlbnQgcGFja2FnZSBwYXRoIHwgYCJ0b29scy9idWlsZCJgIHwKfCBgaGVwaC5jb3JlLm51bV9jcHUoKWAgfCBDUFVzIGF2YWlsYWJsZSB0byB0aGUgcHJvY2VzcyB8IGA4YCB8CnwgYGhlcGguY29yZS5wYWNrYWdlcyhtYXRjaGVyKWAgfCBtYXRjaGluZyB3b3Jrc3BhY2UgcGFja2FnZSBwYXRocyB8IGBbInRvb2xzIiwgInRvb2xzL2J1aWxkIl1gIHwKCmBoZXBoLmNvcmUub3MoKWAgYW5kIGBoZXBoLmNvcmUuYXJjaCgpYCByZXR1cm4gbm9ybWFsaXplZCBuYW1lcyB0aGF0IG1hdGNoCnRoZSBjb252ZW50aW9ucyB1c2VkIGJ5IGNvbnRhaW5lciByZWdpc3RyaWVzIGFuZCBtb3N0IHBhY2thZ2UgZGlzdHJpYnV0aW9uCnRvb2xzLiBgaGVwaC5jb3JlLm9zX3JhdygpYCBhbmQgYGhlcGguY29yZS5hcmNoX3JhdygpYCByZXR1cm4gdGhlIGV4YWN0CmlkZW50aWZpZXJzIHRoZSBob3N0IHJlcG9ydHMg4oCUIHVzZSB0aG9zZSB3aGVuIGEgdG9vbCBvciBVUkwgc2NoZW1lIGV4cGVjdHMKbm9uLW5vcm1hbGl6ZWQgbmFtZXMuCgpgaGVwaC5jb3JlLnBrZygpYCByZXR1cm5zIHRoZSBjdXJyZW50IHBhY2thZ2UgcGF0aCDigJQgdGhlIHNhbWUgdmFsdWUgYXMgdGhlCnRvcC1sZXZlbCBgZ2V0X3BrZygpYCwgd2hpY2ggc3RpbGwgd29ya3MgYnV0IGBoZXBoLmNvcmUucGtnKClgIGlzIHByZWZlcnJlZC4KCmBgYHB5dGhvbiB0aXRsZT0iQlVJTEQiCiMgRG93bmxvYWQgYSBwbGF0Zm9ybS1zcGVjaWZpYyBiaW5hcnkKdGFyZ2V0KAogICAgbmFtZSA9ICJ0b29sIiwKICAgIGRyaXZlciA9ICJleGVjIiwKICAgIHJ1biA9IFsKICAgICAgICAiY3VybCAtZnNTTG8gJE9VVCBodHRwczovL3JlbGVhc2VzLmV4YW1wbGUuY29tL3Rvb2wve30ve30vdG9vbCIuZm9ybWF0KAogICAgICAgICAgICBoZXBoLmNvcmUub3MoKSwKICAgICAgICAgICAgaGVwaC5jb3JlLmFyY2goKSwKICAgICAgICApLAogICAgXSwKICAgIG91dCA9ICJ0b29sIiwKKQpgYGAKCmBgYHB5dGhvbiB0aXRsZT0iQlVJTEQiCiMgQnVpbGQgZGlmZmVyZW50IHRhcmdldHMgcGVyIHBsYXRmb3JtCmlmIGhlcGguY29yZS5vcygpID09ICJsaW51eCI6CiAgICB0YXJnZXQobmFtZSA9ICJidW5kbGUiLCBkcml2ZXIgPSAiZXhlYyIsIHJ1biA9IFsiLi9wYWNrYWdlLWxpbnV4LnNoIl0sIG91dCA9ICJidW5kbGUiKQplbHNlOgogICAgdGFyZ2V0KG5hbWUgPSAiYnVuZGxlIiwgZHJpdmVyID0gImV4ZWMiLCBydW4gPSBbIi4vcGFja2FnZS1tYWMuc2giXSwgb3V0ID0gImJ1bmRsZSIpCmBgYAoKYGhlcGguY29yZS5udW1fY3B1KClgIHJldHVybnMgdGhlIG51bWJlciBvZiBDUFVzIGF2YWlsYWJsZSB0byB0aGUgcHJvY2VzcywKZmFsbGluZyBiYWNrIHRvIGAxYCBpZiB0aGUgaG9zdCBjb3VudCBjYW4ndCBiZSBkZXRlcm1pbmVkLiBVc2UgaXQgdG8gc2l6ZSBhCnRvb2wncyBvd24gcGFyYWxsZWxpc20gZmxhZyBpbnN0ZWFkIG9mIGhhcmRjb2RpbmcgYSBudW1iZXI6CgpgYGBweXRob24gdGl0bGU9IkJVSUxEIgp0YXJnZXQoCiAgICBuYW1lID0gInRlc3QiLAogICAgZHJpdmVyID0gImV4ZWMiLAogICAgcnVuID0gWyJnbyB0ZXN0IC1wIHt9IC4vLi4uIi5mb3JtYXQoaGVwaC5jb3JlLm51bV9jcHUoKSldLAopCmBgYAoKYGhlcGguY29yZS5wYWNrYWdlcyhtYXRjaGVyKWAgcmV0dXJucyB0aGUgc29ydGVkIGxpc3Qgb2Ygd29ya3NwYWNlIHBhY2thZ2UKcGF0aHMgbWF0Y2hpbmcgYSBbcXVlcnldKC4vcXVlcnkubWQpIG1hdGNoZXIgc3RyaW5nIOKAlCBgLy9mb29gLCBgLy9mb28vLi4uYCwgb3IKYSBjb21iaW5hdGlvbiBqb2luZWQgd2l0aCBgJiZgLCBgfHxgLCBgIWAuIFJlbGF0aXZlIGZvcm1zIChgLi9gLCBgLi5gLCBgLmApCnJlc29sdmUgYWdhaW5zdCB0aGUgY3VycmVudCBwYWNrYWdlLiBUaGUgbWF0Y2hlciBpcyBldmFsdWF0ZWQgcGVyIHBhY2thZ2UsIHNvCm9ubHkgcGFja2FnZS1sZXZlbCBtYXRjaGVycyBhcmUgc3VwcG9ydGVkOyBvbmUgdGhhdCBuZWVkcyB0YXJnZXQtbGV2ZWwKaW5mb3JtYXRpb24gKGBsYWJlbCguLi4pYCwgYC8vcGtnOm5hbWVgKSBlcnJvcnMgaW5zdGVhZCBvZiBzaWxlbnRseSBtYXRjaGluZwpub3RoaW5nLgoKYGBgcHl0aG9uIHRpdGxlPSJCVUlMRCIKIyBPbmUgY2hlY2sgdGFyZ2V0IHBlciBwYWNrYWdlIHVuZGVyIHNlcnZpY2VzLy4KZm9yIHBrZyBpbiBoZXBoLmNvcmUucGFja2FnZXMoIi8vc2VydmljZXMvLi4uIik6CiAgICB0YXJnZXQoCiAgICAgICAgbmFtZSA9ICJjaGVjay0iICsgaGVwaC5mcy5iYXNlKHBrZyksCiAgICAgICAgZHJpdmVyID0gImV4ZWMiLAogICAgICAgIHJ1biA9IFsiLi9jaGVjay5zaCAiICsgcGtnXSwKICAgICkKYGBgCgojIyMgU2hhcmluZyBzeW1ib2xzIHdpdGggYGxvYWQoKWAKCmBsb2FkKClgIGltcG9ydHMgc3ltYm9scyBmcm9tIGFub3RoZXIgU3RhcmxhcmsgZmlsZSBzbyBjb21tb24gZGVmaW5pdGlvbnMgbGl2ZQppbiBvbmUgcGxhY2UuIEEgbG9hZGVkIGhlbHBlciByZWdpc3RlcnMgaXRzIHRhcmdldHMgYWdhaW5zdCB0aGUgcGFja2FnZSB0aGF0CipjYWxscyogaXQsIG5vdCB0aGUgZmlsZSBpdCBpcyBkZWZpbmVkIGluOgoKYGBgcHl0aG9uIHRpdGxlPSJCVUlMRCIKbG9hZCgiLy9idWlsZC9kZWZzOmdvLnN0YXIiLCAiZ29fc2VydmljZSIpCgpnb19zZXJ2aWNlKG5hbWUgPSAiYXBpIikKYGBgCgpUaGUgcGF0aCBhcmd1bWVudCBmb2xsb3dzIHRoZSBzYW1lIHJ1bGVzIGFzIGBmaWxlKClgL2BnbG9iKClgIGFib3ZlOiBgLy9wa2cvLi4uYAppcyB3b3Jrc3BhY2Utcm9vdC1yZWxhdGl2ZSwgYC4vYC9gLi4vYCBpcyByZXNvbHZlZCBhZ2FpbnN0IHRoZSBjdXJyZW50IHBhY2thZ2UsCmFuZCBhIHBhdGggd2hvc2UgYC4uYCBzZWdtZW50cyB3b3VsZCByZXNvbHZlIG91dHNpZGUgdGhlIHdvcmtzcGFjZSByb290IGlzIGFuCmVycm9yIHJhdGhlciB0aGFuIGJlaW5nIGZvbGxvd2VkLgo=
+---
+title: "Buildfile"
+sidebar_position: 2
+description: Package provider that scans the workspace for Starlark BUILD files and parses target definitions from them.
+---
+
+# Buildfile
+
+The buildfile plugin is a package provider that scans the workspace for BUILD
+files containing Starlark code and parses target definitions from them. It
+evaluates each BUILD file as Starlark to extract targets along with their
+drivers, configuration, labels, and transitive dependencies, then hands those
+targets to the build engine. BUILD file naming is customizable through glob
+patterns, and `load()` statements let you share symbols across BUILD files so
+common definitions can be reused throughout the workspace.
+
+## Provider
+
+A provider discovers targets and makes them available to the build engine
+without running any of the work itself; the actual execution is delegated to
+whatever driver each target names.
+
+## Enabling it
+
+Built-in. Register in `.hephconfig` under `plugins` with `builtin: buildfile`.
+The plugin scans the workspace for BUILD files (or custom patterns) and
+automatically makes those targets available to the build engine.
+
+## Configuration
+
+Register the provider and, optionally, tune which file names it treats as BUILD
+files:
+
+```yaml title=".hephconfig"
+plugins:
+  - builtin: buildfile
+    options:
+      patterns:
+        - BUILD
+        - "*.BUILD"
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `patterns` | `string[]` | `["BUILD", "*.BUILD"]` | Glob patterns for BUILD file names to recognize. |
+| `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from the BUILD file walk. |
+| `defaultDriver` | `string` | `""` | Driver name to use when a target omits `driver`. An explicit `driver` in `target()` always wins. |
+| `indent` | number | `4` | Indentation width in spaces per level, used by [`heph tool build-fmt`](/docs/guides/formatting-build-files). |
+
+### Skipping directories
+
+Use `skip` to prevent the provider from descending into directories you don't
+want scanned — vendored code, generated output trees, large third-party
+subtrees, etc. Each pattern is matched against the workspace-relative path of
+the directory.
+
+```yaml title=".hephconfig"
+plugins:
+  - builtin: buildfile
+    options:
+      skip:
+        - vendor
+        - "third_party/**"
+        - "generated/*"
+```
+
+`skip` is a hard boundary: it applies to discovery *and* to direct target
+resolution. Addressing a target inside a skipped subtree — for example
+`heph run //vendor/pkg:lib` — returns not found, the same as if the BUILD
+file were never there.
+
+### Default driver
+
+If most targets in your workspace use the same driver, set `defaultDriver` so
+`target()` calls can omit the `driver` field:
+
+```yaml title=".hephconfig"
+plugins:
+  - builtin: buildfile
+    options:
+      defaultDriver: bash
+```
+
+```python title="BUILD"
+# driver is omitted — falls back to "bash"
+target(
+    name = "hello",
+    run = ["echo hello"],
+    out = "hello.txt",
+)
+
+# explicit driver always wins
+target(
+    name = "gen",
+    driver = "exec",
+    run = ["./gen.sh"],
+    out = "gen.txt",
+)
+```
+
+A target that omits `driver` when no `defaultDriver` is configured is an error.
+
+## Usage
+
+A matching BUILD file defines targets by calling `target()` in Starlark:
+
+```python title="BUILD"
+target(
+    name = "hello",
+    driver = "sh",
+    run = ["echo hello"],
+)
+```
+
+## Authoring BUILD files
+
+BUILD files are written in Starlark — a small, deterministic dialect of Python.
+The plugin exposes a fixed set of builtins:
+
+| Builtin | Returns | Purpose |
+|---------|---------|----------|
+| `target(name, driver, **kwargs)` | the target's address | Declare a target. |
+| `file(path, abs=False)` | a file address | Reference one workspace file as an input. |
+| `glob(pattern, exclude=None, abs=False)` | a glob address | Reference many files by pattern. |
+| `query(expr)` | a query address | Reference all targets matching a [query expression](/docs/plugins/query). |
+| `struct(**kwargs)` | a struct | Bundle named values to pass into a field. |
+| `get_pkg()` | the current package path | Compute addresses relative to where the BUILD file lives. Prefer `heph.core.pkg()`. |
+| `provider_state(provider, **kwargs)` | — | Hand package-level state to a provider. |
+| `heph.core` | namespace | Host platform info and current package. See [below](#hephcore--host-platform). |
+
+`file()` and `glob()` resolve to [filesystem](./fs.md) addresses; `query()`
+resolves to a [query](./query.md) address. All three drop straight into a
+dependency field:
+
+```python title="BUILD"
+target(
+    name = "lint",
+    driver = "group",
+    deps = [query("//... && label(lint)")],
+)
+
+target(
+    name = "lib",
+    driver = "bash",
+    deps = [glob("src/**/*.go", exclude = "src/**/*_test.go")],
+    run = "go build -o $OUT ./src",
+    out = "lib",
+)
+```
+
+By default paths are resolved relative to the BUILD file's package; pass
+`abs = True` to resolve from the workspace root instead. Paths are lexically
+normalized — `./` prefixes and empty segments are collapsed, `..` components
+resolve against the package path, and a path whose `..` segments escape the
+workspace root is an error.
+
+### `target()` — what buildfile reads, and what it forwards
+
+`target()` interprets only the fields that describe the target to the engine —
+everything else is handed verbatim to the **driver**:
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `name` | yes | The target's name within its package. |
+| `driver` | no* | The driver that executes it (`bash`, `go_golist`, `group`, …). Required when `defaultDriver` is not set. |
+| `labels` | no | A label or list of labels, used by [query](./query.md) and matchers. |
+| `transitive` | no | Sandbox settings propagated to targets that depend on this one. |
+| `approval` | no | `True`, or `{"required": True, "notice": [...]}` to gate execution on explicit user confirmation. See [Approval gates](/docs/concepts/approval). |
+
+:::note
+Any other keyword (`run`, `deps`, `out`, `env`, `cache`, `codegen`, …) is
+**driver-defined**. buildfile does not interpret it — it forwards the value to
+the named driver, which decides what it means. For the fields a given driver
+accepts, see that driver's page, e.g. [Exec](./exec.md) for `bash`/`sh`/`exec`.
+:::
+
+`target()` returns the new target's address, so you can bind it to a variable
+and reference it from another target instead of retyping the address:
+
+```python title="BUILD"
+lib = target(name = "lib", driver = "bash", run = "go build -o $OUT .", out = "lib")
+
+target(
+    name = "image",
+    driver = "bash",
+    deps = {"bin": lib},
+    run = "cp $SRC_BIN $OUT",
+    out = "image",
+)
+```
+
+### Relative addresses
+
+Inside a BUILD file, `deps` (and any other address field) accept relative
+address forms resolved against the BUILD file's own package. This avoids
+repeating the package path for targets that live nearby.
+
+```python title="app/BUILD"
+util = target(name = "util", driver = "exec", run = "...", out = "util")
+
+target(
+    name = "server",
+    driver = "exec",
+    deps = [
+        ":util",          # same as //app:util
+        "./proto:api",    # same as //app/proto:api
+        "../shared:lib",  # same as //shared:lib
+    ],
+    run = "...",
+    out = "server",
+)
+```
+
+See [Addresses → Relative forms](/docs/reference/addresses#relative-forms) for the full reference table.
+
+### `heph.core` — host platform
+
+`heph.core` is a namespace available in every BUILD file. Use it to read the
+host platform so targets can vary by operating system or CPU architecture.
+
+| Function | Returns | Example values |
+|----------|---------|----------------|
+| `heph.core.os()` | normalized OS name | `"darwin"`, `"linux"`, `"windows"` |
+| `heph.core.arch()` | normalized architecture | `"amd64"`, `"arm64"` |
+| `heph.core.os_raw()` | host OS identifier | `"macos"`, `"linux"` |
+| `heph.core.arch_raw()` | host architecture identifier | `"x86_64"`, `"aarch64"` |
+| `heph.core.pkg()` | current package path | `"tools/build"` |
+| `heph.core.num_cpu()` | CPUs available to the process | `8` |
+| `heph.core.packages(matcher)` | matching workspace package paths | `["tools", "tools/build"]` |
+
+`heph.core.os()` and `heph.core.arch()` return normalized names that match
+the conventions used by container registries and most package distribution
+tools. `heph.core.os_raw()` and `heph.core.arch_raw()` return the exact
+identifiers the host reports — use those when a tool or URL scheme expects
+non-normalized names.
+
+`heph.core.pkg()` returns the current package path — the same value as the
+top-level `get_pkg()`, which still works but `heph.core.pkg()` is preferred.
+
+```python title="BUILD"
+# Download a platform-specific binary
+target(
+    name = "tool",
+    driver = "exec",
+    run = [
+        "curl -fsSLo $OUT https://releases.example.com/tool/{}/{}/tool".format(
+            heph.core.os(),
+            heph.core.arch(),
+        ),
+    ],
+    out = "tool",
+)
+```
+
+```python title="BUILD"
+# Build different targets per platform
+if heph.core.os() == "linux":
+    target(name = "bundle", driver = "exec", run = ["./package-linux.sh"], out = "bundle")
+else:
+    target(name = "bundle", driver = "exec", run = ["./package-mac.sh"], out = "bundle")
+```
+
+`heph.core.num_cpu()` returns the number of CPUs available to the process,
+falling back to `1` if the host count can't be determined. Use it to size a
+tool's own parallelism flag instead of hardcoding a number:
+
+```python title="BUILD"
+target(
+    name = "test",
+    driver = "exec",
+    run = ["go test -p {} ./...".format(heph.core.num_cpu())],
+)
+```
+
+`heph.core.packages(matcher)` returns the sorted list of workspace package
+paths matching a [query](./query.md) matcher string — `//foo`, `//foo/...`, or
+a combination joined with `&&`, `||`, `!`. Relative forms (`./`, `..`, `.`)
+resolve against the current package. The matcher is evaluated per package, so
+only package-level matchers are supported; one that needs target-level
+information (`label(...)`, `//pkg:name`) errors instead of silently matching
+nothing.
+
+```python title="BUILD"
+# One check target per package under services/.
+for pkg in heph.core.packages("//services/..."):
+    target(
+        name = "check-" + heph.fs.base(pkg),
+        driver = "exec",
+        run = ["./check.sh " + pkg],
+    )
+```
+
+### Sharing symbols with `load()`
+
+`load()` imports symbols from another Starlark file so common definitions live
+in one place. A loaded helper registers its targets against the package that
+*calls* it, not the file it is defined in:
+
+```python title="BUILD"
+load("//build/defs:go.star", "go_service")
+
+go_service(name = "api")
+```
+
+The path argument follows the same rules as `file()`/`glob()` above: `//pkg/...`
+is workspace-root-relative, `./`/`../` is resolved against the current package,
+and a path whose `..` segments would resolve outside the workspace root is an
+error rather than being followed.
