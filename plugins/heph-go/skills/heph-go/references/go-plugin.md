@@ -221,9 +221,14 @@ none match. Library targets have no such shortcut — always give them `@v=NAME`
 heph.go.build_addr(pkg, variant = "")
 # heph.go.build_addr("cmd/server", "release") -> "//cmd/server:build@v=release"
 # heph.go.build_addr("cmd/server")            -> "//cmd/server:build"
+# heph.go.build_addr("./worker", "release")   -> relative to the calling package, e.g. "//cmd/server/worker:build@v=release"
+# heph.go.build_addr("../shared")             -> "//cmd/shared:build"
 ```
 
 - `pkg` required; `variant` optional, defaults to `""` (plain address).
+- `pkg` is a package path, or, starting with `./` or `../`, resolved relative
+  to the calling BUILD file's package (same rules as relative addresses). A
+  path that resolves outside the workspace is an error.
 - All arguments are type-enforced: wrong type, missing required arg, or
   unknown keyword → hard error naming the function and the offending argument.
 - Pure string formatting — resolves and builds nothing, and doesn't check that
