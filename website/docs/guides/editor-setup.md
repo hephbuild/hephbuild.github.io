@@ -16,7 +16,7 @@ go-to-definition, and document formatting.
 |---------|-------------|
 | Diagnostics | Flags a `target()` or `provider_state()` call that's missing a required field — a base field like `name`, or, once `driver`/`provider` is set, a field required by that driver or provider. |
 | Completion | `target`, `file`, `glob`, `struct`, `provider_state`, `heph.core.*`, and every provider function complete with their signatures and inline docs. Address strings (`//pkg:name`) complete packages and target names as you type. Inside a `target(driver="exec", …)` call, the driver's accepted fields complete with types and descriptions. |
-| Hover | Signature and documentation for any builtin or provider function. Hover a `target()` call to see the addresses it produced and, once its `driver` is set, that driver's config fields with their types and descriptions. |
+| Hover | Signature and documentation for any builtin or provider function. Hover a `target()` call to see the addresses it produced and, once its `driver` is set, that driver's config fields with their types and descriptions. Same for `provider_state()`: once its `provider` is set, hover shows that provider's state fields instead of a generic signature. |
 | Go-to-definition | Jump to the BUILD file that defines an address — both `//pkg:name` and relative `:name` forms. |
 | Formatting | Format-on-save rewrites the open BUILD file to canonical style. Uses the same rules as [`heph tool build-fmt`](/docs/guides/formatting-build-files), respecting the workspace `indent` setting and the `# heph:fmt skip-file` directive. |
 
