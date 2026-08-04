@@ -113,6 +113,12 @@ The old `-e`/`--exclude` flag was removed. Use `!` inside a query expression
 to exclude targets — for example `//... && !//vendor/...`.
 :::
 
+:::note
+`heph run` fails if a selector — whether a label, a package matcher, or a
+`-e` expression — matches no targets, instead of silently building nothing.
+`heph query` has no such check: an empty result is a valid answer.
+:::
+
 ## `query()` in BUILD files
 
 The `query()` builtin lets a BUILD file select targets dynamically, the same

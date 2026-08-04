@@ -28,6 +28,21 @@ If a generated file is missing or out of date, the run exits non-zero with a
 diff — so a contributor who forgot to regenerate gets a red build, not a silent
 drift.
 
+## Selectors that match nothing fail the run
+
+`heph run` exits non-zero if its selector matches no targets. A typo'd label,
+an unbuilt variant, or a package matcher outside the workspace used to build
+nothing and exit 0 — indistinguishable from a job that legitimately had
+nothing to do. Now it fails loud instead. Debug a selector that isn't
+matching what you expect with:
+
+```bash title="terminal"
+heph query -e '<expr>'
+```
+
+This only applies to `heph run`. A `heph query` that matches nothing is a
+legitimate answer.
+
 ## Validate the workspace
 
 [`heph validate`](/docs/guides/validate) checks that every target resolves, that
