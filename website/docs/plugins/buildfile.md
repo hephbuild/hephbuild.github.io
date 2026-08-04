@@ -303,3 +303,8 @@ load("//build/defs:go.star", "go_service")
 
 go_service(name = "api")
 ```
+
+The path argument follows the same rules as `file()`/`glob()` above: `//pkg/...`
+is workspace-root-relative, `./`/`../` is resolved against the current package,
+and a path whose `..` segments would resolve outside the workspace root is an
+error rather than being followed.
