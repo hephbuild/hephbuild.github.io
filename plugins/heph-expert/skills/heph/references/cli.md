@@ -86,7 +86,7 @@ Maintenance subcommands operating on the workspace or local cache.
 | Subcommand | Does |
 |---|---|
 | `heph tool gc` | Garbage-collect the local cache (`.heph3/cache`): remove artifacts no longer reachable from any current target. Resolves specs, so providers may run. |
-| `heph tool clean <TARGET_ADDRESS>` / `heph tool clean <LABEL> <PACKAGE_MATCHER>` / `heph tool clean -e <EXPR>` | Remove every cached revision of the selected target(s) — all of them, regardless of `history`, whether or not the target still exists. Selection required (no whole-cache default, so a bare `heph tool clean` prints help); `all <PACKAGE_MATCHER>` selects by package without a label, same as `query`. `heph tool clean all //...` clears the entire local cache. |
+| `heph tool clean <TARGET_ADDRESS>` / `heph tool clean <LABEL> <PACKAGE_MATCHER>` / `heph tool clean -e <EXPR>` | Remove every cached revision of the selected target(s) — all of them, regardless of `history`, whether or not the target still exists. Selection required (no whole-cache default, so a bare `heph tool clean` prints help); `all <PACKAGE_MATCHER>` selects by package without a label, same as `query`. `heph tool clean all //...` clears the entire local cache. Needing this regularly on an unchanged target usually means that target under-declares an input — fix the target, don't make `clean` routine. |
 | `heph tool gen-gitignore [PACKAGE_MATCHER]` | Write/refresh the managed heph block in the root `.gitignore` with all `codegen = "copy"` outputs. Idempotent; a matcher rebuilds only that subtree's lines. |
 | `heph tool completions <SHELL>` | Emit a shell completion-registration script, e.g. `source <(heph tool completions zsh)`. |
 

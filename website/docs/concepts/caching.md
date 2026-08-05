@@ -131,3 +131,10 @@ heph tool clean all //...             # clear the entire local cache
 The selection is required — a bare `heph tool clean` prints help instead of
 wiping the cache. `all` selects a package without naming a label, the same way
 it does for [`query`](/docs/plugins/query).
+
+:::tip
+Reaching for `clean` regularly on a target that hasn't changed is usually a
+symptom, not a fix — it means the cache is returning something stale, which
+points at an under-declared input on that target rather than a cache problem.
+Track down the missing input instead of making `clean` part of your workflow.
+:::
