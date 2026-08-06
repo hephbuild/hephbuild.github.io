@@ -21,7 +21,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 |---|---|---|---|
 | Exec | `exec`, `bash`, `sh` | Run shell commands in sandboxed builds; interactive `--shell` debugging. | Built-in; list under `plugins:` as `builtin: exec` (or `bash`/`sh`). |
 | Filesystem | `fs` | Reference workspace files/globs as inputs. | Built-in, always on. |
-| Group | `group` | Bundle targets transparently (pass-through), no extra work. | Built-in, always on. |
+| Group | `group` | Bundle targets transparently (pass-through); add `include`/`exclude`/`strip_prefix`/`prefix`/`rename` to re-export deps' outputs filtered and relocated, without copying. | Built-in, always on. |
 | Hostbin | `hostbin` | Wrap a host `PATH` binary as a target. | Built-in, always on. |
 | Nix | `nix` | Build reproducible tool environments via Nix flakes. | Opt-in; register under `plugins:` as `builtin: nix`. Needs `nix` on PATH with flakes. |
 | Textfile | `textfile` | Generate text files, optionally executable. | Built-in. |
@@ -122,7 +122,12 @@ logic. Returns a `group` target.
 
 ### Group / Filesystem / Hostbin / Textfile
 - **Group:** bundle several targets as a single transparent, pass-through
-  dependency.
+  dependency. Set `include`/`exclude` (glob path filters), `strip_prefix`/
+  `prefix` (path relocation), or `rename` (string = sole surviving output's
+  new path; map = exact emitted path → destination) to re-export deps'
+  outputs filtered/relocated with zero copying — this makes the group a real,
+  uncached target instead of a transparent one. `heph inspect outputs <addr>`
+  shows the resulting paths.
 - **Filesystem:** the `fs` driver; surfaces workspace files/globs as inputs
   (the target side of `file()`/`glob()`).
 - **Hostbin:** wraps host binaries as targets via generated wrapper scripts —
