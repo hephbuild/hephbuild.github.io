@@ -115,3 +115,26 @@ that's no longer reachable (removed targets, orphaned entries):
 ```bash title="terminal"
 heph tool gc
 ```
+
+To deliberately remove cached entries for a specific target selection instead —
+every revision, regardless of `history`, whether or not the target still
+exists — use `heph tool clean`. Targets are selected the same way as for
+`run`: an address, a label followed by a package matcher, or `-e '<expr>'`.
+
+```bash title="terminal"
+heph tool clean //cmd/server:bin      # one target (that exact variant)
+heph tool clean all //cmd/...         # every cached target under a subtree
+heph tool clean test //cmd/...        # every target labelled "test"
+heph tool clean all //...             # clear the entire local cache
+```
+
+The selection is required — a bare `heph tool clean` prints help instead of
+wiping the cache. `all` selects a package without naming a label, the same way
+it does for [`query`](/docs/plugins/query).
+
+:::tip
+Reaching for `clean` regularly on a target that hasn't changed is usually a
+symptom, not a fix — it means the cache is returning something stale, which
+points at an under-declared input on that target rather than a cache problem.
+Track down the missing input instead of making `clean` part of your workflow.
+:::
