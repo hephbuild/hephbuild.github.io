@@ -39,13 +39,22 @@ drivers that build its libraries, binaries, and tests.
 |---------------|------------------------------------------|------------------------------------------------|
 | [Go](./go.md) | `go_golist`, `go_embed`, `go_testmain`   | Go language support: libraries, binaries, tests. |
 
+## Containers
+
+The OCI plugin builds and moves container images, with or without a
+Dockerfile and with or without a daemon.
+
+| Plugin        | Driver                                                                                        | Purpose                                        |
+|---------------|-------------------------------------------------------------------------------------------------|------------------------------------------------|
+| [OCI](./oci.md) | `docker_build`, `oci_image`, `oci_layer`, `oci_index`, `oci_pull`, `oci_push`, `oci_load` | Build an image (with a Dockerfile or from target outputs), group multi-platform images, and move images between a registry, the cache, and a local docker daemon. |
+
 ## Providers
 
 Each provider plugin discovers or generates targets rather than executing them,
 so it registers no driver.
 
 | Plugin                      | Purpose                                                          |
-|-----------------------------|------------------------------------------------------------------|
+|-----------------------------|--------------------------------------------------------------|
 | [Buildfile](./buildfile.md) | Scans the workspace for BUILD files and parses target definitions. |
 | [Query](./query.md)         | Selects targets dynamically by label, package, prefix, or output.  |
 
@@ -57,5 +66,5 @@ They are purely build-event consumers and run in the same process as heph on a
 background thread.
 
 | Plugin                              | Purpose                                                                    |
-|-------------------------------------|----------------------------------------------------------------------------|
+|--------------------------------------|-----------------------------------------------------------------------|
 | [GitHub Actions](./gha.md)          | Live PR comment and step summary for GitHub Actions builds.                |
