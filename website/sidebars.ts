@@ -47,6 +47,7 @@ const sidebars: SidebarsConfig = {
         'plugins/hostbin',
         'plugins/http-fetch',
         'plugins/nix',
+        'plugins/oci',
         'plugins/query',
         'plugins/textfile',
         'plugins/gha',
