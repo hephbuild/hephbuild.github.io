@@ -365,7 +365,10 @@ ties them together. Blobs the registry already has are skipped.
 ### `oci_load`
 
 Loads an image archive into the local docker daemon. Also an action, not
-cached — it mutates the daemon's image store and runs every time.
+cached — it mutates the daemon's image store and runs every time. Its output
+is the ref it tagged in the daemon — needed because the derived tag (see
+`tag` below) carries an input hash and can't be written down by hand, so a
+downstream target reads the ref instead of reconstructing it.
 
 ```python title="BUILD"
 target(
@@ -376,14 +379,27 @@ target(
 ```
 
 ```console title="terminal"
-$ heph run //app:load
+$ heph run --cat-out //app:load
 app_img:9f2c4e1b7a0d3856
+$ docker run --rm "$(heph run --cat-out //app:load)"
+```
+
+A downstream target reads the ref the same way it reads any other
+dependency's output:
+
+```python title="BUILD"
+target(
+    name = "smoke_test",
+    driver = "bash",
+    deps = [":load"],
+    run = "docker run --rm \"$(cat $SRC)\"",
+)
 ```
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `image` | `string` | **required** | Target address of the image to load — a `docker_build`, `oci_image`, or `oci_index` target. Only its archive output is consumed. |
-| `tag` | `string` | derived | Local tag to give the loaded image, e.g. `app:dev`. Left unset, the tag is derived from the image target's address and this load's input hash — the derived form changes if and only if the image changes, so two people building the same commit get the same tag, and it never points at whichever image happened to load last. Set `tag` only when a human needs to type something predictable. |
+| `tag` | `string` | derived | Local tag to give the loaded image, e.g. `app:dev`. Left unset, the tag is derived from the image target's address and this load's input hash — the derived form changes if and only if the image changes, so two people building the same commit get the same tag, and it never points at whichever image happened to load last. Set `tag` only when a human needs to type something predictable — either way, the ref is the target's output, so a script reads it instead of reconstructing it. |
 | `platform` | `string` | Linux on the host's architecture | Which instance to load out of a multi-platform archive, as `"os/arch"`. A daemon holds one image per tag, so a multi-arch archive must be narrowed to one instance on the way in. |
 
 ## Registry authentication
