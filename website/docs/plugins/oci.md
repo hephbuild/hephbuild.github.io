@@ -399,8 +399,28 @@ target(
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `image` | `string` | **required** | Target address of the image to load — a `docker_build`, `oci_image`, or `oci_index` target. Only its archive output is consumed. |
-| `tag` | `string` | derived | Local tag to give the loaded image, e.g. `app:dev`. Left unset, the tag is derived from the image target's address and this load's input hash — the derived form changes if and only if the image changes, so two people building the same commit get the same tag, and it never points at whichever image happened to load last. Set `tag` only when a human needs to type something predictable — either way, the ref is the target's output, so a script reads it instead of reconstructing it. |
+| `tag` | `string` | derived | Local ref to give the loaded image. Takes either half of a ref, or both — whichever half is left out is derived. See below. |
 | `platform` | `string` | Linux on the host's architecture | Which instance to load out of a multi-platform archive, as `"os/arch"`. A daemon holds one image per tag, so a multi-arch archive must be narrowed to one instance on the way in. |
+
+`tag` splits into a **repository** and a **tag**. Naming only one leaves the
+other derived — the derived tag changes if and only if the image changes, so
+two people building the same commit get the same tag, and it never points at
+whichever image happened to load last; the derived repository is the image
+target's address turned into a docker-legal name (`//cmd/server:img` becomes
+`cmd_server_img`). Whichever half is written is carried through as-is:
+
+```python title="BUILD"
+oci_load(image = ":img")                          # app_img:9f2c4e1b7a0d3856
+oci_load(image = ":img", tag = "app")              # app:9f2c4e1b7a0d3856
+oci_load(image = ":img", tag = "ghcr.io/me/app")   # ghcr.io/me/app:9f2c4e1b7a0d3856
+oci_load(image = ":img", tag = "app:dev")          # app:dev
+```
+
+A `tag` with no `:` after its last `/` names a repository only — this
+includes a repository on a registry port, e.g. `localhost:5000/app`, which
+keeps a derived tag rather than being read as tag `5000/app`. A `tag` that
+can't identify an image to load — empty, `:dev`, `app:`, or pinned to a
+digest (`app@sha256:…`) — is rejected at parse.
 
 ## Registry authentication
 
