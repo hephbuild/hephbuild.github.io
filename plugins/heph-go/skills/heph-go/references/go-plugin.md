@@ -190,6 +190,7 @@ provider_state(provider = "go", variants = {
 | `goexperiment` | `list[string]` | no | `GOEXPERIMENT` values. |
 | `gcflags` | `list[string]` | no | Extra `go tool compile` flags. |
 | `ldflags` | `list[string]` | no | Extra `go tool link` flags. |
+| `buildmode` | `string` | no | Link mode for a `package main` `:build`: `"exe"` (default, static on Linux) or `"pie"` (position-independent, needs an interpreter on Linux). See "Buildmode" below. |
 | `inherit` | `string` | no | Another variant name in the same map to start from. |
 
 No `cgo` field — every heph-built Go target has `CGO_ENABLED=0` unconditionally.
@@ -197,6 +198,24 @@ No `cgo` field — every heph-built Go target has `CGO_ENABLED=0` unconditionall
 (`tags`/`goexperiment`/`gcflags`/`ldflags`) are **replaced wholesale, not
 merged**; `goos`/`goarch` may be omitted when the base sets them; inheritance
 cycles error.
+
+### Buildmode
+
+`buildmode` picks the link mode for a `package main` target's `:build`:
+`"exe"` (default) matches plain `go build` — on Linux the binary links
+statically with no interpreter, so it runs in `FROM scratch`/distroless.
+`"pie"` produces a position-independent executable, which on Linux always
+needs `/lib/ld-linux-<arch>.so.1` at run time, cgo or not.
+
+```python title="BUILD"
+provider_state(provider = "go", variants = {
+    "release": {"goos": "linux", "goarch": "arm64", "buildmode": "pie"},
+})
+```
+
+On darwin/arm64 the linker makes every executable PIE regardless of this
+setting — the knob only changes behavior on Linux. Only affects the linked
+binary; libraries/archives are unaffected.
 
 Select with `@v=NAME` on the address:
 
