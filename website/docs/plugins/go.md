@@ -359,6 +359,7 @@ provider_state(provider = "go", variants = {
 | `goexperiment` | `list[string]` | no                               | `GOEXPERIMENT` values to enable. |
 | `gcflags`      | `list[string]` | no                               | Extra flags passed to `go tool compile`. |
 | `ldflags`      | `list[string]` | no                               | Extra flags passed to `go tool link`. |
+| `buildmode`    | `string`       | no                               | Link mode: `"exe"` (default) or `"pie"`. See [Buildmode: static vs PIE](#buildmode-static-vs-pie). |
 | `inherit`      | `string`       | no                               | Name of another variant in the same map to start from. |
 
 `cgo` is not a variant field — every heph-built Go target compiles with
@@ -370,6 +371,29 @@ on top of it. List fields (`tags`, `goexperiment`, `gcflags`, `ldflags`) are
 `tags = ["prod"]`, not `["prod", ...]` plus whatever `base` had. `goos` and
 `goarch` can be omitted when inheriting from a variant that already sets them.
 Inheritance cycles are rejected with an error.
+
+### Buildmode: static vs PIE
+
+`buildmode` controls the binary's link mode for a `package main` target's
+`:build`:
+
+| Value   | Behavior |
+|---------|----------|
+| `"exe"` | Default. Matches plain `go build`. On Linux, links a statically linked binary with no interpreter — it runs in a `FROM scratch` or distroless image. |
+| `"pie"` | Position-independent executable. On Linux this always needs `/lib/ld-linux-<arch>.so.1` present at run time, even with cgo disabled. |
+
+```python title="BUILD"
+provider_state(provider = "go", variants = {
+    "release": {"goos": "linux", "goarch": "arm64", "buildmode": "pie"},
+})
+```
+
+On darwin/arm64 the Go linker makes every executable PIE regardless of this
+setting, so both values produce the same kind of binary there — the knob only
+changes behavior on Linux.
+
+Library targets and archives are unaffected by `buildmode`; it only applies to
+the linked binary of a `package main`.
 
 ### Selecting a variant
 
