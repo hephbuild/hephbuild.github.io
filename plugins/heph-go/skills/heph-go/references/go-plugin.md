@@ -46,6 +46,7 @@ plugins:
 |------------|----------------------|--------------|-------------|
 | `gotool`   | `string`             | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` (hermetic SDK downloaded from `go.dev/dl`), `"host"` (use the `go` binary already on the host's `PATH`), or a target address like `"//@heph/bin:go"` (use the toolchain a target produces). |
 | `govet`    | `string` (target addr) | the plugin's own published `heph-govet` build | The `heph-govet` binary lint/format targets run — see "Linting and formatting" below. |
+| `cctool`   | `string` (target addr) | the host's `cc` via the `hostbin` provider (`//@heph/bin:cc`) | The C compiler a race-detector build stages where it needs cgo — see "Race detector" below. Only resolved when such a build actually runs. |
 | `checksums` | `map[string, string]` | `{}`        | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at https://go.dev/dl/?mode=json. Without an entry the download is unverified (warning logged). SDK entries have no effect when `gotool = "host"`. |
 | `skip`     | `string[]`           | `[]`         | Workspace-relative glob patterns for directories to exclude from Go package discovery. Each pattern is matched against the directory's workspace-relative path. |
 | `walk_db`  | path                 | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
@@ -89,11 +90,13 @@ For a normal package the provider produces (the two you reference directly):
 | `:build` | The library, or binary for `package main`.      | —                 |
 | `:test`  | The package's in-package tests.                 | `test`, `go-test` |
 
-There is also `:xtest` for external (`package foo_test`) tests. A number of
-internal variants exist to make compilation and linking agree
-(`build_test_lib`, `build_xtest_lib`, `build_testmain_lib`, `testmain`,
-`embed_test`, etc., plus a per-package `_golist`). These are implementation
-detail — don't depend on them by hand; depend on `:build`, `:test`, `:xtest`.
+There is also `:xtest` for external (`package foo_test`) tests, and their
+race-detector counterparts `:test_race` / `:xtest_race` (labels `test-race`,
+`go-test-race` — see "Race detector" below). A number of internal variants
+exist to make compilation and linking agree (`build_test_lib`,
+`build_xtest_lib`, `build_testmain_lib`, `testmain`, `embed_test`, etc., plus a
+per-package `_golist`). These are implementation detail — don't depend on them
+by hand; depend on `:build`, `:test`, `:xtest`, `:test_race`, `:xtest_race`.
 
 Inspect what exists:
 
@@ -114,6 +117,40 @@ only read these (e.g. in a dep graph); never write them by hand.
 
 Because module + version are part of the address, a dependency bump changes the
 address and invalidates only the targets importing it.
+
+## Race detector
+
+Every package with tests also gets `:test_race` and `:xtest_race` — `test` and
+`xtest`, compiled and linked with Go's race detector.
+
+```bash
+heph run //lib/auth:test_race     # run this package's tests under the race detector
+heph run 'label(test-race)'       # every race-detector test in the workspace
+```
+
+Race instrumentation covers the whole program, standard library included, so
+race targets are several times slower to build and run than `test`/`xtest`.
+They carry the `test-race`/`go-test-race` labels instead of `test`/`go-test`,
+so `heph run 'label(test)'` keeps meaning the ordinary suite. Run both
+together with `label(test) || label(test-race)`.
+
+`:test_race`/`:xtest_race` accept the same `@v=NAME` variant selection and the
+same `provider_state(test = {...})` config (`env`, `pass_env`, `pre_run`, …) as
+`:test`/`:xtest`. On Linux, a race build always links `buildmode = "exe"`, even
+if the selected variant declares `buildmode = "pie"` — Go's race detector
+doesn't support PIE there. On darwin the variant's declared buildmode is
+honored as-is.
+
+A race build needs a C compiler everywhere except darwin, where Go's race
+runtime has no cgo dependency. On Linux, the `cctool` provider option picks
+which C compiler to stage (defaults to the host's `cc` via `hostbin`, resolved
+only when a race build that needs cgo actually runs):
+
+```yaml title=".hephconfig"
+options:
+  gotool: "1.26.4"
+  cctool: "//@heph/bin:cc"    # default; point elsewhere for a hermetic compiler
+```
 
 ## Linting and formatting
 
