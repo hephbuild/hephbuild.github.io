@@ -64,7 +64,7 @@ exactly right and might have changed, fetch the live doc page (the docs expose a
    rebuild on unrelated changes.
 
 7. **Debug in the sandbox.** For failures, reach for `heph run <addr> --shell`
-   (bash/sh) to reproduce with the exact inputs/tools/env, rather than adding
+   (bash driver) to reproduce with the exact inputs/tools/env, rather than adding
    prints or loosening isolation.
 
 ## Output style

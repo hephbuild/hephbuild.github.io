@@ -71,7 +71,7 @@ Ground every claim in the actual graph:
 - `heph query all //pkg` — did the provider generate `:build`/`:test`?
 - `heph inspect deps //pkg:build` — did the `go_src` / `std` / `thirdparty` edges land?
 - `heph inspect hashin //pkg:build` — what is in the cache key?
-- `heph run //gen:target --shell` — (bash/sh codegen) reproduce the sandbox and
+- `heph run //gen:target --shell` — (bash codegen) reproduce the sandbox and
   see exactly which generated files arrived.
 
 When you explain a failure, name the specific missing input or mislabelled target

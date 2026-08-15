@@ -6,13 +6,13 @@ description: >-
   .hephconfig, BUILD files with target()/glob()/file(), heph addresses like
   //pkg:name or //@heph/..., the heph CLI (heph run, heph inspect, heph query,
   heph validate, heph tool gc/gen-gitignore), heph caching/cache hits, target
-  sandboxes, codegen (copy / in_place), output groups, drivers (bash, sh, exec,
+  sandboxes, codegen (copy / in_place), output groups, drivers (bash, exec,
   nix, go_*) or providers (buildfile, go, query). Also use it for ANY task that
   involves writing, reading, debugging, or reviewing heph BUILD files, tuning
   .hephconfig, diagnosing why a target rebuilt or a cache missed, or setting up
   heph in CI — even when the user does not say the word "heph" explicitly but
   the files or commands make it clear.
-version: 0.1.1
+version: 0.1.2
 ---
 
 # heph build system
@@ -85,7 +85,7 @@ is self-contained and mirrors the official docs.
    show the resolved/raw definition. Nothing executes unless a provider must
    run to answer.
 4. **Debug failures in the sandbox.** `heph run <addr> --shell` drops into the
-   exact inputs/tools/env the target runs with (bash/sh drivers). Recommend this
+   exact inputs/tools/env the target runs with (bash driver). Recommend this
    over adding debug prints.
 5. **Distinguish the three dependency kinds** (`deps` / `hash_deps` /
    `runtime_deps`) and the three codegen-vs-cache choices — they are the most

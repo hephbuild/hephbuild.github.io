@@ -73,7 +73,7 @@ target(
 heph inspect deps //<pkg>:build    # go_src edge present?
 heph run //<pkg>:build             # compiles with generated code
 heph run //<pkg>:test              # tests see code + fixtures
-heph run //<gen>:<name> --shell    # (bash/sh) inspect the codegen sandbox
+heph run //<gen>:<name> --shell    # (bash) inspect the codegen sandbox
 ```
 
 Produce the BUILD diff, state exactly which BUILD file each block goes in

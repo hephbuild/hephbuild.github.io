@@ -15,7 +15,7 @@ Steps:
    `.hephconfig` `buildfile.patterns`). The package is the workspace-relative
    directory; the target address will be `//<package>:<name>`.
 
-2. **Pick the driver.** `bash`/`sh`/`exec` for shell actions, `nix` for a pinned
+2. **Pick the driver.** `bash`/`exec` for shell actions, `nix` for a pinned
    toolchain, `textfile` for a generated text file, `group` to bundle. For Go
    code, do NOT write `target()` — the `go` provider generates `:build`/`:test`
    automatically; hand the user off to the dedicated **`heph-go`** plugin

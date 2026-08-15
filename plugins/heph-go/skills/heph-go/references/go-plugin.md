@@ -546,5 +546,5 @@ heph inspect states //pkg --inherited # provider_state declarations this package
 heph run //pkg:build                 # compile
 heph run //pkg:test                  # in-package tests
 heph run //pkg:xtest                 # external tests
-heph run //gen:target --shell        # (bash/sh codegen) inspect the sandbox
+heph run //gen:target --shell        # (bash codegen) inspect the sandbox
 ```

@@ -13,7 +13,7 @@ description: >-
   package fails to find generated code, embeds, third-party modules, or testdata.
   Also use it when a go.mod / *.go file is present and the task is "make Go work
   under heph" even if the user does not say "heph" explicitly.
-version: 0.1.1
+version: 0.1.2
 ---
 
 # heph + Go setup
@@ -211,7 +211,7 @@ provider_state(provider = "go", test = {"skip": False})
    smallest subtree that covers the generator and its consumers.
 5. **Verify, don't assume.** `heph query all <pkg>` lists the generated targets;
    `heph inspect deps //pkg:build` shows whether the `go_src`/std/thirdparty edges
-   landed; `heph run //pkg:build --shell` (bash/sh codegen targets) reproduces the
+   landed; `heph run //pkg:build --shell` (bash codegen targets) reproduces the
    sandbox to see exactly which files arrived. Diagnose with these before editing.
 6. **Keep it reproducible.** Pin `gotool`; keep codegen deterministic; prefer
    `codegen = "copy"` + `gen-gitignore` for generated sources.

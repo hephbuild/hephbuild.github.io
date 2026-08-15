@@ -43,13 +43,13 @@ Only these fields are interpreted by the engine/buildfile:
 | Field | Required | Meaning |
 |---|---|---|
 | `name` | yes | Target name within its package. |
-| `driver` | no* | Driver that executes it (`bash`, `sh`, `exec`, `nix`, `group`, …). Required when `defaultDriver` is not set in the buildfile provider options. |
+| `driver` | no* | Driver that executes it (`bash`, `exec`, `nix`, `group`, …). Required when `defaultDriver` is not set in the buildfile provider options. |
 | `labels` | no | Label or list of labels, used by `query` and matchers. |
 | `transitive` | no | Sandbox settings propagated to dependents. |
 
 **Everything else** (`run`, `deps`, `out`, `env`, `cache`, `codegen`, …) is
 **driver-defined**: buildfile forwards it verbatim to the named driver. For the
-exec drivers (`bash`/`sh`/`exec`) those fields are documented below.
+exec drivers (`bash`/`exec`) those fields are documented below.
 
 ```python title="BUILD"
 lib = target(name = "lib", driver = "bash", run = "go build -o $OUT .", out = "lib")
@@ -147,8 +147,8 @@ go_service(name = "api")
 
 ## Exec driver fields
 
-The `exec` plugin registers three drivers: `exec` (direct execution), `bash`
-(bash with job control), `sh` (POSIX shell). `bash`/`sh` support interactive
+The `exec` plugin registers two drivers: `exec` (direct execution), `bash`
+(bash with job control, `-o pipefail`). `bash` supports interactive
 `--shell` mode with PTY allocation. Target config keys:
 
 | Key | Meaning |

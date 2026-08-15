@@ -19,7 +19,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 
 | Plugin | Driver(s) | Purpose | Registration |
 |---|---|---|---|
-| Exec | `exec`, `bash`, `sh` | Run shell commands in sandboxed builds; interactive `--shell` debugging. | Built-in; list under `plugins:` as `builtin: exec` (or `bash`/`sh`). |
+| Exec | `exec`, `bash` | Run shell commands in sandboxed builds; interactive `--shell` debugging. | Built-in; list under `plugins:` as `builtin: exec` (or `bash`). |
 | Filesystem | `fs` | Reference workspace files/globs as inputs. | Built-in, always on. |
 | Group | `group` | Bundle targets transparently (pass-through); add `include`/`exclude`/`strip_prefix`/`prefix`/`rename` to re-export deps' outputs filtered and relocated, without copying. | Built-in, always on. |
 | Hostbin | `hostbin` | Wrap a host `PATH` binary as a target. | Built-in, always on. |
@@ -66,7 +66,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 
 ## Per-plugin detail
 
-### Exec (`exec` / `bash` / `sh`)
+### Exec (`exec` / `bash`)
 Full field list, dependency kinds, output groups and sandbox env vars are in
 `authoring.md`. `path` option sets the `PATH` override (default
 `/usr/local/bin:/usr/bin:/bin`).

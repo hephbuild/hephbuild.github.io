@@ -15,7 +15,7 @@ Work through this, narrating findings concisely:
    outputs, tools and sandbox config are what you expect. `heph inspect spec
    <addr>` shows the raw provider spec if the resolved def looks wrong.
 
-2. **Reproduce in the sandbox.** `heph run <addr> --shell` (bash/sh drivers)
+2. **Reproduce in the sandbox.** `heph run <addr> --shell` (bash driver)
    drops you into the exact inputs/tools/env. Inside, inspect `$SRC_*`,
    `$TOOL_*`, `$OUT*`, `$LIST_SRC_*`, and re-run the `run` command by hand to see
    the real error.

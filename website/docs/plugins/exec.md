@@ -6,8 +6,8 @@ description: Execution drivers for running shell commands in sandboxed target bu
 
 # Exec
 
-The `pluginexec` plugin provides three execution drivers — `exec`, `bash`,
-and `sh` — for running shell commands inside sandboxed target builds. It wires
+The `pluginexec` plugin provides two execution drivers — `exec` and `bash` —
+for running shell commands inside sandboxed target builds. It wires
 up dependency injection, sets up environment variables, resolves the tools a
 target needs on its `PATH`, and supports interactive shell debugging with PTY
 allocation. Whenever a target runs a command to produce its outputs, one of
@@ -16,13 +16,13 @@ these drivers is doing the work.
 ## Driver
 
 A **driver** is the component that knows how to execute a target's action and
-turn its inputs into outputs. This plugin registers the drivers named `exec`,
-`bash`, and `sh`.
+turn its inputs into outputs. This plugin registers the drivers named `exec`
+and `bash`.
 
 ## Enabling it
 
-Built-in. Register in `.hephconfig` under `plugins` with `builtin: exec`,
-`builtin: bash`, or `builtin: sh`. The optional `path` option sets the `PATH`
+Built-in. Register in `.hephconfig` under `plugins` with `builtin: exec` or
+`builtin: bash`. The optional `path` option sets the `PATH`
 override, which defaults to `/usr/local/bin:/usr/bin:/bin` if empty or unset.
 
 ## Configuration
@@ -36,12 +36,6 @@ plugins:
         - /usr/bin
         - /bin
   - builtin: bash
-    options:
-      path:
-        - /usr/local/bin
-        - /usr/bin
-        - /bin
-  - builtin: sh
     options:
       path:
         - /usr/local/bin
@@ -67,15 +61,14 @@ target(
 
 ## Notes
 
-There are three driver variants:
+There are two driver variants:
 
 | Driver | Behavior                                          |
 |--------|---------------------------------------------------|
 | `exec` | Direct command execution.                         |
-| `bash` | Bash shell with job control.                      |
-| `sh`   | POSIX shell, no bash-isms.                         |
+| `bash` | Bash shell with job control, run with `-o pipefail` so a failing stage in a pipeline fails the target. |
 
-The `bash` and `sh` drivers support an interactive `--shell` mode with PTY
+The `bash` driver supports an interactive `--shell` mode with PTY
 allocation, which is useful for debugging a target's sandbox.
 
 The following target config keys are available:
@@ -249,6 +242,6 @@ environment it would run with:
 heph run //app:server --shell
 ```
 
-The `bash` and `sh` drivers allocate a PTY and start an interactive shell inside
+The `bash` driver allocates a PTY and starts an interactive shell inside
 the prepared sandbox, so you can inspect `$SRC_*`, re-run the command by hand,
 and see why it broke.
