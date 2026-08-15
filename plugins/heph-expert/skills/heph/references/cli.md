@@ -23,7 +23,7 @@ heph run <LABEL> <PACKAGE_MATCHER>
 | Flag | Description |
 |---|---|
 | `--force` | Force execution, ignoring any cached result. |
-| `--shell` | Drop into an interactive shell in the target's sandbox instead of running it (bash/sh). |
+| `--shell` | Drop into an interactive shell in the target's sandbox instead of running it (bash driver). |
 | `--cat-out` | Print output artifacts to stdout. |
 | `--list-out` | Print the output file list to stdout. |
 | `-e`, `--exclude <ADDR>` | Exclude a target address (repeatable). |

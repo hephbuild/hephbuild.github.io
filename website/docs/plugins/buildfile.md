@@ -109,7 +109,7 @@ A matching BUILD file defines targets by calling `target()` in Starlark:
 ```python title="BUILD"
 target(
     name = "hello",
-    driver = "sh",
+    driver = "bash",
     run = ["echo hello"],
 )
 ```
@@ -173,7 +173,7 @@ everything else is handed verbatim to the **driver**:
 Any other keyword (`run`, `deps`, `out`, `env`, `cache`, `codegen`, …) is
 **driver-defined**. buildfile does not interpret it — it forwards the value to
 the named driver, which decides what it means. For the fields a given driver
-accepts, see that driver's page, e.g. [Exec](./exec.md) for `bash`/`sh`/`exec`.
+accepts, see that driver's page, e.g. [Exec](./exec.md) for `bash`/`exec`.
 :::
 
 `target()` returns the new target's address, so you can bind it to a variable

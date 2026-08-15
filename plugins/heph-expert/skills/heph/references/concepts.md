@@ -81,7 +81,7 @@ present inputs through a FUSE overlay — opt-in via the `fuse` block in
 identical either way; only how the files get there differs.
 
 **Inspecting.** When a target fails, step inside with
-`heph run <addr> --shell` (bash/sh drivers): you get the exact inputs, tools and
+`heph run <addr> --shell` (bash driver): you get the exact inputs, tools and
 env, can list `$SRC_*`, and re-run the command by hand.
 
 ## Caching

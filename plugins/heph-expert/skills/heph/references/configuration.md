@@ -51,7 +51,7 @@ plugins:
 
 **Built-in vs opt-in.** Some plugins are always available and need no
 registration: `group`, `fs`, `hostbin`, `query`. The exec drivers (`exec`,
-`bash`, `sh`) are built-in but should be listed under `plugins:` to use them.
+`bash`) are built-in but should be listed under `plugins:` to use them.
 The `nix` driver must also be registered. The `go` plugin is **external** — it
 is not compiled into the heph binary and must be loaded via `path:` or `url:`.
 Each plugin page states which.
