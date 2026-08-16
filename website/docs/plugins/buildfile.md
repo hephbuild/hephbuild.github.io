@@ -156,6 +156,12 @@ normalized — `./` prefixes and empty segments are collapsed, `..` components
 resolve against the package path, and a path whose `..` segments escape the
 workspace root is an error.
 
+For `glob()`, `exclude` resolves exactly like `pattern` — package-relative by
+default, workspace-root-relative under `abs = True`. A package-relative
+`exclude = ["vendor/**"]` in `//pkg` excludes `pkg/vendor/**`, not a
+root-level `vendor/**`; write `exclude = ["vendor/**"], abs = True` to exclude
+from the workspace root instead.
+
 ### `target()` — what buildfile reads, and what it forwards
 
 `target()` interprets only the fields that describe the target to the engine —
