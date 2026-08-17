@@ -69,6 +69,11 @@ Both resolve to filesystem (`//@heph/fs:…`) addresses, so their results drop
 straight into a dependency field. Paths are relative to the BUILD file's
 package by default; pass `abs=True` to resolve from the workspace root.
 
+For `glob()`, `exclude` resolves exactly like `pattern` — package-relative by
+default, workspace-root-relative under `abs=True`. A package-relative
+`exclude=["vendor/**"]` in `//pkg` excludes `pkg/vendor/**`, not a root-level
+`vendor/**`; add `abs=True` to exclude from the workspace root instead.
+
 ```python title="BUILD"
 target(
     name = "lib",
