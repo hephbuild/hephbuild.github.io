@@ -94,9 +94,9 @@ There is also `:xtest` for external (`package foo_test`) tests, and their
 race-detector counterparts `:test_race` / `:xtest_race` (labels `test-race`,
 `go-test-race` — see "Race detector" below). A number of internal variants
 exist to make compilation and linking agree (`build_test_lib`,
-`build_xtest_lib`, `build_testmain_lib`, `testmain`, `embed_test`, etc., plus a
-per-package `_golist`). These are implementation detail — don't depend on them
-by hand; depend on `:build`, `:test`, `:xtest`, `:test_race`, `:xtest_race`.
+`build_xtest_lib`, `build_testmain_lib`, `testmain`, etc., plus a per-package
+`_golist`). These are implementation detail — don't depend on them by hand;
+depend on `:build`, `:test`, `:xtest`, `:test_race`, `:xtest_race`.
 
 Inspect what exists:
 
