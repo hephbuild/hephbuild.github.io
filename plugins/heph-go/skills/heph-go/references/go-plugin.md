@@ -169,6 +169,10 @@ boundaries.
 | `format-check` | `go_format_check` | Gate: fails if any file isn't formatted. Reports only. |
 | `format` | `go_format` | Fixer: reformats sources in place (in-place codegen). |
 
+Within a module that opts in, `provider_state(lint = False)` drops
+`lint-check`/`lint` for a package (or subtree with `recursive = True`) while
+leaving `format`/`format-check` running — see "`lint` — skipping" below.
+
 Four linters selectable via `.golangci.yml` `linters.default`/`enable`/`disable`:
 `govet` (standard `go vet` set; opt-in extras `shadow`/`fieldalignment`/`nilness`/
 `sortslice`/`unusedwrite` via `linters.settings.govet.enable`), `staticcheck`
@@ -407,8 +411,9 @@ provider_state(
 | `go_embed_deps`   | `list[string]`         | Explicit embed-asset target addresses injected into every descendant package's compile step. The analog of `go_codegen_deps` for the `go_embed_src` lane — for targets producing embed-only assets not labelled `go_embed_src`. The closest ancestor carrying it wins. |
 | `variants`        | `map[string, struct(...)]` | Declares named [build variants](#build-variants) that this package and its descendants select with `@v=NAME`, bounded to the enclosing Go module. |
 | `test`            | `bool \| struct(...)` | `False` stops test-target generation for this package; `True` / unset runs them. The struct form configures `test`/`xtest` run targets — env vars and pre-run shell lines. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
+| `lint`            | `bool`                 | `False` drops this package's `lint-check`/`lint` targets; `True` / unset keeps them, within a module that opts into linting at all. `format`/`format-check` are unaffected. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
 | `link`            | `struct(...)`          | Link settings for a `main` package's `build` (binary) target: `flags`, `deps`, `runtime_deps`. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
-| `recursive`       | `bool`                 | When `True`, extends this state's `test` and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
+| `recursive`       | `bool`                 | When `True`, extends this state's `test`, `lint`, and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
 
 ### `test` — skipping and environment
 
@@ -442,6 +447,36 @@ provider_state(
 | `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
 | `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
 | `pre_run`          | `list[string]` | yes    | Shell lines run before the test binary. When non-empty, the target switches from the `exec` driver to the `bash` driver so the lines execute as shell. |
+
+### `lint` — skipping
+
+Same scoping rules as `test`: applies to the exact declaring package by
+default; add `recursive = True` to extend to descendants; the closest
+applicable declaration wins.
+
+- `lint = False` — drops `lint-check`/`lint` for this package (and descendants
+  if `recursive = True`). Only meaningful within a module that already has a
+  `.golangci.yml`/`.golangci.yaml` at its root — it can't turn linting on for
+  a module that hasn't opted in.
+- `lint = True` — (default) keeps them. Overrides an ancestor's `lint = False`.
+
+```python title="BUILD"
+provider_state(provider = "go", lint = False)                    # this package
+provider_state(provider = "go", lint = False, recursive = True)  # + descendants
+provider_state(provider = "go", lint = True)                     # re-enable in a subdirectory
+```
+
+Two things deliberately keep running when `lint = False`:
+
+- **`format`/`format-check`.** A different tool with a different verdict —
+  a package that opts out of linting still gets formatted.
+- **The internal per-variant lint-analysis unit.** A dependent package that
+  still lints consumes this package's facts for interprocedural analysis. It
+  produces no user-visible diagnostics on its own and is never built unless a
+  still-linted dependent pulls it in.
+
+`test` and `lint` toggles are independent — disabling one says nothing about
+the other.
 
 ### `link` — binary link configuration
 
@@ -532,7 +567,7 @@ actually needs the bytes to satisfy `//go:embed` patterns.
 | `test = False` unexpectedly not disabling descendants | missing `recursive = True` | Add `recursive = True` to the `provider_state` to extend to descendants. |
 | Unsure which `provider_state` a package actually sees | multiple ancestors declare the same key | Run `heph inspect states //pkg --inherited` to see the whole chain, root first. |
 | A named `link` dep group ends up merged with the plugin's own deps | named group reused an internal group name (`link_deps`, `lib_*`, `gosdk`, …) | Rename the group — named groups are staged verbatim, not namespaced. |
-| `heph query all <pkg>` shows no `lint-check`/`lint`/`format-check`/`format` | no `.golangci.yml`/`.golangci.yaml` at the package's module root | Add one — even an empty `linters:\n  default: standard` opts the module in. |
+| `heph query all <pkg>` shows no `lint-check`/`lint`/`format-check`/`format` | no `.golangci.yml`/`.golangci.yaml` at the package's module root, or `provider_state(lint = False)` applies | Add a golangci config to opt the module in; check `provider_state` (`lint = False` only drops `lint-check`/`lint`, not `format`/`format-check`). |
 | `lint`/`format` targets fail to resolve; error mentions `govet` | the `govet` option addr can't be built/fetched (e.g. a release asset that doesn't exist) | Point `govet` at a working target address, or clear an incorrect override so the default download is used. |
 | Suppressed finding still reports | `//nolint` used the registry linter name instead of the golangci name | For staticcheck/gosimple/stylecheck findings, match `//nolint:staticcheck` — golangci folds all three into that one name. |
 

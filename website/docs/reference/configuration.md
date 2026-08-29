@@ -380,25 +380,3 @@ caches:
 ```bash
 HEPH_PROFILES=dev heph run //...
 ```
-
-### CI-specific settings
-
-A `ci` profile can override any key — here disabling telemetry and ensuring
-the shared cache is writable:
-
-```yaml title="ci.hephconfig"
-telemetry:
-  enabled: false
-caches:
-  shared:
-    write: true
-```
-
-Activate it in your workflow:
-
-```yaml title=".github/workflows/build.yml"
-env:
-  HEPH_PROFILES: ci
-```
-
-See the [CI guide](/docs/guides/ci) for a full CI setup.
