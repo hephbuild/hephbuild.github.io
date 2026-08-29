@@ -74,7 +74,7 @@ Every key below is optional.
 | `fs`        | `{skip: string[]}`            | `{}`    | Workspace-wide ignore patterns shared with all tree-walking plugins. |
 | `memCache`  | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
 | `cache`     | `{spillThresholdBytes: number}` | `{}`  | Durable local-cache tuning. |
-| `caches`    | map of `{uri, read, write, concurrency}` | `{}` | Named remote (shared) caches. |
+| `caches`    | map of `{uri, read, write, concurrency, endpoint, region}` | `{}` | Named remote (shared) caches. |
 | `fuse`      | `{enabled: true \| false \| "auto"}` | off | Sandbox overlay mode. |
 | `lock`      | `{backend: fs \| mem}`        | `fs`    | Execute-phase lock backend. |
 | `telemetry` | `{enabled: true \| false}`    | `{}`  (enabled) | Anonymous usage reporting. Set `enabled: false` to opt out. |
@@ -257,6 +257,8 @@ loaded from a persisted file) and refreshed when the definitions change.
 | `read` | bool | `true` | Whether to consult this cache on a local miss. |
 | `write` | bool | `true` | Whether to push artifacts here after a local write. Writes happen on a background task — the build does not wait on the network. |
 | `concurrency` | number | `256` | Maximum in-flight requests to this cache at once. This is a shared ceiling across every target's pull/push against this cache, not a per-target limit. |
+| `endpoint` | string | unset | Base URL of an S3-compatible service to talk to instead of AWS (e.g. Cloudflare R2, MinIO). `s3://` caches only. See [Custom S3-compatible endpoints](/docs/guides/remote-cache#custom-s3-compatible-endpoints). |
+| `region` | string | unset | Region to sign S3 requests for. `s3://` caches only; unset leaves the choice to the `AWS_REGION` environment variable, which in turn defaults to `us-east-1`. |
 
 Supported URI schemes:
 
@@ -267,6 +269,11 @@ Supported URI schemes:
 | `az://container/prefix` | Azure Blob Storage | `AZURE_STORAGE_ACCOUNT_NAME` + `AZURE_STORAGE_ACCESS_KEY` |
 | `https://host/prefix` | Generic HTTP object store | — |
 | `file:///path` | Local filesystem | — |
+
+`endpoint` and `region` apply only to `s3://` caches — setting either on any
+other scheme is a hard error at startup, naming the offending field and URI.
+When set, both override the corresponding environment variable
+(`AWS_ENDPOINT_URL`, `AWS_REGION`) for that cache.
 
 Run `heph tool cache measure-latency` to force a fresh latency measurement and
 print per-cache round-trip times. See the [Remote cache guide](/docs/guides/remote-cache)
@@ -355,7 +362,7 @@ A profile file that is missing or has invalid YAML is a hard error.
 | Config section | Behavior |
 |----------------|----------|
 | Scalar fields (`homeDir`, `lock`, `fuse`, `telemetry`, …) | Profile value wins when present; base value is kept when absent. |
-| `caches` | Deep-merged by cache name. A profile can patch individual fields (e.g. flip `write`) while inheriting the rest of the entry from the base. |
+| `caches` | Deep-merged by cache name. A profile can patch individual fields (e.g. flip `write`, or re-point `endpoint`) while inheriting the rest of the entry from the base. |
 | `plugins` | Merged by identifier (`builtin`/`path`/`url` value). A matching entry is replaced in place; new ones are appended, preserving order. |
 
 ### Disabling remote cache writes locally
