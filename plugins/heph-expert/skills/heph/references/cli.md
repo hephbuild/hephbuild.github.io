@@ -8,6 +8,11 @@ Two argument forms recur across `run` and `query`:
 - a **label** followed by a **package matcher** — `test //...` selects every
   target carrying the `test` label under the matcher.
 
+A label matches `[A-Za-z0-9_-]+`. The positional label argument is checked
+against that grammar and errors when it isn't a valid label, pointing at `-e`
+when the argument contains query syntax (`&&`, `||`, `!`, `(`, `)`, or
+whitespace): `-e 'label(lint) && !label(go-lint) && //...'`.
+
 ---
 
 ## `heph run`

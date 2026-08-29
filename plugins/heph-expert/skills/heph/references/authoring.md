@@ -44,7 +44,7 @@ Only these fields are interpreted by the engine/buildfile:
 |---|---|---|
 | `name` | yes | Target name within its package. |
 | `driver` | no* | Driver that executes it (`bash`, `exec`, `nix`, `group`, …). Required when `defaultDriver` is not set in the buildfile provider options. |
-| `labels` | no | Label or list of labels, used by `query` and matchers. |
+| `labels` | no | Label or list of labels, used by `query` and matchers. Each must match `[A-Za-z0-9_-]+` — a label outside that grammar fails the `target()` call. |
 | `transitive` | no | Sandbox settings propagated to dependents. |
 
 **Everything else** (`run`, `deps`, `out`, `env`, `cache`, `codegen`, …) is

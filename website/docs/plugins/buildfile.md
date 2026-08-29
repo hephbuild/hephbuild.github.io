@@ -171,7 +171,7 @@ everything else is handed verbatim to the **driver**:
 |-------|----------|---------|
 | `name` | yes | The target's name within its package. |
 | `driver` | no* | The driver that executes it (`bash`, `go_golist`, `group`, …). Required when `defaultDriver` is not set. |
-| `labels` | no | A label or list of labels, used by [query](./query.md) and matchers. |
+| `labels` | no | A label or list of labels, used by [query](./query.md) and matchers. Each must match `[A-Za-z0-9_-]+` — a `target()` with a label outside that grammar fails to evaluate. |
 | `transitive` | no | Sandbox settings propagated to targets that depend on this one. |
 | `approval` | no | `True`, or `{"required": True, "notice": [...]}` to gate execution on explicit user confirmation. See [Approval gates](/docs/concepts/approval). |
 
