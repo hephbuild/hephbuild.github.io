@@ -226,6 +226,10 @@ in-place rewrite behavior as any [codegen](../concepts/codegen.md) fixer
 target. A package whose module has no `.golangci.yml` gets none of these four
 targets; `:build` and `:test` are unaffected either way.
 
+Within a module that does opt in, [`provider_state(lint = False)`](#skipping-lint)
+drops `lint-check`/`lint` for a package while leaving `format`/`format-check`
+in place — the two families are gated independently.
+
 ### Selecting and configuring linters
 
 `linters.default`/`enable`/`disable` in `.golangci.yml` select among four
@@ -632,9 +636,9 @@ changes the address and invalidates only the targets that import it.
 
 `provider_state(provider="go", ...)` placed in a BUILD file configures the Go
 provider for that package. `go_codegen_root` and `go_codegen_deps` always extend
-to descendant packages. `test` and `link` apply to the exact declaring package by
-default; add `recursive = True` to extend them to descendants. When the same key
-applies at multiple depths, the deepest (closest) declaration wins.
+to descendant packages. `test`, `lint`, and `link` apply to the exact declaring
+package by default; add `recursive = True` to extend them to descendants. When
+the same key applies at multiple depths, the deepest (closest) declaration wins.
 
 :::tip
 `heph inspect states //pkg --inherited` prints every `provider_state`
@@ -652,8 +656,9 @@ package actually sees before chasing it through the BUILD file tree. See
 | `go_embed_deps`   | `list[string]`        | Explicit embed-asset target addresses injected into every descendant package's compile step. The analog of `go_codegen_deps` for the `go_embed_src` lane — for targets that produce embed-only assets but aren't labelled `go_embed_src`. The closest ancestor carrying it wins. |
 | `variants`        | `map[string, struct(...)]` | Declares named [build variants](#build-variants) that this package and its descendants select with `@v=NAME`, bounded to the enclosing Go module. |
 | `test`            | `bool \| struct(...)` | Controls test-target generation and configuration. Applies to the exact package by default; add `recursive = True` to extend to descendants. See below. |
+| `lint`            | `bool`                | `lint = False` drops the package's `lint-check`/`lint` targets; `lint = True` (or unset) keeps them, within a module that opts into linting at all. `format`/`format-check` are unaffected. Applies to the exact package by default; add `recursive = True` to extend to descendants. See [Skipping lint](#skipping-lint). |
 | `link`            | `struct(...)`         | Link settings for a `main` package's `build` (binary) target. Applies to the exact package by default; add `recursive = True` to extend to descendants. See [Link configuration](#link-configuration). |
-| `recursive`       | `bool`                | When `True`, extends this state's `test` and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
+| `recursive`       | `bool`                | When `True`, extends this state's `test`, `lint`, and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
 
 ### Skipping tests
 
@@ -671,6 +676,32 @@ provider_state(provider = "go", recursive = True, test = False)
 # Re-enable in a subdirectory:
 provider_state(provider = "go", test = True)
 ```
+
+### Skipping lint
+
+`lint = False` drops the `lint-check`/`lint` targets for the exact declaring
+package, the same scoping rules as `test`: add `recursive = True` to disable
+across the whole subtree, and a deeper `lint = True` re-enables them — the
+closest applicable ancestor wins. This only applies within a module that
+already has a `.golangci.yml`/`.golangci.yaml` at its root; it can't turn
+linting on for a module that hasn't opted in.
+
+```python title="BUILD"
+# Drop lint targets for this package only:
+provider_state(provider = "go", lint = False)
+
+# Drop lint targets for this package and all descendants:
+provider_state(provider = "go", recursive = True, lint = False)
+
+# Re-enable in a subdirectory:
+provider_state(provider = "go", lint = True)
+```
+
+`format`/`format-check` are a separate family and keep running regardless —
+they're a different tool with a different verdict. The internal per-variant
+lint-analysis unit also stays resolvable even when a package opts out, so a
+still-linted importer can still pull in this package's facts for
+interprocedural analysis; it produces no user-visible diagnostics on its own.
 
 ### Test environment
 
