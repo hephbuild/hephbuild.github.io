@@ -47,6 +47,7 @@ plugins:
 | `gotool`   | `string`             | **required** | Go toolchain to use. Set to a pinned version like `"1.27.0"` (hermetic SDK downloaded from `go.dev/dl`), `"host"` (use the `go` binary already on the host's `PATH`), or a target address like `"//@heph/bin:go"` (use the toolchain a target produces). |
 | `govet`    | `string` (target addr) | the plugin's own published `heph-govet` build | The `heph-govet` binary lint/format targets run — see "Linting and formatting" below. |
 | `cctool`   | `string` (target addr) | the host's `cc` via the `hostbin` provider (`//@heph/bin:cc`) | The C compiler a race-detector build stages where it needs cgo — see "Race detector" below. Only resolved when such a build actually runs. |
+| `runner`   | `string` (target addr) | unset        | Exec runner every Go tool (`go list`, `go tool compile`/`asm`/`pack`, `gofmt`, `heph-govet`) runs under, or `"local"`. Reaches the `go_*` drivers as their default and this provider's own `bash` targets (the std install, the thirdparty download) as their `runner` field. See "Running under a runner" below. |
 | `checksums` | `map[string, string]` | `{}`        | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.27.0/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at https://go.dev/dl/?mode=json. Without an entry the download is unverified (warning logged). SDK entries have no effect when `gotool = "host"`. |
 | `skip`     | `string[]`           | `[]`         | Workspace-relative glob patterns for directories to exclude from Go package discovery. Each pattern is matched against the directory's workspace-relative path. |
 | `walk_db`  | path                 | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
@@ -80,6 +81,40 @@ vendored packages. Example: `["vendor", "internal/generated/**"]`.
 - The target must produce a single output: either a `go` binary file, or a
   directory containing `bin/go`.
 - Reproducibility depends entirely on what the target produces.
+
+## Running under a runner
+
+Set the plugin's `runner` option to run every Go tool inside a described
+environment (a devenv shell, a container) instead of on the host:
+
+```yaml title=".hephconfig"
+options:
+  gotool: "1.27.0"
+  runner: "//tools/devenv:runner"
+```
+
+It reaches every Go target — the `go_*`-driver ones and the plain `bash`
+targets this provider also generates (the std install, the thirdparty
+download, and the binary/test-binary links) alike. A build where only half
+moved into the environment mixes toolchains and fails to link.
+
+`gotool: "host"` composes with it: under a runner, `"host"` means the `go`
+found on the *runner's* `PATH` (`GOROOT` resolved by running `go env GOROOT`
+inside that environment), not heph's own `PATH`. `gotool: "<version>"` and a
+target-address `gotool` are unaffected either way.
+
+A hand-written target using a `go_*` driver can set its own `runner` field
+(including `runner = "local"` to opt out); there is no per-package override
+for *generated* targets — the option is workspace-wide.
+
+**Tests are deliberately not covered by it** — a build wants the compiler's
+environment, a test often wants the runtime's. Point a package's tests at a
+runner independently with `provider_state(test = {"runner": ...})` — see
+"`test` — skipping and environment" below. With `test.runner` unset, a test
+falls back to the plugin's own `runner` option.
+
+See <https://hephbuild.github.io/docs/concepts/runners> for what a runner is
+and the runners exposed via the `devenv` and `oci` plugins.
 
 ## Generated targets
 
@@ -135,11 +170,11 @@ so `heph run 'label(test)'` keeps meaning the ordinary suite. Run both
 together with `label(test) || label(test-race)`.
 
 `:test_race`/`:xtest_race` accept the same `@v=NAME` variant selection and the
-same `provider_state(test = {...})` config (`env`, `pass_env`, `pre_run`, …) as
-`:test`/`:xtest`. On Linux, a race build always links `buildmode = "exe"`, even
-if the selected variant declares `buildmode = "pie"` — Go's race detector
-doesn't support PIE there. On darwin the variant's declared buildmode is
-honored as-is.
+same `provider_state(test = {...})` config (`env`, `pass_env`, `pre_run`,
+`runner`, …) as `:test`/`:xtest`. On Linux, a race build always links
+`buildmode = "exe"`, even if the selected variant declares
+`buildmode = "pie"` — Go's race detector doesn't support PIE there. On darwin
+the variant's declared buildmode is honored as-is.
 
 A race build needs a C compiler everywhere except darwin, where Go's race
 runtime has no cgo dependency. On Linux, the `cctool` provider option picks
@@ -412,7 +447,7 @@ provider_state(
 | `go_codegen_deps` | `list[string]`         | Explicit codegen target addresses injected into every descendant package's analysis/build sandbox. For generators that aren't labelled `go_src`. Honored independently of `go_codegen_root` (a BUILD setting only this still injects them). The closest ancestor carrying it wins. Always applies to descendants, independent of `recursive`. |
 | `go_embed_deps`   | `list[string]`         | Explicit embed-asset target addresses injected into every descendant package's compile step. The analog of `go_codegen_deps` for the `go_embed_src` lane — for targets producing embed-only assets not labelled `go_embed_src`. The closest ancestor carrying it wins. |
 | `variants`        | `map[string, struct(...)]` | Declares named [build variants](#build-variants) that this package and its descendants select with `@v=NAME`, bounded to the enclosing Go module. |
-| `test`            | `bool \| struct(...)` | `False` stops test-target generation for this package; `True` / unset runs them. The struct form configures `test`/`xtest` run targets — env vars and pre-run shell lines. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
+| `test`            | `bool \| struct(...)` | `False` stops test-target generation for this package; `True` / unset runs them. The struct form configures `test`/`xtest` run targets — env vars, pre-run shell lines, and the exec runner. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
 | `lint`            | `bool`                 | `False` drops this package's `lint-check`/`lint` targets; `True` / unset keeps them, within a module that opts into linting at all. `format`/`format-check` are unaffected. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
 | `link`            | `struct(...)`          | Link settings for a `main` package's `build` (binary) target: `flags`, `deps`, `runtime_deps`. Package-scoped by default; add `recursive = True` to extend to descendants. See below. |
 | `recursive`       | `bool`                 | When `True`, extends this state's `test`, `lint`, and `link` config to all descendant packages. `go_codegen_root` and `go_codegen_deps` are unaffected — they always apply to descendants. |
@@ -438,6 +473,7 @@ provider_state(
         "runtime_env":      {"BAR": "2"},   # not hashed; runtime-only
         "runtime_pass_env": ["PATH"],       # not hashed; runtime-only
         "pre_run":          ["export FOO=bar", "mkdir -p ./scratch"],
+        "runner":           "//tools/devenv:runner",   # hashed; affects the cache key
     },
 )
 ```
@@ -449,6 +485,7 @@ provider_state(
 | `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
 | `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
 | `pre_run`          | `list[string]` | yes    | Shell lines run before the test binary. When non-empty, the target switches from the `exec` driver to the `bash` driver so the lines execute as shell. |
+| `runner`           | `string` (target addr) | yes | Exec runner the test runs under, overriding the plugin's own `runner` option for this package's tests. See "Running under a runner" above. |
 
 ### `lint` — skipping
 
@@ -572,6 +609,7 @@ actually needs the bytes to satisfy `//go:embed` patterns.
 | `heph query all <pkg>` shows no `lint-check`/`lint`/`format-check`/`format` | no `.golangci.yml`/`.golangci.yaml` at the package's module root, or `provider_state(lint = False)` applies | Add a golangci config to opt the module in; check `provider_state` (`lint = False` only drops `lint-check`/`lint`, not `format`/`format-check`). |
 | `lint`/`format` targets fail to resolve; error mentions `govet` | the `govet` option addr can't be built/fetched (e.g. a release asset that doesn't exist) | Point `govet` at a working target address, or clear an incorrect override so the default download is used. |
 | Suppressed finding still reports | `//nolint` used the registry linter name instead of the golangci name | For staticcheck/gosimple/stylecheck findings, match `//nolint:staticcheck` — golangci folds all three into that one name. |
+| Every Go target rebuilds/fails to link after setting `runner` | only some Go targets moved into the environment (e.g. a hand-written `go_*` target has its own `runner = "local"`) | The `runner` option applies workspace-wide by default; drop a stray per-target override, or make it deliberate. |
 
 ## Verification commands
 

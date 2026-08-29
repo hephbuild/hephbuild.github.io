@@ -171,6 +171,7 @@ The `exec` plugin registers two drivers: `exec` (direct execution), `bash`
 | `runtime_env` | Literal runtime-only env vars. |
 | `cache` | Bool, or `{enabled, remote, history}`. |
 | `codegen` | `"copy"` or `"in_place"` — write outputs into the source tree. |
+| `runner` | Exec runner this command runs under: a target address producing a `runner.json`, or `"local"` to opt out of a workspace-wide default (the driver's own `runner:` option). See `concepts.md` → *Runners*. |
 
 ```python title="BUILD"
 target(
