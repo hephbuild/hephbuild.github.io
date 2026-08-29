@@ -33,21 +33,21 @@ single `plugins:` entry loads the provider and all four drivers:
 plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
-      gotool: "1.26.4"       # required — pinned version, "host", or a target address
+      gotool: "1.27.0"       # required — pinned version, "host", or a target address
       skip: []               # optional
       checksums:             # optional; recommended for supply-chain verification
-        "1.26.4/linux/amd64": "<sha256hex>"
-        "1.26.4/darwin/arm64": "<sha256hex>"
+        "1.27.0/linux/amd64": "<sha256hex>"
+        "1.27.0/darwin/arm64": "<sha256hex>"
 ```
 
 ### Plugin options
 
 | Option     | Type                 | Default      | Description |
 |------------|----------------------|--------------|-------------|
-| `gotool`   | `string`             | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` (hermetic SDK downloaded from `go.dev/dl`), `"host"` (use the `go` binary already on the host's `PATH`), or a target address like `"//@heph/bin:go"` (use the toolchain a target produces). |
+| `gotool`   | `string`             | **required** | Go toolchain to use. Set to a pinned version like `"1.27.0"` (hermetic SDK downloaded from `go.dev/dl`), `"host"` (use the `go` binary already on the host's `PATH`), or a target address like `"//@heph/bin:go"` (use the toolchain a target produces). |
 | `govet`    | `string` (target addr) | the plugin's own published `heph-govet` build | The `heph-govet` binary lint/format targets run — see "Linting and formatting" below. |
 | `cctool`   | `string` (target addr) | the host's `cc` via the `hostbin` provider (`//@heph/bin:cc`) | The C compiler a race-detector build stages where it needs cgo — see "Race detector" below. Only resolved when such a build actually runs. |
-| `checksums` | `map[string, string]` | `{}`        | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at https://go.dev/dl/?mode=json. Without an entry the download is unverified (warning logged). SDK entries have no effect when `gotool = "host"`. |
+| `checksums` | `map[string, string]` | `{}`        | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.27.0/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at https://go.dev/dl/?mode=json. Without an entry the download is unverified (warning logged). SDK entries have no effect when `gotool = "host"`. |
 | `skip`     | `string[]`           | `[]`         | Workspace-relative glob patterns for directories to exclude from Go package discovery. Each pattern is matched against the directory's workspace-relative path. |
 | `walk_db`  | path                 | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
@@ -148,7 +148,7 @@ only when a race build that needs cgo actually runs):
 
 ```yaml title=".hephconfig"
 options:
-  gotool: "1.26.4"
+  gotool: "1.27.0"
   cctool: "//@heph/bin:cc"    # default; point elsewhere for a hermetic compiler
 ```
 
@@ -199,7 +199,9 @@ exclusions.
 built-in `http_fetch` target — nothing to configure by default. Point the
 `govet` provider option at another target address (e.g. a local build) to use
 a different binary; pin a non-default release download with a
-`"govet/<tag>/<goos>/<goarch>"` entry in `checksums`.
+`"govet/<tag>/<goos>/<goarch>"` entry in `checksums`. Building it from
+source needs a `gotool` at least as new as that module's own target version,
+or the build fails; the plugin's default published binary is unaffected.
 
 ## Build variants
 
@@ -562,7 +564,7 @@ actually needs the bytes to satisfy `//go:embed` patterns.
 | `query`/`list`/IDE is slow because of an embed asset build | embed asset is labelled `go_src` — it runs during analysis | Relabel it `go_embed_src`; the build will only run at actual compile time. |
 | Test panics: open testdata/...: no such file | fixture not staged into the sandbox | Label the producing target `go_test_data`. |
 | Wrong/old third-party version compiled | `go.mod` version drift vs the generated `@version` address | Reconcile `go.mod`; the address (and thus cache key) follows the pinned version. |
-| Non-reproducible builds across machines | using `gotool = "host"` | Switch to a pinned version: `gotool: "1.26.4"` and add `checksums`. |
+| Non-reproducible builds across machines | using `gotool = "host"` | Switch to a pinned version: `gotool: "1.27.0"` and add `checksums`. |
 | SDK checksum mismatch | `checksums` entry doesn't match the tarball | Look up the correct SHA-256 at https://go.dev/dl/?mode=json. |
 | `test = False` unexpectedly not disabling descendants | missing `recursive = True` | Add `recursive = True` to the `provider_state` to extend to descendants. |
 | Unsure which `provider_state` a package actually sees | multiple ancestors declare the same key | Run `heph inspect states //pkg --inherited` to see the whole chain, root first. |
