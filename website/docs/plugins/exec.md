@@ -24,6 +24,8 @@ and `bash`.
 Built-in. Register in `.hephconfig` under `plugins` with `builtin: exec` or
 `builtin: bash`. The optional `path` option sets the `PATH`
 override, which defaults to `/usr/local/bin:/usr/bin:/bin` if empty or unset.
+The optional `runner` option sets a workspace-wide default
+[runner](/docs/concepts/runners) for every target using this driver.
 
 ## Configuration
 
@@ -35,12 +37,14 @@ plugins:
         - /usr/local/bin
         - /usr/bin
         - /bin
+      runner: "//tools/devenv:runner"   # optional; see Runners
   - builtin: bash
     options:
       path:
         - /usr/local/bin
         - /usr/bin
         - /bin
+      runner: "//tools/devenv:runner"   # optional; see Runners
 ```
 
 ## Usage
@@ -88,6 +92,7 @@ The following target config keys are available:
 | `runtime_env`      | Runtime literal environment variables.               |
 | `cache`            | `True`/`False` toggles local + remote together; dict: `{enabled, remote, history}`. |
 | `codegen`          | Write generated outputs into the source tree (`copy` or `in_place`). |
+| `runner`           | Exec runner this command runs under — a target address producing a `runner.json`, or `"local"` to opt out of a workspace-wide default. See [Runners](/docs/concepts/runners). |
 
 These environment variables are available inside the sandbox:
 
@@ -232,6 +237,28 @@ target(
 
 The target still builds and caches locally; it is never uploaded to or pulled
 from a remote cache.
+
+## Runners
+
+By default a command runs on this host. Point it at a
+[runner](/docs/concepts/runners) target instead to run inside a described
+environment — a devenv shell, a container:
+
+```python title="BUILD"
+target(
+    name = "build",
+    driver = "bash",
+    run = "make",
+    out = "out/",
+    runner = "//tools/devenv:runner",
+)
+```
+
+Set `runner` on the driver's own options (see [Configuration](#configuration))
+to apply it to every `exec`/`bash` target in the workspace by default; a
+target's own `runner` field overrides that default, and `runner = "local"`
+opts a single target back onto the host. See [Runners](/docs/concepts/runners)
+for the full picture, including what environment a target actually sees.
 
 ## Interactive debugging with `--shell`
 

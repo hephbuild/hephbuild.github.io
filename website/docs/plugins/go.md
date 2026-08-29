@@ -64,6 +64,7 @@ plugins:
 | `gotool` | `string` | **required** | Go toolchain to use. Set to a pinned version like `"1.27.0"` to download the SDK hermetically from `go.dev/dl`, `"host"` to use the `go` binary already on the host's `PATH`, or a target address like `"//@heph/bin:go"` to use the toolchain a target produces. |
 | `govet` | `string` (target address) | the plugin's own published `heph-govet` build | The `heph-govet` binary that [lint and format targets](#linting-and-formatting) run. See [Pinning the analyzer binary](#pinning-the-analyzer-binary). |
 | `cctool` | `string` (target address) | the host's `cc`, via [hostbin](./hostbin.md) (`//@heph/bin:cc`) | The C compiler a [race-detector](#race-detector) build stages where it needs cgo. Only resolved when such a build actually runs. |
+| `runner` | `string` (target address) | unset | Exec [runner](/docs/concepts/runners) every Go tool (`go list`, `go tool compile`/`asm`/`pack`, `gofmt`, `heph-govet`) runs under, or `"local"`. Reaches the `go_*` drivers as their default and this provider's own `bash` targets (the standard library install, the third-party module download) as their `runner` field. See [Running Go tools under a runner](#running-go-tools-under-a-runner). |
 | `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.27.0/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at [go.dev/dl/?mode=json](https://go.dev/dl/?mode=json). When a key is missing the download is unverified (a warning is logged). SDK checksums have no effect when `gotool = "host"`. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
 | `walk_db` | path | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
@@ -133,6 +134,50 @@ found. Standard library (`@heph/go/std/…`) and third-party module
 (`@heph/go/thirdparty/…`) packages live outside the workspace tree and are
 never affected by `skip`.
 
+## Running Go tools under a runner
+
+Set `runner` to run every Go tool inside a described environment instead of
+on the host — see [Runners](/docs/concepts/runners) for what a runner is:
+
+```yaml title=".hephconfig"
+options:
+  gotool: "1.27.0"
+  runner: "//tools/devenv:runner"
+```
+
+It reaches every Go target — the `go_*`-driver ones and the plain `bash`
+targets this provider also generates (the standard library install, the
+third-party module download, and the binary/test-binary links) alike. A build
+where only half moved into the environment mixes toolchains and fails to
+link.
+
+`gotool: "host"` composes with it: under a runner, `"host"` means the `go`
+found on the *runner's* `PATH`, resolving `GOROOT` by running `go env GOROOT`
+inside that environment. Left unset (no runner), `gotool: "host"` behaves
+exactly as before — heph's own `PATH`. `gotool: "<version>"` and a
+target-address `gotool` are unaffected either way — both already resolve to a
+staged path inside the sandbox and never probe a host.
+
+A hand-written target using a `go_*` driver can set its own `runner` field
+(including `runner = "local"` to opt out); there is no per-package override
+for *generated* targets — the option is workspace-wide.
+
+**Tests are deliberately not covered by it.** A build wants the compiler's
+environment; a test often wants the runtime's — a separate decision. Point a
+package's tests at a runner with `provider_state` instead:
+
+```python title="BUILD"
+provider_state(
+    provider = "go",
+    test = {"runner": "//tools/devenv:runner"},
+)
+```
+
+With `test.runner` unset, a test falls back to the plugin's own `runner`
+option, so a workspace that wants everything in one environment sets it there
+and needs nothing per package. See [Test environment](#test-environment) for
+the rest of what `test` accepts.
+
 ## Usage
 
 The provider analyzes each Go package from its `go.mod` and source files and
@@ -180,10 +225,11 @@ Run both together with `label(test) || label(test-race)`.
 
 `:test_race`/`:xtest_race` accept the same `@v=NAME` variant selection and the
 same `provider_state(test = {...})` configuration — `env`, `pass_env`,
-`pre_run`, and so on — as `:test`/`:xtest`. See [Test environment](#test-environment).
-On Linux, a race build always links with `buildmode = "exe"`, even if the
-selected variant declares `buildmode = "pie"` — Go's race detector doesn't
-support PIE there. On darwin the variant's declared buildmode is honored as-is.
+`pre_run`, `runner`, and so on — as `:test`/`:xtest`. See
+[Test environment](#test-environment). On Linux, a race build always links
+with `buildmode = "exe"`, even if the selected variant declares
+`buildmode = "pie"` — Go's race detector doesn't support PIE there. On darwin
+the variant's declared buildmode is honored as-is.
 
 A race build needs a C compiler everywhere except darwin, where Go's race
 runtime has no cgo dependency. On Linux, the `cctool` option picks which C
@@ -520,7 +566,7 @@ the provider picks it up automatically.
 Three labels are recognized:
 
 | Label           | Attach to a target that produces…                                          | Pulled into |
-|-----------------|----------------------------------------------------------------------------|-------------|
+|-----------------|------------------------------------------------------------------------------|-------------|
 | `go_src`        | Generated `.go` sources (and small embedded files cheap to produce).       | `:build`, `:build_test` |
 | `go_embed_src`  | Embed-only assets for `//go:embed` that should not block `query`/`list`.   | `:build`, `:build_test` |
 | `go_test_data`  | Files a test reads at runtime (fixtures, goldens).                         | `:test`, `:xtest`  |
@@ -723,6 +769,7 @@ provider_state(
         "runtime_env":      {"BAR": "2"},   # not hashed; runtime-only
         "runtime_pass_env": ["PATH"],       # not hashed; runtime-only
         "pre_run":          ["export FOO=bar", "mkdir -p ./scratch"],
+        "runner":           "//tools/devenv:runner",   # hashed; affects the cache key
     },
 )
 ```
@@ -734,6 +781,7 @@ provider_state(
 | `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
 | `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
 | `pre_run`          | `list[string]` | yes    | Shell lines run before the test binary. When non-empty, the target switches from the `exec` driver to the `bash` driver so the lines execute as shell. |
+| `runner`           | `string` (target address) | yes | Exec [runner](/docs/concepts/runners) the test runs under, overriding the plugin's own `runner` option for this package's tests. See [Running Go tools under a runner](#running-go-tools-under-a-runner). |
 
 ### Link configuration
 
@@ -758,7 +806,7 @@ provider_state(
 ```
 
 | Field          | Type                                                            | Hashed | Description |
-|----------------|------------------------------------------------------------------|--------|-------------|
+|----------------|--------------------------------------------------------------------|--------|-------------|
 | `flags`        | `list[string]`                                                    | yes    | Extra flags passed verbatim to `go tool link`, inserted before `-o`. Use for `-X` linker vars, stripping flags (`-s`, `-w`), etc. |
 | `deps`         | `string \| list[string] \| map[string, string \| list[string]]`   | yes    | Target addresses staged into the link sandbox as hashed inputs. `flags` can reference their outputs. |
 | `runtime_deps` | `string \| list[string] \| map[string, string \| list[string]]`   | no     | Target addresses staged with the binary at run time only. Not hashed — they do not affect the cache key. |

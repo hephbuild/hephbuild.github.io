@@ -10,6 +10,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 - [Drivers](#drivers)
 - [Language plugins](#language-plugins)
 - [Providers](#providers)
+- [Runners](#runners)
 - [Addresses & the `@heph/*` packages](#addresses--the-heph-packages)
 - [Per-plugin detail](#per-plugin-detail)
 
@@ -40,6 +41,23 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 | Query | Select targets dynamically by label/package/prefix/output, returning a group. | Built-in, always on. |
 | Go | Analyze Go packages and generate build/test targets (also registers the `go_*` drivers). | External plugin — not compiled in. Load via `plugins: - path:` or `- url:` pointing at `heph-go-plugin.json`. For Go work, defer to the `heph-go` plugin. |
 
+## Runners
+
+A **runner** is a target that describes an environment — a devenv shell, a
+running container — so another target can run inside it instead of on the
+bare host. The exec drivers (`exec`/`bash`) take a `runner` field/option (see
+`authoring.md` → *Exec driver fields*); the `go` provider has its own
+`runner` option (owned by the `heph-go` plugin).
+
+| Plugin | Driver | Describes | Registration |
+|---|---|---|---|
+| Devenv | `devenv_runner` | A [devenv](https://devenv.sh) shell. | External plugin. Load via `plugins: - path:` or `- url:` pointing at `heph-devenv-plugin.json`. |
+| OCI | `oci_runner` | A running container, held open for the build. | Part of the `oci` plugin's manifest (`heph-oci-plugin.json`). |
+
+Full contract (the `runner.json` shape, environment composition, writing your
+own): `concepts.md` → *Runners*, or
+<https://hephbuild.github.io/docs/concepts/runners>.
+
 ## Addresses & the `@heph/*` packages
 
 ```
@@ -69,7 +87,8 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 ### Exec (`exec` / `bash`)
 Full field list, dependency kinds, output groups and sandbox env vars are in
 `authoring.md`. `path` option sets the `PATH` override (default
-`/usr/local/bin:/usr/bin:/bin`).
+`/usr/local/bin:/usr/bin:/bin`). `runner` option sets a workspace-wide default
+[runner](#runners) for every target using this driver.
 
 ### Nix (`nix`)
 Builds a reproducible environment from a `nixpkgs` flake URL and exposes

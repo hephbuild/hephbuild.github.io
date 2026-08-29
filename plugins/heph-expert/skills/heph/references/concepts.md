@@ -10,6 +10,7 @@ The mental model behind heph. Source pages under
 - [Caching](#caching)
 - [Reproducibility](#reproducibility)
 - [Codegen](#codegen)
+- [Runners](#runners)
 
 ---
 
@@ -167,3 +168,41 @@ a unified diff if they differ. Works for both modes (a `copy` target fails if
 its file is missing/stale; `in_place` fails if a source isn't already in its
 transformed form). Wire it into CI so a forgotten `heph run` becomes a red build
 with an exact diff instead of a drifting tree.
+
+## Runners
+
+An **exec runner** decides *where* a target's command actually runs: on the
+host as usual, inside a devenv shell, or inside a container. Any exec
+(`exec`/`bash`) target can name one via its `runner` field, and so can the
+`go` provider (its own `runner` option).
+
+```python title="BUILD"
+target(
+    name = "build",
+    driver = "bash",
+    run = "make",
+    out = "out/",
+    runner = "//tools/devenv:runner",
+)
+```
+
+Or set it once for the whole workspace, on the exec/bash driver's own
+`runner:` option (a target's own `runner` field wins over it).
+`runner = "local"` is the explicit opt-out.
+
+A runner is itself a target — built by the `devenv` plugin's `devenv_runner`
+driver or the `oci` plugin's `oci_runner` driver, or hand-written. It is a
+**hashed dependency**: naming one, or a change to the environment it resolves
+to, changes the consumer's cache key.
+
+**What a target sees:** `env_clear + the runner's environment + the target's
+own` — the target's own `env`/`pass_env`/deps/tools always win. `PATH` is
+assembled (`the target's tools ++ its own declared PATH entries ++ the
+runner's PATH`) rather than overridden, so a declared tool always wins over a
+same-named program the environment ships.
+
+Full reference, including the `runner.json` contract for writing a custom
+runner and the built-in `wrap`/`session` implementations:
+<https://hephbuild.github.io/docs/concepts/runners>. The `heph-go` plugin
+covers the `go` provider's `runner` option and
+`provider_state(test = {"runner": ...})`.
