@@ -113,12 +113,10 @@ heph query -e '//... && !//vendor/...'
 ```
 
 The positional `<label> <package>` form takes one bare label — it has no
-delimiters, so `heph run 'lint && !go-lint' //...` used to be read as a
-request for the label literally spelled `lint && !go-lint`, match nothing, and
-exit `0` as if the build had passed. The label argument is now checked against
-the label grammar; an argument that isn't a valid label errors instead of
-silently selecting nothing, and if it contains `&&`, `||`, `!`, parentheses,
-or whitespace the error points at `-e` as the form to use instead:
+delimiters, so the label argument is checked against the label grammar. An
+argument that isn't a valid label errors, and if it contains `&&`, `||`, `!`,
+parentheses, or whitespace the error points at `-e` as the form to use
+instead:
 
 ```bash
 $ heph run 'lint && !go-lint' //...

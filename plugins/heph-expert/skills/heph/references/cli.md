@@ -9,11 +9,9 @@ Two argument forms recur across `run` and `query`:
   target carrying the `test` label under the matcher.
 
 A label matches `[A-Za-z0-9_-]+`. The positional label argument is checked
-against that grammar; `heph run 'lint && !go-lint' //...` used to be read as a
-request for the (nonexistent) label literally spelled `lint && !go-lint` and
-exit `0` having matched nothing. It now errors, and points at `-e` when the
-argument contains query syntax (`&&`, `||`, `!`, `(`, `)`, or whitespace):
-`-e 'label(lint) && !label(go-lint) && //...'`.
+against that grammar and errors when it isn't a valid label, pointing at `-e`
+when the argument contains query syntax (`&&`, `||`, `!`, `(`, `)`, or
+whitespace): `-e 'label(lint) && !label(go-lint) && //...'`.
 
 ---
 
