@@ -11,13 +11,16 @@ from a Dockerfile with `docker buildx`; `oci_image` assembles one directly
 from target outputs, with no Dockerfile, no daemon, and nothing executed.
 `oci_pull`, `oci_push`, and `oci_load` move an image between a registry,
 heph's cache, and a local docker daemon. `oci_index` groups images built
-separately, one per platform, into a single multi-platform image.
+separately, one per platform, into a single multi-platform image. `oci_runner`
+turns a running container into a [runner](/docs/concepts/runners) other
+targets can execute inside.
 
 ## Driver
 
 A **driver** is the component that knows how to execute a target's action.
-This plugin registers seven drivers: `docker_build`, `oci_image`,
-`oci_layer`, `oci_index`, `oci_pull`, `oci_push`, and `oci_load`.
+This plugin registers eight drivers: `docker_build`, `oci_image`,
+`oci_layer`, `oci_index`, `oci_pull`, `oci_push`, `oci_load`, and
+`oci_runner`.
 
 ## Enabling it
 
@@ -431,6 +434,49 @@ does — from `~/.docker/config.json` (or `$DOCKER_CONFIG`) and any
 on any `oci_*` rule; a pull or push against a public image needs no
 credentials at all.
 
+## Running targets inside a container
+
+`oci_runner` describes a running container as a [runner](/docs/concepts/runners)
+other targets execute inside:
+
+```python title="BUILD"
+target(
+    name = "load",
+    driver = "oci_load",
+    image = ":img",
+    tag = "app:runner",
+)
+
+target(
+    name = "runner",
+    driver = "oci_runner",
+    image = "app:runner",
+    deps = [":load"],
+)
+
+target(
+    name = "check",
+    driver = "bash",
+    runner = ":runner",
+    run = ["python --version"],
+)
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `image` | `string` | **required** | Image reference to run targets in, e.g. the tag `oci_load` gave it. Must already be in the local docker daemon. |
+| `deps` | `string[]` | `[]` | Targets that must build first — normally the `oci_load` target that puts `image` in the daemon. Hashed: rebuilding the image re-derives the runner. |
+| `run_args` | `string[]` | `[]` | Extra `docker run` arguments for the held container — `--network`, additional `-v` mounts, `--user`. The workspace root and heph's own home are mounted automatically; do not repeat them here. |
+
+One container is held open for the whole build and each target runs inside it
+with `docker exec`. The runner's fingerprint is the image's content digest,
+resolved from the daemon at build time — retagging the image moves the
+digest, which re-keys every target that runs under it.
+
+Cached locally, never remotely: the answer is a fact about this daemon's
+image store, and publishing it would let one machine's resolution key
+another's builds.
+
 ## Cache control
 
 `docker_build`, `oci_image`, `oci_layer`, `oci_index`, and `oci_pull` all
@@ -443,5 +489,6 @@ accept `cache` as a bare bool or a dict with up to three keys:
 | `history` | int | `1` | Number of past revisions to retain in the local cache (minimum `1`). |
 
 A bare `True` sets both `enabled` and `remote` to `true`. A bare `False`
-disables both. `oci_push` and `oci_load` have no `cache` field — as actions
-with an external side effect, they're never cached.
+disables both. `oci_push`, `oci_load`, and `oci_runner` have no `cache`
+field — as actions with an external side effect (or, for `oci_runner`, an
+answer scoped to this machine's own daemon), they're never remotely cached.

@@ -25,6 +25,7 @@ const sidebars: SidebarsConfig = {
         'concepts/sandbox',
         'concepts/codegen',
         'concepts/approval',
+        'concepts/runners',
       ],
     },
     {
@@ -40,6 +41,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'plugins/index',
         'plugins/buildfile',
+        'plugins/devenv',
         'plugins/exec',
         'plugins/fs',
         'plugins/go',

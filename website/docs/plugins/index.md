@@ -21,7 +21,7 @@ Each driver plugin registers one or more named executors a target can run
 through.
 
 | Plugin                  | Driver                                   | Purpose                                                              |
-|-------------------------|------------------------------------------|----------------------------------------------------------------------|
+|-------------------------|--------------------------------------------|--------------------------------------------------------------------------|
 | [Exec](./exec.md)       | `exec`, `bash`, `sh`                     | Runs shell commands in sandboxed builds, with interactive debugging. |
 | [Filesystem](./fs.md)   | `fs`                                     | References workspace files and globs as build inputs.                |
 | [Group](./group.md)     | `group`                                  | Bundles targets transparently with no extra work.                    |
@@ -36,7 +36,7 @@ Language plugins add first-class support for a toolchain, registering the
 drivers that build its libraries, binaries, and tests.
 
 | Plugin        | Driver                                   | Purpose                                        |
-|---------------|------------------------------------------|------------------------------------------------|
+|---------------|---------------------------------------------|--------------------------------------------------|
 | [Go](./go.md) | `go_golist`, `go_embed`, `go_testmain`   | Go language support: libraries, binaries, tests. |
 
 ## Containers
@@ -45,8 +45,19 @@ The OCI plugin builds and moves container images, with or without a
 Dockerfile and with or without a daemon.
 
 | Plugin        | Driver                                                                                        | Purpose                                        |
-|---------------|-------------------------------------------------------------------------------------------------|------------------------------------------------|
-| [OCI](./oci.md) | `docker_build`, `oci_image`, `oci_layer`, `oci_index`, `oci_pull`, `oci_push`, `oci_load` | Build an image (with a Dockerfile or from target outputs), group multi-platform images, and move images between a registry, the cache, and a local docker daemon. |
+|---------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------|
+| [OCI](./oci.md) | `docker_build`, `oci_image`, `oci_layer`, `oci_index`, `oci_pull`, `oci_push`, `oci_load`, `oci_runner` | Build an image (with a Dockerfile or from target outputs), group multi-platform images, move images between a registry, the cache, and a local docker daemon, and run targets inside a running container. |
+
+## Runners
+
+A [runner](/docs/concepts/runners) target describes an environment other
+targets run inside — a devenv shell, a container — instead of on the bare
+host. Any [Exec](./exec.md) or [Go](./go.md) target can point at one.
+
+| Plugin              | Driver          | Describes                        |
+|----------------------|-----------------|-----------------------------------|
+| [Devenv](./devenv.md) | `devenv_runner` | A [devenv](https://devenv.sh) shell. |
+| [OCI](./oci.md#running-targets-inside-a-container)  | `oci_runner`    | A running container.              |
 
 ## Providers
 
