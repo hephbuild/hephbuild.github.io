@@ -50,21 +50,21 @@ plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
     checksum: sha256:<hex>   # optional
     options:
-      gotool: "1.26.4"       # required — pinned version, "host", or a target address
+      gotool: "1.27.0"       # required — pinned version, "host", or a target address
       skip: []               # optional
       checksums:             # optional; recommended for supply-chain verification
-        "1.26.4/linux/amd64": "<sha256hex>"
-        "1.26.4/darwin/arm64": "<sha256hex>"
+        "1.27.0/linux/amd64": "<sha256hex>"
+        "1.27.0/darwin/arm64": "<sha256hex>"
 ```
 
 ### Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `gotool` | `string` | **required** | Go toolchain to use. Set to a pinned version like `"1.26.4"` to download the SDK hermetically from `go.dev/dl`, `"host"` to use the `go` binary already on the host's `PATH`, or a target address like `"//@heph/bin:go"` to use the toolchain a target produces. |
+| `gotool` | `string` | **required** | Go toolchain to use. Set to a pinned version like `"1.27.0"` to download the SDK hermetically from `go.dev/dl`, `"host"` to use the `go` binary already on the host's `PATH`, or a target address like `"//@heph/bin:go"` to use the toolchain a target produces. |
 | `govet` | `string` (target address) | the plugin's own published `heph-govet` build | The `heph-govet` binary that [lint and format targets](#linting-and-formatting) run. See [Pinning the analyzer binary](#pinning-the-analyzer-binary). |
 | `cctool` | `string` (target address) | the host's `cc`, via [hostbin](./hostbin.md) (`//@heph/bin:cc`) | The C compiler a [race-detector](#race-detector) build stages where it needs cgo. Only resolved when such a build actually runs. |
-| `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.26.4/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at [go.dev/dl/?mode=json](https://go.dev/dl/?mode=json). When a key is missing the download is unverified (a warning is logged). SDK checksums have no effect when `gotool = "host"`. |
+| `checksums` | `map[string, string]` | `{}` | Expected SHA-256 digests for hermetic SDK tarballs, keyed `"<version>/<goos>/<goarch>"` (e.g. `"1.27.0/linux/amd64"`), and for `govet` release downloads, keyed `"govet/<tag>/<goos>/<goarch>"`. Look up SDK values at [go.dev/dl/?mode=json](https://go.dev/dl/?mode=json). When a key is missing the download is unverified (a warning is logged). SDK checksums have no effect when `gotool = "host"`. |
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from Go package discovery. |
 | `walk_db` | path | `<homeDir>/heph-plugin-go-fswalk.db` | Path to the filesystem walk cache database. |
 
@@ -74,10 +74,10 @@ plugins:
 
 ```yaml title=".hephconfig"
 options:
-  gotool: "1.26.4"
+  gotool: "1.27.0"
   checksums:
-    "1.26.4/linux/amd64": "<sha256>"
-    "1.26.4/darwin/arm64": "<sha256>"
+    "1.27.0/linux/amd64": "<sha256>"
+    "1.27.0/darwin/arm64": "<sha256>"
 ```
 
 The plugin downloads the Go SDK tarball for the host platform from
@@ -120,7 +120,7 @@ Each pattern is matched against the workspace-relative path of the directory.
 plugins:
   - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
-      gotool: "1.26.4"
+      gotool: "1.27.0"
       skip:
         - vendor
         - "internal/generated/**"
@@ -192,7 +192,7 @@ compiler to stage — it defaults to the host's `cc`, found through the
 
 ```yaml title=".hephconfig"
 options:
-  gotool: "1.26.4"
+  gotool: "1.27.0"
   cctool: "//@heph/bin:cc"    # default; point elsewhere for a hermetic compiler
 ```
 
@@ -354,9 +354,13 @@ tree:
 
 ```yaml title=".hephconfig"
 options:
-  gotool: "1.26.4"
+  gotool: "1.27.0"
   govet: "//tools/heph-govet:build"
 ```
+
+Building `heph-govet` from source needs a Go toolchain of at least the
+version its own module targets — set `gotool` accordingly, or the build
+fails. The plugin's default published binary is unaffected either way.
 
 Add a `"govet/<tag>/<goos>/<goarch>"` entry to `checksums` to verify a pinned
 `govet` release download other than the plugin's own build.
