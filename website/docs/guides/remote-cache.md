@@ -59,6 +59,36 @@ heph reads credentials from the environment using the standard AWS credential
 chain — `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY`, `AWS_PROFILE`, or an
 instance/workload-identity role.
 
+### Custom S3-compatible endpoints
+
+Point an `s3://` cache at an S3-compatible service that isn't AWS — Cloudflare
+R2, MinIO, Ceph — with `endpoint` and `region`. The URI still names the bucket
+and prefix; `endpoint` names the host to talk to:
+
+```yaml title=".hephconfig"
+caches:
+  shared:
+    uri: s3://my-bucket/heph-cache
+    endpoint: https://<account>.r2.cloudflarestorage.com
+    region: auto
+```
+
+`endpoint` and `region` override the standard `AWS_ENDPOINT_URL` /
+`AWS_REGION` environment variables when set. Both are `s3://`-only — setting
+either on a `gs://`, `az://`, `https://`, or `file://` cache fails at startup
+with the offending field and URI.
+
+A plain `http://` endpoint (a local MinIO, a test double) is what opts that
+cache into plaintext requests — heph otherwise refuses plaintext HTTP to a
+remote cache. Writing `https://` never lifts that block:
+
+```yaml title=".hephconfig"
+caches:
+  local:
+    uri: s3://bucket/prefix
+    endpoint: http://localhost:9000
+```
+
 ## Setting up GCS
 
 ```yaml title=".hephconfig"
