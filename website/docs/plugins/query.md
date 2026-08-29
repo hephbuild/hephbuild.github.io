@@ -55,7 +55,11 @@ address, include the colon: `//foo:bar`.
 | `package_prefix(//pkg)` | targets in `//pkg` or any sub-package |
 | `tree_output(pkg)` | targets whose codegen tree writes into `pkg` |
 
-Labels containing spaces can be quoted: `label("my label")`.
+A label matches `[A-Za-z0-9_-]+` — ASCII letters, digits, `-`, and `_`. This
+excludes `//`, `:`, `@` (address syntax), the query operators (`&& || ! ( )`),
+and whitespace, so a label is never ambiguous with the syntax around it.
+`label(x)` rejects an argument outside that grammar as a parse error, rather
+than compiling into a predicate that quietly matches nothing.
 
 ### Operators
 
@@ -102,10 +106,27 @@ arguments are mutually exclusive — use one or the other.
 
 ```bash
 heph run //pkg:name                  # positional address (unchanged)
-heph run label //pkg/...             # label + package matcher (unchanged)
+heph run lint //pkg/...              # label + package matcher (unchanged)
 heph run -e '//pkg/... && label(ci)' # query expression
 
 heph query -e '//... && !//vendor/...'
+```
+
+The positional `<label> <package>` form takes one bare label — it has no
+delimiters, so `heph run 'lint && !go-lint' //...` used to be read as a
+request for the label literally spelled `lint && !go-lint`, match nothing, and
+exit `0` as if the build had passed. The label argument is now checked against
+the label grammar; an argument that isn't a valid label errors instead of
+silently selecting nothing, and if it contains `&&`, `||`, `!`, parentheses,
+or whitespace the error points at `-e` as the form to use instead:
+
+```bash
+$ heph run 'lint && !go-lint' //...
+× the first positional argument is a bare label, not a query expression — for
+  `&&`, `||`, `!` or grouping use `-e`, e.g.
+  -e 'label(lint) && !label(go-lint) && //...'
+
+$ heph run -e 'label(lint) && !label(go-lint) && //...'
 ```
 
 :::note
