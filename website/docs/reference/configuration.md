@@ -275,6 +275,13 @@ other scheme is a hard error at startup, naming the offending field and URI.
 When set, both override the corresponding environment variable
 (`AWS_ENDPOINT_URL`, `AWS_REGION`) for that cache.
 
+Every scheme's credentials can also be scoped to heph instead of read from the
+ambient environment — per store kind (`HEPH_S3_*`, `HEPH_GCS_*`,
+`HEPH_AZURE_*`, `HEPH_HTTP_*`) or per named cache
+(`HEPH_CACHE_<NAME>_*`, derived from the cache's key above). See
+[Scoping credentials to a cache](/docs/guides/remote-cache#scoping-credentials-to-a-cache)
+for the full precedence rules.
+
 Run `heph tool cache measure-latency` to force a fresh latency measurement and
 print per-cache round-trip times. See the [Remote cache guide](/docs/guides/remote-cache)
 for a complete walkthrough.
