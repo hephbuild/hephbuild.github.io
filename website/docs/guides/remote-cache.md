@@ -101,6 +101,67 @@ Credentials come from `GOOGLE_APPLICATION_CREDENTIALS` or Application Default
 Credentials. In CI, a Workload Identity binding or a service account key file
 both work.
 
+## Scoping credentials to a cache
+
+By default heph reads credentials from the ambient environment — the same
+`AWS_ACCESS_KEY_ID` any other AWS tool on the machine uses. That's a problem
+the moment the cache lives somewhere else: an `s3://` cache in Cloudflare R2
+needs `AWS_ACCESS_KEY_ID` to hold an R2 key, which is then the wrong key for
+any target that talks to real AWS. Two `s3://` caches in two different
+accounts have the same conflict with each other.
+
+heph also reads two heph-owned namespaces, checked most specific first, before
+falling back to the ambient environment:
+
+1. **This cache alone** — `HEPH_CACHE_<NAME>_*`, where `<NAME>` is the cache's
+   key under `caches:`, uppercased with every character a shell can't spell
+   replaced by `_`. `build-cache` becomes `HEPH_CACHE_BUILD_CACHE_*`.
+2. **Every cache of this kind** — `HEPH_S3_*`, `HEPH_GCS_*`, `HEPH_AZURE_*`, or
+   `HEPH_HTTP_*`, matching the cache's scheme.
+
+The suffix is the same setting name the ambient variable uses, so the mapping
+is mechanical: `HEPH_S3_ACCESS_KEY_ID` for `AWS_ACCESS_KEY_ID`,
+`HEPH_S3_ENDPOINT_URL` for `AWS_ENDPOINT_URL`, `HEPH_GCS_SERVICE_ACCOUNT` for
+`GOOGLE_SERVICE_ACCOUNT`, `HEPH_AZURE_ACCOUNT_NAME` for
+`AZURE_STORAGE_ACCOUNT_NAME`. `HEPH_S3_AWS_ACCESS_KEY_ID` also works, if you'd
+rather keep the vendor name.
+
+Two caches, two accounts, one shell:
+
+```yaml title=".hephconfig"
+caches:
+  r2:
+    uri: s3://heph-cache/repo
+    endpoint: https://<account>.r2.cloudflarestorage.com
+  corp:
+    uri: s3://corp-cache/repo
+```
+
+```bash title="terminal"
+export HEPH_CACHE_R2_ACCESS_KEY_ID=...
+export HEPH_CACHE_R2_SECRET_ACCESS_KEY=...
+export HEPH_CACHE_CORP_ACCESS_KEY_ID=...
+export HEPH_CACHE_CORP_SECRET_ACCESS_KEY=...
+```
+
+The most specific namespace that sets anything wins, and it wins outright —
+heph never merges credentials from two sources for one cache. Setting
+`HEPH_S3_ACCESS_KEY_ID` is enough to stop heph from reading
+`AWS_SECRET_ACCESS_KEY` or `AWS_SESSION_TOKEN` from the ambient environment
+for that cache, so set the matching secret in the same namespace too.
+
+For GCS workload identity federation specifically, the scoped equivalent of
+`GOOGLE_APPLICATION_CREDENTIALS` is `HEPH_GCS_APPLICATION_CREDENTIALS` (or
+`HEPH_CACHE_<NAME>_APPLICATION_CREDENTIALS`).
+
+:::note
+An unrecognized variable name inside a `HEPH_*` namespace fails at startup,
+naming the variable — heph assumes it's a typo rather than an unrelated
+setting. Two caches whose names flatten to the same `HEPH_CACHE_<NAME>_`
+namespace (`build-cache` and `build.cache`, for example) also fail at
+startup, naming both.
+:::
+
 ## Read-only and write-only caches
 
 Set `read` or `write` to `false` to restrict what a cache does. A common
