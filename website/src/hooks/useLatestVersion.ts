@@ -58,7 +58,14 @@ function peek(channel: ReleaseChannelId): LatestVersionState | undefined {
   return hit.state;
 }
 
-/** Resolves a channel, never rejecting — failure is a state, not an exception. */
+/**
+ * Resolves a channel, never rejecting — failure is a state, not an exception:
+ * the promise is shared by every waiting component and cached once it settles,
+ * so throwing here would poison the entry for all of them. The reason is not
+ * swallowed with it; a version that will not resolve is worth one line in the
+ * console, since the usual cause (`403`, the 60-per-hour unauthenticated limit
+ * the API applies per IP) is invisible from the page otherwise.
+ */
 async function fetchChannel(channel: ReleaseChannelId): Promise<LatestVersionState> {
   try {
     const res = await fetch(releasesApiUrl(channel), {
@@ -69,7 +76,12 @@ async function fetchChannel(channel: ReleaseChannelId): Promise<LatestVersionSta
         version: null, loading: false, error: true, empty: true,
       };
     }
-    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+    if (!res.ok) {
+      const limited = res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0';
+      throw new Error(limited
+        ? `GitHub API rate limit reached (${res.headers.get('x-ratelimit-limit') ?? '60'} requests/hour per IP)`
+        : `GitHub API ${res.status}`);
+    }
     const data: { tag_name?: string } = await res.json();
     return {
       version: data.tag_name?.replace(/^v/, '') || FALLBACK_VERSION,
@@ -77,7 +89,9 @@ async function fetchChannel(channel: ReleaseChannelId): Promise<LatestVersionSta
       error: false,
       empty: false,
     };
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(`[release-channels] ${channel}: ${(err as Error).message}`);
     return {
       version: null, loading: false, error: true, empty: false,
     };
