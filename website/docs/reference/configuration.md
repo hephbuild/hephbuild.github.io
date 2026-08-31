@@ -25,7 +25,7 @@ version: v1.2.3
 
 `version` pins the heph release for this workspace so every machine and CI job
 runs the same binary. The tag names a release in a
-[release channel](/docs/reference/release-channels) — `nightly` by default,
+[release channel](/docs/reference/release-channels) — `dev` by default,
 `stable` for slower-moving pins. When the running binary differs from the pin, heph
 automatically downloads the pinned release and re-execs into it on startup —
 the rest of the run is served by the pinned version. The downloaded binary is

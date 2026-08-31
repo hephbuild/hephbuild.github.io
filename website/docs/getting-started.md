@@ -20,7 +20,7 @@ version: <HEPH_VERSION>
 ```
 
 The version above comes from a [release channel](/docs/reference/release-channels)
-— `nightly` by default. Switch the selector on any code block to read the page
+— `dev` by default. Switch the selector on any code block to read the page
 for the other channel.
 
 From here, enable the [plugins](/docs/plugins) that you require and get building!

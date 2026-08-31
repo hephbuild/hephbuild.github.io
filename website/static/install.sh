@@ -7,17 +7,17 @@
 #   HEPH_BIN_NAME  installed binary name   (default: heph)
 #   HEPH_BIN_DIR   install directory       (default: $HOME/.local/bin)
 #   HEPH_VERSION   release tag to install  (default: latest)
-#   HEPH_CHANNEL   release channel         (default: nightly; or stable)
+#   HEPH_CHANNEL   release channel         (default: dev; or stable)
 #   HEPH_NO_MODIFY_PATH=1   skip writing to shell rc files
 
 set -eu
 
-CHANNEL="${HEPH_CHANNEL:-nightly}"
+CHANNEL="${HEPH_CHANNEL:-dev}"
 case "$CHANNEL" in
-    nightly) REPO="hephbuild/heph-artifacts-v1" ;;
+    dev) REPO="hephbuild/heph-artifacts-v1" ;;
     stable)  REPO="hephbuild/heph" ;;
     *)
-        printf 'error: unknown release channel: %s (want: nightly or stable)\n' "$CHANNEL" >&2
+        printf 'error: unknown release channel: %s (want: dev or stable)\n' "$CHANNEL" >&2
         exit 1
         ;;
 esac

@@ -1,7 +1,7 @@
 ---
 title: "Release channels"
 sidebar_position: 4
-description: Where heph releases come from — nightly and stable — and how to pick one.
+description: Where heph releases come from — dev and stable — and how to pick one.
 ---
 
 # Release channels
@@ -13,11 +13,11 @@ differ.
 
 | Channel   | Cadence | Releases |
 |-----------|---------|----------|
-| `nightly` | Cut from every change on main. Newest features, fastest moving. **Default.** | [hephbuild/heph-artifacts-v1](https://github.com/hephbuild/heph-artifacts-v1/releases/latest) |
+| `dev`     | Cut from every change on main. Newest features, fastest moving. **Default.** | [hephbuild/heph-artifacts-v1](https://github.com/hephbuild/heph-artifacts-v1/releases/latest) |
 | `stable`  | Tagged releases. Fewer, slower, vetted. | [hephbuild/heph](https://github.com/hephbuild/heph/releases/latest) |
 
 :::note
-`nightly` is the default everywhere today — the installer, and every version and
+`dev` is the default everywhere today — the installer, and every version and
 URL these docs show. Pick `stable` when you want a slower-moving pin.
 :::
 
@@ -42,7 +42,7 @@ The installer takes the channel in `HEPH_CHANNEL`:
 HEPH_CHANNEL=stable curl -fsSL https://hephbuild.github.io/install.sh | sh
 ```
 
-Omit it for `nightly`. `HEPH_VERSION` pins a tag within the channel:
+Omit it for `dev`. `HEPH_VERSION` pins a tag within the channel:
 
 ```bash title="terminal"
 HEPH_CHANNEL=stable HEPH_VERSION=v1.2.3 curl -fsSL https://hephbuild.github.io/install.sh | sh

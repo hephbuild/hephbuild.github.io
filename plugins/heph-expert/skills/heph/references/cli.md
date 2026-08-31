@@ -105,7 +105,7 @@ Print the heph version string and exit.
 curl -fsSL https://hephbuild.github.io/install.sh | sh
 ```
 
-Releases come from a **release channel**: `nightly` (default, from
+Releases come from a **release channel**: `dev` (default, from
 `hephbuild/heph-artifacts-v1`) or `stable` (from `hephbuild/heph`). Pick one with
 `HEPH_CHANNEL`, and a tag within it with `HEPH_VERSION`:
 

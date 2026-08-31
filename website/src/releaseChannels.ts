@@ -6,7 +6,7 @@
 // `url:` entries in the docs. Flipping which channel a reader gets by default
 // is a one-line change to DEFAULT_RELEASE_CHANNEL below.
 
-export type ReleaseChannelId = 'nightly' | 'stable';
+export type ReleaseChannelId = 'dev' | 'stable';
 
 export interface ReleaseChannel {
   id: ReleaseChannelId;
@@ -19,9 +19,9 @@ export interface ReleaseChannel {
 }
 
 export const RELEASE_CHANNELS: Record<ReleaseChannelId, ReleaseChannel> = {
-  nightly: {
-    id: 'nightly',
-    label: 'Nightly',
+  dev: {
+    id: 'dev',
+    label: 'Dev',
     description: 'Cut from every change on main. Newest features, fastest moving.',
     repo: 'hephbuild/heph-artifacts-v1',
   },
@@ -34,14 +34,14 @@ export const RELEASE_CHANNELS: Record<ReleaseChannelId, ReleaseChannel> = {
 };
 
 /** Order the channels are offered in. */
-export const RELEASE_CHANNEL_IDS: ReleaseChannelId[] = ['nightly', 'stable'];
+export const RELEASE_CHANNEL_IDS: ReleaseChannelId[] = ['dev', 'stable'];
 
 /**
  * The channel a reader gets until they pick another one — every version the
  * site shows without an explicit channel comes from here. Change this constant
  * (and nothing else) to make another channel the default.
  */
-export const DEFAULT_RELEASE_CHANNEL: ReleaseChannelId = 'nightly';
+export const DEFAULT_RELEASE_CHANNEL: ReleaseChannelId = 'dev';
 
 export function isReleaseChannelId(value: unknown): value is ReleaseChannelId {
   return typeof value === 'string' && value in RELEASE_CHANNELS;
