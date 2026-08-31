@@ -462,6 +462,10 @@ provider_state(provider = "go", variants = {
 `cgo` is not a variant field — every heph-built Go target compiles with
 `CGO_ENABLED=0`, unconditionally.
 
+A host's `GOFLAGS` environment variable has no effect on `go list` or on the
+build — heph does not read it. Set build tags with a variant's `tags` field
+instead of `GOFLAGS=-tags=...`.
+
 `inherit` resolves the named variant first, then overlays the fields you set
 on top of it. List fields (`tags`, `goexperiment`, `gcflags`, `ldflags`) are
 **replaced**, not merged — in the example above, `release` ends with

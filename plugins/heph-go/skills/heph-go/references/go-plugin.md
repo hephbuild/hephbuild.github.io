@@ -272,6 +272,8 @@ provider_state(provider = "go", variants = {
 | `inherit` | `string` | no | Another variant name in the same map to start from. |
 
 No `cgo` field — every heph-built Go target has `CGO_ENABLED=0` unconditionally.
+A host's `GOFLAGS` has no effect on `go list` or the build — heph does not read
+it; set build tags via a variant's `tags` field instead of `GOFLAGS=-tags=...`.
 `inherit` overlays declared fields onto the resolved base; list fields
 (`tags`/`goexperiment`/`gcflags`/`ldflags`) are **replaced wholesale, not
 merged**; `goos`/`goarch` may be omitted when the base sets them; inheritance
