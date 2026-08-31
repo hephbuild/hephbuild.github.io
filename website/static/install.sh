@@ -7,11 +7,21 @@
 #   HEPH_BIN_NAME  installed binary name   (default: heph)
 #   HEPH_BIN_DIR   install directory       (default: $HOME/.local/bin)
 #   HEPH_VERSION   release tag to install  (default: latest)
+#   HEPH_CHANNEL   release channel         (default: nightly; or stable)
 #   HEPH_NO_MODIFY_PATH=1   skip writing to shell rc files
 
 set -eu
 
-REPO="hephbuild/heph-artifacts-v1"
+CHANNEL="${HEPH_CHANNEL:-nightly}"
+case "$CHANNEL" in
+    nightly) REPO="hephbuild/heph-artifacts-v1" ;;
+    stable)  REPO="hephbuild/heph" ;;
+    *)
+        printf 'error: unknown release channel: %s (want: nightly or stable)\n' "$CHANNEL" >&2
+        exit 1
+        ;;
+esac
+
 BIN_NAME="${HEPH_BIN_NAME:-heph}"
 BIN_DIR="${HEPH_BIN_DIR:-$HOME/.local/bin}"
 VERSION="${HEPH_VERSION:-latest}"
@@ -75,7 +85,7 @@ fi
 
 # ---- install ----------------------------------------------------------------
 
-info "${BOLD}Installing heph${RESET} (${OS}/${ARCH}, ${VERSION})"
+info "${BOLD}Installing heph${RESET} (${OS}/${ARCH}, ${CHANNEL}, ${VERSION})"
 
 TMP="$(mktemp "${TMPDIR:-/tmp}/heph.XXXXXX")"
 trap 'rm -f "$TMP"' EXIT INT TERM

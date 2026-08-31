@@ -104,3 +104,11 @@ Print the heph version string and exit.
 ```bash
 curl -fsSL https://hephbuild.github.io/install.sh | sh
 ```
+
+Releases come from a **release channel**: `nightly` (default, from
+`hephbuild/heph-artifacts-v1`) or `stable` (from `hephbuild/heph`). Pick one with
+`HEPH_CHANNEL`, and a tag within it with `HEPH_VERSION`:
+
+```bash
+HEPH_CHANNEL=stable HEPH_VERSION=v1.2.3 curl -fsSL https://hephbuild.github.io/install.sh | sh
+```

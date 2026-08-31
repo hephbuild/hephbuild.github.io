@@ -29,9 +29,13 @@ You should not interact with these drivers directly; they are internal plumbing.
 The Go plugin is an **external plugin** (not compiled into the heph binary). A
 single `plugins:` entry loads the provider and all four drivers:
 
+The URL points at a release in a channel — `nightly`
+(`hephbuild/heph-artifacts-v1`, the default) or `stable` (`hephbuild/heph`).
+Keep it on the same channel as the `version:` pin.
+
 ```yaml title=".hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
+  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-go-plugin.json
     options:
       gotool: "1.27.0"       # required — pinned version, "host", or a target address
       skip: []               # optional
