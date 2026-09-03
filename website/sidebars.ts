@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
         'concepts/dependencies',
         'concepts/reproducibility',
         'concepts/caching',
+        'concepts/scratch',
         'concepts/sandbox',
         'concepts/codegen',
         'concepts/approval',

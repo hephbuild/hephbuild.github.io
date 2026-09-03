@@ -20,6 +20,7 @@ plugins:
 | `plugins` | list of plugin entries | `[]` | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map. |
 | `homeDir` | path | unset | Where heph keeps its home and cache. |
 | `memCache` | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
+| `scratch` | `{scope, restoreScopes, seedOnFork}` | unset | Which scratch-cache lineage a run reads and writes. |
 | `fuse` | `{enabled: true \| false \| "auto"}` | off | Sandbox overlay mode. |
 | `lock` | `{backend: fs \| mem}` | `fs` | Execute-phase lock backend. |
 
@@ -65,6 +66,21 @@ memCache:
   perEntryBytes: 16384      # largest single entry kept in memory
   capacityBytes: 67108864   # total budget; 0 disables the in-memory cache
 ```
+
+## `scratch` — branch-lineage policy
+
+Which lineage of a [scratch cache](./concepts.md#scratch-caches) a run reads
+and writes — the cache's *contents* are declared by its target; this is
+which copy of them a run sees.
+
+```yaml title=".hephconfig"
+scratch:
+  scope: "${git:branch}"       # lineage this run writes to; resolves the current branch
+  restoreScopes: ["master"]    # lineages to read from when scope has nothing yet
+  seedOnFork: true             # default: copy the first warm fallback into a cold scope
+```
+
+`restoreScopes` is read-only — a branch never writes into its fallback.
 
 ## `fuse` — sandbox overlay
 

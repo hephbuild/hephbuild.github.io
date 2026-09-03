@@ -8,6 +8,7 @@ The mental model behind heph. Source pages under
 - [Dependencies](#dependencies)
 - [Sandbox](#sandbox)
 - [Caching](#caching)
+- [Scratch caches](#scratch-caches)
 - [Reproducibility](#reproducibility)
 - [Codegen](#codegen)
 - [Runners](#runners)
@@ -118,6 +119,59 @@ filesystem directly).
 are trimmed automatically at the end of the run that writes the new one — no
 action needed. `heph tool gc` sweeps everything else no longer reachable from
 any current target (removed targets, orphaned entries).
+
+## Scratch caches
+
+A **scratch** is a directory a target declares, keeps between runs, and
+shares with every target that references it — the one thing in a sandbox
+that is neither an input nor an output. It's for a tool that already
+maintains its own content-addressed cache (a compiler cache, a package
+download cache, a registry blob store), never for durable state.
+
+The contract: **a target's outputs must be identical whether its scratch is
+warm, cold, or absent.** It never enters `hashin`, so it can never invalidate
+anything — changing its settings rebuilds nothing, deleting it costs only
+time. Prove the contract with `heph --no-scratch inspect hashout <addr>` and
+compare against the ordinary hash.
+
+```python title="BUILD"
+target(
+    name    = "gocache",
+    driver  = "scratch",
+    path    = ".cache/go-build",   # optional; omit for env-var-only
+    env     = "GOCACHE",           # defaults to SCRATCH_<NAME>
+    access  = "shared",            # "exclusive" (default) | "shared"
+    version = "",                  # what the contents depend on, beyond the addr
+    remote  = False,               # may travel through the remote cache
+)
+
+target(name = "build", driver = "bash", scratch = ["//build:gocache"], ...)
+```
+
+| Field | Meaning |
+|---|---|
+| `path` | Mount point inside a consumer's sandbox, relative to its cwd. Optional — omitting it means nothing is placed in the tree, so no output can collect it and no dependency can be shadowed by it. |
+| `env` | Env var a consumer reads the absolute path from. Point it at the tool's own variable (`GOCACHE`, `CCACHE_DIR`). |
+| `access` | `"exclusive"` (default, one consumer at a time, cross-process) or `"shared"` (concurrent — only for a cache safe under concurrent access *by construction*). |
+| `version` | The whole identity beyond the address. heph never guesses; state what the cache depends on (`heph.core.os() + "/" + heph.core.arch()`, a toolchain version, …) or leave empty for a portable cache. |
+| `remote` | May be pulled/pushed through a configured remote cache. |
+| `max_size` | Size cap, e.g. `"10GiB"`; over it the cache is dropped whole rather than trimmed. |
+
+`heph tool scratch ls / head <addr> / path <addr> / rm <addr>|--all / push
+--all / pull --all` inspect, reclaim, and publish caches. `head` explains
+which lineage a build would restore from and why — the go-to when a branch
+starts unexpectedly cold. `.hephconfig`'s `scratch.scope` /
+`scratch.restoreScopes` control per-branch lineages (`${git:branch}` resolves
+automatically); `heph tool gc --scratch-max-size` / `--scratch-max-age-days`
+sweeps by size and age.
+
+A mounted scratch (`path` set) must not sit under a broad output glob in the
+same package — `out = "**/*"` beside a mount fails at pack time, naming the
+mount. The env-var-only form (no `path`) has no such hazard.
+
+Full reference: <https://hephbuild.github.io/docs/concepts/scratch>. The
+`heph-go` plugin covers the Go provider's own `GOCACHE`/`GOMODCACHE` scratch
+caches and `heph.go.gocache_addr()`.
 
 ## Reproducibility
 

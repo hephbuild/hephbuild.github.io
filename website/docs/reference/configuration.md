@@ -286,6 +286,29 @@ Run `heph tool cache measure-latency` to force a fresh latency measurement and
 print per-cache round-trip times. See the [Remote cache guide](/docs/guides/remote-cache)
 for a complete walkthrough.
 
+## `scratch` — branch-lineage policy
+
+Controls which [scratch cache](/docs/concepts/scratch) lineage a run reads
+and writes. A scratch's *contents* are declared by its target; this is about
+which **copy** of them a given run sees.
+
+```yaml title=".hephconfig"
+scratch:
+  scope: "${git:branch}"
+  restoreScopes: ["master"]
+  seedOnFork: true   # default
+```
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `scope` | string | `""` (one shared lineage) | The lineage this run **writes** to. `${git:branch}` resolves to the current branch, so a developer gets per-branch caches without wiring anything; CI overrides it with whatever names the branch there. |
+| `restoreScopes` | string[] | `[]` | Lineages this run may **read** from when its own scope has nothing yet, tried in order — `["master"]` is the common case. Never written to: a branch can read its base's cache but never overwrite it. |
+| `seedOnFork` | bool | `true` | Copy the first warm fallback lineage into a cold scope on its first build there, instead of starting from nothing. Turn off only for a large cache on a filesystem without reflink support, where the copy itself gets expensive. |
+
+See [Scratch caches](/docs/concepts/scratch) for the caches themselves, and
+`heph run --no-scratch` for auditing that a target doesn't secretly depend on
+one.
+
 ## `fuse` — sandbox overlay
 
 Controls whether sandboxes are assembled with a FUSE overlay instead of copying

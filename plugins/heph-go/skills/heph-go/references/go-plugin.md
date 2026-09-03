@@ -187,6 +187,34 @@ options:
   cctool: "//@heph/bin:cc"    # default; point elsewhere for a hermetic compiler
 ```
 
+## Build and module caches
+
+`GOCACHE` (one per Go module + build variant) and `GOMODCACHE` (one shared,
+portable cache for downloaded modules) are wired up automatically as
+[scratch caches](https://hephbuild.github.io/docs/concepts/scratch) —
+nothing to configure. A host-set `GOMODCACHE` is deliberately not passed
+through, so the shared cache is what every build sees. Both show up in
+`heph tool scratch ls`, are droppable with `heph tool scratch rm` if one
+goes bad, and are auditable with `heph run --no-scratch`.
+
+Share the same `GOCACHE` a module's own targets use from a hand-written
+target with `heph.go.gocache_addr()`:
+
+```python title="BUILD"
+target(
+    name    = "custom_build",
+    driver  = "bash",
+    scratch = [heph.go.gocache_addr()],   # goos, goarch, gotool, tags, goexperiment,
+    run     = "go build -o $OUT ./cmd/tool",  # gcflags, ldflags, race — match the variant
+    out     = "tool",
+)
+```
+
+`gocache_addr()` resolves the module from the *calling* BUILD file's nearest
+`go.mod`. Pass the same factors (`goos`/`goarch`/`gotool`/`tags`/…) the
+variant you're building against declares, or the target warms a different
+cache than the one it meant to share.
+
 ## Linting and formatting
 
 A Go module gets `lint-check`, `lint`, `format-check`, and `format` targets the

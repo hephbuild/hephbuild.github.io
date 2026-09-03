@@ -341,6 +341,20 @@ WARN oci_pull: "alpine:3.20" currently resolves to
 See [Reproducibility](/docs/concepts/reproducibility) for the same principle
 applied elsewhere in heph.
 
+#### Shared blob cache
+
+Every `oci_pull` target draws downloaded registry blobs from one shared
+[scratch cache](/docs/concepts/scratch), keyed by nothing but its own
+address — blobs are content-addressed by digest, so one store holds `amd64`
+and `arm64` layers side by side. Two images sharing a base layer download it
+once, not once per pull target. Nothing to configure; inspect or reclaim it
+like any other scratch:
+
+```bash title="terminal"
+heph tool scratch ls          # the blob store shows up alongside your own caches
+heph tool scratch rm --all    # drop it if it ever needs a clean slate
+```
+
 ### `oci_push`
 
 Pushes an image archive to a registry. An **action**, not an artifact — it
