@@ -245,6 +245,45 @@ options:
 `cctool` is resolved only when a race build that needs cgo actually runs — an
 ordinary build, and a darwin race build, never touch it.
 
+## Build and module caches
+
+Every Go list, compile, and third-party download step shares two caches
+automatically — nothing to configure:
+
+- **`GOCACHE`** — one per Go module (the directory holding `go.mod`) and per
+  [build variant](#build-variants), shared by that module's `go list` and
+  `go tool compile` steps alike.
+- **`GOMODCACHE`** — one shared, portable module-download cache for the
+  whole workspace. heph owns it outright: a host-set `GOMODCACHE` is not
+  passed through, so the shared cache is what every build sees.
+
+Both are [scratch caches](/docs/concepts/scratch) — visible in
+`heph tool scratch ls`, droppable with `heph tool scratch rm` if one goes
+bad, and auditable with `heph run --no-scratch`. Point a hand-written target
+at the same `GOCACHE` a module's own targets already share with
+`heph.go.gocache_addr()`:
+
+```python title="BUILD"
+target(
+    name    = "custom_build",
+    driver  = "bash",
+    scratch = [heph.go.gocache_addr()],
+    run     = "go build -o $OUT ./cmd/tool",
+    out     = "tool",
+)
+```
+
+| Argument | Default | Meaning |
+|----------|---------|---------|
+| `goos` / `goarch` | this machine's | Target platform of the cache to share. |
+| `gotool` | `"host"` | Toolchain selector — `"host"`, a pinned version, or a target address. Match whatever the variant you're building against declares. |
+| `tags` / `goexperiment` / `gcflags` / `ldflags` | `[]` | The rest of the variant's factors — pass what the variant uses, or the target warms a different cache than the one it meant to share. |
+| `race` | `false` | Address the race-detector variant of the cache. |
+
+`gocache_addr()` resolves the module from the *calling* BUILD file's nearest
+`go.mod`, so a target gets the same cache the Go driver's own targets in
+that module already use.
+
 ## Linting and formatting
 
 A Go module gets four extra targets the moment it has a `.golangci.yml` (or
