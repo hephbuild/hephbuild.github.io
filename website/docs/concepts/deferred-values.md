@@ -70,8 +70,9 @@ target normally with `deps` instead if you need those too.
 ## Where you can use one
 
 Support is per option, not per driver — an option only accepts a deferred
-value if its documentation says so. The `run` option on the
-[`exec` and `bash`](/docs/plugins/exec) drivers does.
+value if its documentation says so. Two do today: the `run` option on the
+[`exec` and `bash`](/docs/plugins/exec) drivers, and the `env`/`files` values
+in a [credential](/docs/concepts/credentials)'s `present` block.
 
 A reference is always rejected in an option that decides *which targets exist*
 or *what the build graph looks like* — `deps`, `tools`, `runner`, `out`,
@@ -94,6 +95,7 @@ and `./name` forms an address elsewhere accepts stay bash here too.
 | the producer's output is empty | fails |
 | `${read://…}` output has more than one line | fails |
 | the producer publishes more than one output and no group is given | fails, listing them |
+| `${src://…}` used in a [credential](/docs/concepts/credentials)'s `present` | fails at parse — a credential has no sandbox for a path to point into |
 
 ## Substitution, not quoting
 
