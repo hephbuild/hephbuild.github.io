@@ -79,7 +79,7 @@ The following target config keys are available:
 
 | Key                | Meaning                                              |
 |--------------------|------------------------------------------------------|
-| `run`              | List of commands to execute.                         |
+| `run`              | List of commands to execute. Accepts [deferred values](/docs/concepts/deferred-values). |
 | `deps`             | Hashed build-time dependencies.                      |
 | `hash_deps`        | Hash-only dependencies.                              |
 | `runtime_deps`     | Runtime-only dependencies.                           |
@@ -259,6 +259,13 @@ to apply it to every `exec`/`bash` target in the workspace by default; a
 target's own `runner` field overrides that default, and `runner = "local"`
 opts a single target back onto the host. See [Runners](/docs/concepts/runners)
 for the full picture, including what environment a target actually sees.
+
+## Deferred values
+
+`run` can reference another target's output instead of a literal —
+`${read://pkg:name}` for its contents, `${src://pkg:name}` for its sandbox
+path — and heph resolves the reference once that target has run. See
+[Deferred values](/docs/concepts/deferred-values).
 
 ## Interactive debugging with `--shell`
 
