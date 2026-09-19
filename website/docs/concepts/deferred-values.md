@@ -57,7 +57,7 @@ an argument under the `exec` driver, which runs with no shell at all:
 target(
     name = "copy-version",
     driver = "exec",
-    run = ["cp", "${src://:version}", "current-version.txt"],
+    run = ["cp", "${src://:version}", "current-version.copy"],
     out = "current-version.copy",
 )
 ```
