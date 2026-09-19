@@ -12,6 +12,7 @@ const STATUS_TAIL = [
 
 /** Technical status strip + minimal mono nav. */
 export function Nav() {
+  // Marketing chrome always quotes the default release channel.
   const { version } = useLatestVersion();
   const status = [{ label: version ? `v${version}` : 'v…' }, ...STATUS_TAIL];
   return (

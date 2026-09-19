@@ -24,7 +24,9 @@ version: v1.2.3
 ```
 
 `version` pins the heph release for this workspace so every machine and CI job
-runs the same binary. When the running binary differs from the pin, heph
+runs the same binary. The tag names a release in a
+[release channel](/docs/reference/release-channels) — `dev` by default,
+`stable` for slower-moving pins. When the running binary differs from the pin, heph
 automatically downloads the pinned release and re-execs into it on startup —
 the rest of the run is served by the pinned version. The downloaded binary is
 cached in `~/.heph/versions/<tag>/` and reused on subsequent runs.
@@ -67,7 +69,7 @@ Every key below is optional.
 
 | Key         | Type                          | Default | Description |
 |-------------|-------------------------------|---------|-------------|
-| `version`   | string                        | unset   | Pins the heph release for this workspace. When set, heph automatically downloads and re-execs into the pinned version on startup. See [Pinning the version](#pinning-the-version). |
+| `version`   | string                        | unset   | Pins the heph release for this workspace. When set, heph automatically downloads and re-execs into the pinned version on startup. See [Pinning the version](#pinning-the-version) and [Release channels](/docs/reference/release-channels). |
 | `versionFlavour` | string                   | `""` (std) | Selects which release flavour self-upgrade downloads: `""` for std, or `debug` for the unstripped build. See [Pinning a release flavour](#pinning-a-release-flavour). |
 | `plugins`   | list of plugin entries        | `[]`    | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map and, for `url:` entries, an optional `checksum`. |
 | `homeDir`   | path                          | unset   | Where heph keeps its home and cache. |
@@ -137,7 +139,7 @@ plugins:
   - path: ./path/to/my-plugin.json
 
   # Remote manifest — downloaded and cached automatically
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
+  - url: <HEPH_ARTIFACTS_URL>/heph-go-plugin.json
 ```
 
 `path:` and `url:` plugins are supported on Unix only.
@@ -150,7 +152,7 @@ trusting anything it declares — a mismatch is a hard error.
 
 ```yaml title=".hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/<HEPH_VERSION_URL>/heph-go-plugin.json
+  - url: <HEPH_ARTIFACTS_URL>/heph-go-plugin.json
     checksum: sha256:<hex>
 ```
 
