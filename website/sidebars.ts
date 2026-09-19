@@ -20,9 +20,11 @@ const sidebars: SidebarsConfig = {
       items: [
         'concepts/targets',
         'concepts/dependencies',
+        'concepts/deferred-values',
         'concepts/reproducibility',
         'concepts/caching',
         'concepts/scratch',
+        'concepts/credentials',
         'concepts/sandbox',
         'concepts/codegen',
         'concepts/approval',
