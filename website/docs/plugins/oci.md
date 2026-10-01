@@ -294,6 +294,8 @@ target(
 | `all_platforms` | `bool` | `false` | Pull **every** instance of the manifest list instead of naming them, keeping the whole index. This is what a base for a multi-platform `docker_build`/`oci_image` needs. |
 | `out` | `string` | `<target name>.tar`, or `.oci` with `layout = True` | Output filename (or directory name), relative to the target's package. Must be a bare name. |
 | `insecure` | `bool` | `false` | Pull from an insecure (HTTP / self-signed) registry: plain HTTP, certificate validation off. |
+| `credentials` | `string[]` | `[]` | [Credential](/docs/concepts/credentials) targets to pull with, presented with `heph.auth.docker([...])`. See [Registry authentication](#registry-authentication). |
+| `ambient_credentials` | `bool` | `false` | Pull with the host's own `docker login`. Not combinable with `credentials`. |
 | `cache` | bool or dict | both tiers on | Caching for the pulled archive. A pull is content-addressed only when `ref` is digest-pinned. See [Cache control](#cache-control). |
 
 The platform is always resolved to a concrete `os/arch` and always hashed,
@@ -375,6 +377,8 @@ target(
 | `image` | `string` | **required** | Target address of the image to push — a `docker_build`, `oci_image`, or `oci_index` target. Only its archive output is consumed. |
 | `ref` | `string` | **required** | Destination registry reference, e.g. `registry.io/me/app:1.2`. |
 | `insecure` | `bool` | `false` | Push to an insecure (HTTP / self-signed) registry: plain HTTP, certificate validation off. |
+| `credentials` | `string[]` | `[]` | [Credential](/docs/concepts/credentials) targets to push with, presented with `heph.auth.docker([...])`. See [Registry authentication](#registry-authentication). |
+| `ambient_credentials` | `bool` | `false` | Push with the host's own `docker login`. Not combinable with `credentials`. |
 
 A multi-platform archive pushes every instance plus the manifest list that
 ties them together. Blobs the registry already has are skipped.
@@ -441,12 +445,68 @@ digest (`app@sha256:…`) — is rejected at parse.
 
 ## Registry authentication
 
-`oci_pull` and `oci_push` resolve credentials the same way the `docker` CLI
-does — from `~/.docker/config.json` (or `$DOCKER_CONFIG`) and any
-`docker-credential-*` helper it names — so a host already logged in with
-`docker login` needs no extra configuration. There is no registry-auth option
-on any `oci_*` rule; a pull or push against a public image needs no
-credentials at all.
+`oci_pull` and `oci_push` are **anonymous by default**. A target that needs a
+registry login says which identity it uses, in the BUILD file:
+
+| The target sets | It authenticates as |
+|---|---|
+| nothing (the default) | anonymous |
+| `credentials = [...]` | those credentials only |
+| `ambient_credentials = True` | the host's own Docker login (`~/.docker/config.json` or `$DOCKER_CONFIG`, and any `docker-credential-*` helper it names, or podman's `auth.json`); anonymous for a registry it has nothing for |
+
+`credentials` and `ambient_credentials` are mutually exclusive; setting both
+is an error.
+
+### Declared credentials
+
+Declare a [credential](/docs/concepts/credentials) presented with
+`heph.auth.docker`, listing the registries it covers, and reference it from the
+target:
+
+```python title="BUILD"
+ghcr = target(
+    name    = "ghcr",
+    driver  = "credential",
+    sources = [heph.auth.env(["USERNAME", "PASSWORD"])],
+    present = heph.auth.docker(["ghcr.io"]),
+)
+
+oci_pull(name = "base", ref = "ghcr.io/acme/base@sha256:…", credentials = [ghcr])
+oci_push(name = "push", image = ":img", ref = "ghcr.io/acme/app:1.2", credentials = [ghcr])
+```
+
+- The credential must provide a `username` and a secret (`password`). A credential with no `username` is refused. The username depends on the registry: ghcr.io and GitLab accept any name, Google Artifact Registry wants `oauth2accesstoken`, ECR wants `AWS`, Docker Hub wants your account name.
+- The registry must be listed in `heph.auth.docker([...])`. Docker Hub aliases (`docker.io`, `index.docker.io`, `registry-1.docker.io`) are equivalent, so `["docker.io"]` covers `alpine`.
+- A registry none of the listed credentials covers is an error naming the registry, and so are two credentials covering the same registry. A target never falls back to another identity.
+
+### Using your own docker login
+
+```python title="BUILD"
+oci_pull(name = "base", ref = "registry.corp/base@sha256:…", ambient_credentials = True)
+```
+
+Handy for a developer's laptop. Because the result then depends on whoever runs
+the build, prefer `credentials` for anything CI runs.
+
+When a request fails, the error says whether it was anonymous and names both
+attributes.
+
+### Caching a credential-gated pull
+
+Credentials never enter the cache key. A pull by tag (`ref = "registry.corp/base:1"`)
+resolves against the identity that ran it, and a registry that filters tags by
+permission can then hand one identity's image to another through a shared
+cache. heph warns when a tag-referenced pull uses credentials. Pin the ref by
+digest (`@sha256:…`), or set `cache = False`.
+
+A digest-pinned pull is cached like any other: anyone who can read the remote
+cache can read the image.
+
+:::note
+`docker_build` doesn't take `credentials`. To build on a private base image,
+pull it with `oci_pull(layout = True, credentials = [...])` and pass it as
+`bases`.
+:::
 
 ## Running targets inside a container
 
