@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { UIKitProvider } from '@heph/uikit';
+import { ReleaseChannelProvider } from '../hooks/useReleaseChannel';
 
 // Self-hosted IBM Plex (no Google Fonts CDN). Webpack emits the woff2 as
 // separate cached assets and only the used weights are fetched. Weights mirror
@@ -20,8 +21,14 @@ import '@heph/uikit/style.css';
 /**
  * Docusaurus swizzles `Root` around the entire app (both SSR and hydration),
  * so this is where the uikit's antd theme provider and Blueprint tokens get
- * mounted once for every page — landing and docs alike.
+ * mounted once for every page — landing and docs alike. The release-channel
+ * provider lives here too, so every version-bearing code block on a page shares
+ * one channel and one selection.
  */
 export default function Root({ children }: { children: ReactNode }): ReactNode {
-  return <UIKitProvider>{children}</UIKitProvider>;
+  return (
+    <UIKitProvider>
+      <ReleaseChannelProvider>{children}</ReleaseChannelProvider>
+    </UIKitProvider>
+  );
 }
