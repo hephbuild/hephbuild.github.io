@@ -25,6 +25,12 @@ build. After three consecutive failures a cache is paused with an
 exponential backoff, and automatically resumes on its own the next time a
 request to it succeeds.
 
+An authentication failure is the exception. If the remote rejects your
+credentials (a 401/403, an expired login or session token, a revoked or
+unreadable key), heph logs one warning and disables that cache for the rest of
+the run instead of retrying. The build carries on using the local cache; log in
+again and re-run to use the remote.
+
 ## Bucket layout
 
 Objects are keyed by target address, so a bucket browses like the source
