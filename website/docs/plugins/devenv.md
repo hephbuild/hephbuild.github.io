@@ -26,7 +26,7 @@ via the `bin` option below).
 
 ```yaml title=".hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-devenv-plugin.json
+  - url: <HEPH_ARTIFACTS_URL>/heph-devenv-plugin.json
     checksum: sha256:<hex>   # optional; pin from heph-devenv-plugin.json.sha256
 ```
 
