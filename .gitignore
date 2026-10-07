@@ -23,3 +23,9 @@ devenv.local.nix
 # generated search index + self-hosted embedding model / wasm runtime
 website/static/search/
 website/.search-cache/
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
