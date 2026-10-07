@@ -46,5 +46,7 @@ module.exports = {
     '*.config.js',
     '*.cjs',
     '.devenv',
+    // Cloudflare Worker, deployed by its own Terraform; not part of the TS build.
+    'infra',
   ],
 };

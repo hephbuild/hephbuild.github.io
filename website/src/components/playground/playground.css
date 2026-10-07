@@ -1,0 +1,360 @@
+/* /playground — version picker, boot progress, xterm and the example list. */
+
+/* The header and controls keep the site's 1200px column; the terminal and
+   examples below use the full width of the screen. */
+.pg {
+  padding: 48px 24px 72px;
+  color: var(--ink);
+}
+
+.pg-head,
+.pg-controls,
+.pg > .pg-error {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pg-head h1 {
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-tight);
+  margin: 14px 0 10px;
+}
+
+.pg-head p {
+  max-width: 640px;
+  color: var(--ink-2);
+  font-size: var(--text-md);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+.pg-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 20px;
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+
+.pg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pg-field span,
+.pg-plugins span {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pg-field select {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  height: 38px;
+  padding: 0 10px;
+  max-width: 100%;
+  border: 1px solid var(--hair-strong);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.pg-start {
+  height: 38px;
+  padding: 0 20px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+}
+
+.pg-start:hover:not(:disabled) {
+  background: var(--ac);
+  border-color: var(--ac);
+}
+
+.pg-start:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pg-plugins {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+}
+
+.pg-plugins code {
+  font-size: var(--text-xs);
+}
+
+.pg-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
+  gap: 20px;
+}
+
+/* Pinned under the navbar and no taller than the screen, so scrolling down a
+   long example keeps the whole terminal in view. */
+.pg-term-wrap {
+  --pg-term-top: calc(var(--ifm-navbar-height) + 12px);
+  position: sticky;
+  top: var(--pg-term-top);
+  background: #0b0c0f;
+  border: 1px solid var(--steel-800);
+  height: max(420px, calc(100vh - var(--pg-term-top) - 12px));
+  min-width: 0;
+}
+
+.pg-term {
+  height: 100%;
+  padding: 10px;
+}
+
+.pg-term-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: #c4c6cc;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.pg-term-placeholder p {
+  max-width: 420px;
+  margin: 0;
+}
+
+.pg-stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: min(420px, 100%);
+  text-align: left;
+}
+
+.pg-stages li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 0;
+  color: #6b7080;
+}
+
+.pg-stages li::before {
+  content: '○';
+  width: 1em;
+}
+
+.pg-stages li[data-state='active'] {
+  color: #e6e7ea;
+}
+
+.pg-stages li[data-state='active']::before {
+  content: '◉';
+  color: #5a7dff;
+}
+
+.pg-stages li[data-state='done']::before {
+  content: '✓';
+  color: #2bbd84;
+}
+
+.pg-stages small {
+  color: #a6a9b0;
+}
+
+.pg-stages progress {
+  flex-basis: 100%;
+  height: 4px;
+  margin-left: calc(1em + 10px);
+  accent-color: #5a7dff;
+}
+
+.pg-error {
+  color: #d6494e;
+  white-space: pre-wrap;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  margin: 0 0 12px;
+  background: transparent;
+}
+
+.pg-offline {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--ac);
+  background: var(--ac-tint);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: var(--leading-normal);
+}
+
+.pg-examples ul,
+.pg-examples ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pg-examples .pg-ex-list {
+  margin-top: 12px;
+  gap: 8px;
+}
+
+.pg-ex-list > li {
+  border: 1px solid var(--hair-strong);
+  background: var(--paper);
+}
+
+.pg-ex-list > li[data-open='true'] {
+  border-color: var(--ac);
+}
+
+.pg-examples button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+}
+
+.pg-ex-head {
+  padding: 10px 12px;
+}
+
+.pg-ex-head strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.pg-ex-head small {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+}
+
+.pg-ex-body {
+  padding: 0 12px 12px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+.pg-ex-body > p {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.pg-steps {
+  counter-reset: step;
+  gap: 10px;
+}
+
+.pg-steps > li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 26px;
+}
+
+.pg-steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--hair-strong);
+  font-size: var(--text-2xs);
+  line-height: 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.pg-steps > li[data-state='next']::before {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+.pg-steps > li[data-state='done']::before {
+  content: '✓';
+  border-color: var(--ac);
+  background: var(--ac);
+  color: var(--paper);
+}
+
+.pg-steps button {
+  padding: 6px 8px;
+  border: 1px solid var(--hair-2);
+  background: var(--bg-3);
+}
+
+.pg-steps button:hover:not(:disabled) {
+  border-color: var(--ac);
+}
+
+.pg-steps button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.pg-steps button span {
+  font-weight: 600;
+}
+
+.pg-steps button code {
+  font-size: var(--text-2xs);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.pg-steps p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.pg-note {
+  margin-top: 14px;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: var(--leading-normal);
+}
+
+@media (max-width: 900px) {
+  .pg-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Stacked above the examples: pinned, it would cover them. */
+  .pg-term-wrap {
+    position: static;
+    height: 460px;
+  }
+}
