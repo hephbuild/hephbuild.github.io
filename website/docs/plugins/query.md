@@ -115,10 +115,6 @@ target that does not exist.
 heph query --candidates -e '//... && label(lint)'
 ```
 
-If a query unexpectedly matches nothing, set `HEPH_NO_LISTED_FACTS=1` to resolve
-every candidate instead of trusting provider listings. `heph validate` checks
-the listings.
-
 ## CLI: `-e` / `--expr`
 
 `heph run` and `heph query` accept `-e <EXPR>` (long form `--expr`) as an
