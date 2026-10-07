@@ -16,9 +16,9 @@ variable "script_name" {
 }
 
 variable "allowed_origins" {
-  description = "Origins allowed to use the proxy. Requests from any other origin are refused before anything is fetched."
+  description = "Origins allowed to use the proxy; `*` matches one DNS label. Requests from any other origin are refused before anything is fetched."
   type        = list(string)
-  default     = ["https://hephbuild.github.io", "https://hephbuild.pages.dev", "http://localhost:3000"]
+  default     = ["https://hephbuild.github.io", "https://hephbuild.pages.dev", "https://*.hephbuild.pages.dev", "http://localhost:3000"]
 }
 
 variable "requests_per_minute" {

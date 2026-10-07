@@ -5,7 +5,8 @@
 //   GET https://<host>/heph-release?https://github.com/hephbuild/heph-artifacts-v1/releases/download/<tag>/<asset>
 //
 // Everything that can be refused is refused before any upstream fetch: wrong
-// path, an Origin outside ALLOWED_ORIGINS (a JSON array binding), an IP over
+// path, an Origin outside ALLOWED_ORIGINS (a JSON array binding, wildcards
+// allowed: see originAllowed), an IP over
 // the LIMITER rate limit, a method other than GET/HEAD, anything but a heph
 // release asset. Release tags are immutable, so responses are cacheable for a
 // year: browsers keep them, and on a custom domain the edge cache serves each
@@ -23,6 +24,20 @@ function safeDecode(s) {
   } catch {
     return '';
   }
+}
+
+// A pattern may hold one `*`, standing for exactly one DNS label:
+// https://*.example.com admits https://preview.example.com but not
+// https://a.b.example.com or https://example.com.
+function originAllowed(origin, patterns) {
+  return patterns.some((pattern) => {
+    const [prefix, suffix, ...rest] = pattern.split('*');
+    if (suffix === undefined) return origin === pattern;
+    if (rest.length) return false;
+    if (origin.length <= prefix.length + suffix.length) return false;
+    if (!origin.startsWith(prefix) || !origin.endsWith(suffix)) return false;
+    return /^[a-z0-9-]+$/.test(origin.slice(prefix.length, origin.length - suffix.length));
+  });
 }
 
 function corsHeaders(origin) {
@@ -45,8 +60,7 @@ export default {
     if (url.pathname !== PATH) return fail(404, 'not found');
 
     const origin = request.headers.get('origin') ?? '';
-    const allowed = new Set(env.ALLOWED_ORIGINS ?? []);
-    if (!allowed.has(origin)) return fail(403, 'origin not allowed');
+    if (!originAllowed(origin, env.ALLOWED_ORIGINS ?? [])) return fail(403, 'origin not allowed');
     const cors = corsHeaders(origin);
 
     const ip = request.headers.get('cf-connecting-ip') ?? '';
