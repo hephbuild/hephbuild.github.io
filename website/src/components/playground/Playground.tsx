@@ -5,7 +5,7 @@ import type { Vm } from 'arm64js';
 import type { AttachedTerminal } from 'arm64js/terminal';
 import { Eyebrow } from '@heph/uikit';
 import '@xterm/xterm/css/xterm.css';
-import { EXAMPLES } from './examples';
+import { EXAMPLES, type Example } from './examples';
 import { listReleases, type Release } from './releases';
 import {
   bootPlayground, enterShell, type Progress, type Stage,
@@ -54,6 +54,18 @@ function Stages({ progress }: { progress: Progress }) {
   );
 }
 
+/** Text with `code spans`, as in the example summaries. */
+function Inline({ text }: { text: string }) {
+  return (
+    <>
+      {text.split('`').map((part, i) => (
+        // eslint-disable-next-line react/no-array-index-key
+        i % 2 ? <code key={i}>{part}</code> : <span key={i}>{part}</span>
+      ))}
+    </>
+  );
+}
+
 function startLabel(status: Status): string {
   if (status.kind === 'running') return 'Starting…';
   return status.kind === 'ready' ? 'Restart' : 'Start VM';
@@ -68,6 +80,9 @@ export function Playground() {
   const vmRef = useRef<Vm | null>(null);
   const termRef = useRef<AttachedTerminal | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const [openExample, setOpenExample] = useState(EXAMPLES[0]?.dir ?? '');
+  // Steps run in this VM, as "<dir>/<index>".
+  const [doneSteps, setDoneSteps] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
     const ac = new AbortController();
@@ -95,6 +110,7 @@ export function Playground() {
   const start = async () => {
     if (!release || !termEl.current) return;
     teardown();
+    setDoneSteps(new Set());
     const ac = new AbortController();
     abortRef.current = ac;
     setStatus({ kind: 'running', progress: { stage: 'download' } });
@@ -123,8 +139,9 @@ export function Playground() {
     }
   };
 
-  const runExample = (dir: string, command: string) => {
-    vmRef.current?.write(`cd ~/examples/${dir} && ${command}\r`).catch(() => {});
+  const runStep = (ex: Example, index: number, command: string) => {
+    vmRef.current?.write(`cd ~/examples/${ex.dir} && ${command}\r`).catch(() => {});
+    setDoneSteps((prev) => new Set(prev).add(`${ex.dir}/${index}`));
     termRef.current?.xterm.focus();
   };
 
@@ -206,26 +223,58 @@ export function Playground() {
 
         <aside className="pg-examples">
           <Eyebrow>Examples</Eyebrow>
-          <ul>
-            {EXAMPLES.map((ex) => (
-              <li key={ex.dir}>
-                <button type="button" disabled={!ready} onClick={() => runExample(ex.dir, ex.try)}>
-                  <strong>{ex.title}</strong>
-                  <code>{ex.try}</code>
-                </button>
-              </li>
-            ))}
+          <p className="pg-offline">
+            The VM has no internet access: it can build only what is already inside it.
+          </p>
+          <ul className="pg-ex-list">
+            {EXAMPLES.map((ex) => {
+              const open = ex.dir === openExample;
+              const next = ex.steps.findIndex((_, i) => !doneSteps.has(`${ex.dir}/${i}`));
+              return (
+                <li key={ex.dir} data-open={open}>
+                  <button
+                    type="button"
+                    className="pg-ex-head"
+                    aria-expanded={open}
+                    onClick={() => setOpenExample(ex.dir)}
+                  >
+                    <strong>{ex.title}</strong>
+                    <small>{`~/examples/${ex.dir}`}</small>
+                  </button>
+                  {open && (
+                    <div className="pg-ex-body">
+                      <p><Inline text={ex.summary} /></p>
+                      <ol className="pg-steps">
+                        {ex.steps.map((step, i) => {
+                          let state = 'todo';
+                          if (doneSteps.has(`${ex.dir}/${i}`)) state = 'done';
+                          else if (i === next) state = 'next';
+                          return (
+                            <li key={step.label} data-state={state}>
+                              <button type="button" disabled={!ready} onClick={() => runStep(ex, i, step.run)}>
+                                <span>{step.label}</span>
+                                <code>{step.run}</code>
+                              </button>
+                              <p><Inline text={step.expect} /></p>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
           <p className="pg-note">
-            Each example lives in
+            Each step types its command into the terminal. Every example also has a
             {' '}
-            <code>~/examples/&lt;name&gt;</code>
-            {' '}
-            with a README. Edit files with
+            <code>README</code>
+            ; edit its files with
             {' '}
             <code>vi</code>
             {' '}
-            and rebuild to watch the cache work.
+            and rebuild to see what changes.
           </p>
         </aside>
       </div>

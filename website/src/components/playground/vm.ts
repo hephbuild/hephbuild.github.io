@@ -1,5 +1,7 @@
 import type { Vm } from 'arm64js';
-import { EXAMPLES, WELCOME, hephconfig } from './examples';
+import {
+  EXAMPLES, WELCOME, hephconfig, readme,
+} from './examples';
 import { fetchAsset, type Release } from './releases';
 
 export type Stage = 'download' | 'boot' | 'packages' | 'install' | 'ready';
@@ -25,9 +27,9 @@ const VCPUS = 2;
 const PLUGIN_DIR = '/opt/heph/plugins';
 
 // heph and its plugins are glibc builds; Alpine is musl. gcompat bridges the
-// two, libgcc carries the unwinder, bash backs the `bash` driver, and tcc
-// builds COMPAT_SHIM.
-const PACKAGES = 'gcompat libgcc libstdc++ bash coreutils tcc tcc-libs';
+// two, libgcc carries the unwinder, bash backs the `bash` driver. tcc builds
+// COMPAT_SHIM and the C examples, with musl-dev for the libc headers.
+const PACKAGES = 'gcompat libgcc libstdc++ bash coreutils tcc tcc-libs tcc-libs-static musl-dev';
 
 // The two glibc symbols gcompat lacks, forwarded to their musl equivalents.
 // Preloaded into heph, so the plugins it opens resolve them too. (On arm64 a
@@ -260,7 +262,7 @@ export async function bootPlayground(
       const root = `/root/examples/${ex.dir}`;
       return [
         [`${root}/.hephconfig`, config],
-        [`${root}/README`, `# ${ex.title}\n\n${ex.readme}\n`],
+        [`${root}/README`, readme(ex)],
         ...Object.entries(ex.files).map(([path, content]): [string, string] => [`${root}/${path}`, content]),
       ];
     });
@@ -270,8 +272,15 @@ export async function bootPlayground(
     const script = files.map(([path, content]) => (
       `mkdir -p '${path.replace(/\/[^/]+$/, '')}'\ncat > '${path}' <<'HEPH_PLAYGROUND_EOF'\n${content}${content.endsWith('\n') ? '' : '\n'}HEPH_PLAYGROUND_EOF\n`
     )).join('');
+    // Mounts the image lacks: pseudo-terminals for `heph run --shell`, and,
+    // for the examples, a filesystem with extended attributes, which
+    // `codegen = "copy"` needs (the root filesystem has none).
+    const mounts = [
+      'mountpoint -q /dev/pts || { mkdir -p /dev/pts && mount -t devpts devpts /dev/pts; }',
+      'mkdir -p /root/examples && { mountpoint -q /root/examples || mount -t tmpfs tmpfs /root/examples; }',
+    ].join(' && ');
     await vm.writeFile('/tmp/heph-install.sh', script);
-    await run(vm, 'sh /tmp/heph-install.sh && rm /tmp/heph-install.sh && heph version');
+    await run(vm, `${mounts} && sh /tmp/heph-install.sh && rm /tmp/heph-install.sh && heph version`);
   } catch (e) {
     vm.dispose();
     throw e;

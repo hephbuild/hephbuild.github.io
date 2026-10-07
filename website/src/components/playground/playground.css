@@ -102,14 +102,20 @@
 
 .pg-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
   gap: 20px;
 }
 
+/* Pinned under the navbar and no taller than the screen, so scrolling down a
+   long example keeps the whole terminal in view. */
 .pg-term-wrap {
+  --pg-term-top: calc(var(--ifm-navbar-height) + 12px);
+  position: sticky;
+  top: var(--pg-term-top);
   background: #0b0c0f;
   border: 1px solid var(--steel-800);
-  height: max(560px, calc(100vh - 220px));
+  height: max(420px, calc(100vh - var(--pg-term-top) - 12px));
   min-width: 0;
 }
 
@@ -192,13 +198,37 @@
   background: transparent;
 }
 
-.pg-examples ul {
+.pg-offline {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--ac);
+  background: var(--ac-tint);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: var(--leading-normal);
+}
+
+.pg-examples ul,
+.pg-examples ol {
   list-style: none;
-  margin: 12px 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
+}
+
+.pg-examples .pg-ex-list {
+  margin-top: 12px;
   gap: 8px;
+}
+
+.pg-ex-list > li {
+  border: 1px solid var(--hair-strong);
+  background: var(--paper);
+}
+
+.pg-ex-list > li[data-open='true'] {
+  border-color: var(--ac);
 }
 
 .pg-examples button {
@@ -207,35 +237,108 @@
   flex-direction: column;
   gap: 4px;
   text-align: left;
-  padding: 10px 12px;
-  border: 1px solid var(--hair-strong);
-  background: var(--paper);
+  border: 0;
+  background: transparent;
   color: var(--ink);
   cursor: pointer;
   font: inherit;
 }
 
-.pg-examples button:hover:not(:disabled) {
-  border-color: var(--ac);
+.pg-ex-head {
+  padding: 10px 12px;
 }
 
-.pg-examples button:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-
-.pg-examples strong {
+.pg-ex-head strong {
   font-size: var(--text-sm);
   font-weight: 600;
 }
 
-.pg-examples button code {
+.pg-ex-head small {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+}
+
+.pg-ex-body {
+  padding: 0 12px 12px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+.pg-ex-body > p {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.pg-steps {
+  counter-reset: step;
+  gap: 10px;
+}
+
+.pg-steps > li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 26px;
+}
+
+.pg-steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--hair-strong);
+  font-size: var(--text-2xs);
+  line-height: 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.pg-steps > li[data-state='next']::before {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+.pg-steps > li[data-state='done']::before {
+  content: '✓';
+  border-color: var(--ac);
+  background: var(--ac);
+  color: var(--paper);
+}
+
+.pg-steps button {
+  padding: 6px 8px;
+  border: 1px solid var(--hair-2);
+  background: var(--bg-3);
+}
+
+.pg-steps button:hover:not(:disabled) {
+  border-color: var(--ac);
+}
+
+.pg-steps button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.pg-steps button span {
+  font-weight: 600;
+}
+
+.pg-steps button code {
   font-size: var(--text-2xs);
   background: transparent;
   border: 0;
   padding: 0;
   color: var(--muted);
   word-break: break-all;
+}
+
+.pg-steps p {
+  margin: 4px 0 0;
+  color: var(--muted);
 }
 
 .pg-note {
@@ -249,7 +352,9 @@
   .pg-body {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* Stacked above the examples: pinned, it would cover them. */
   .pg-term-wrap {
+    position: static;
     height: 460px;
   }
 }
