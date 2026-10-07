@@ -14,8 +14,11 @@ export interface Progress {
 export interface Booted {
   vm: Vm;
   vcpus: number;
+  /** Whether the base setup came from a snapshot rather than being run. */
+  restored: boolean;
 }
 
+const IMAGE = 'alpine';
 // Ask for two vCPUs. An image boots only with a vCPU count it was published
 // for, and `alpine` currently ships a single-vCPU build — fall back to that.
 const VCPUS = 2;
@@ -36,6 +39,40 @@ int fcntl64(int fd, int cmd, long arg) { return fcntl(fd, cmd, arg); }
 `;
 const HEPH_BIN = '/opt/heph/bin/heph';
 const COMPAT_LIB = '/opt/heph/lib/libhephcompat.so';
+
+type SetupStep =
+  | { run: string }
+  | { write: string; content: string; mode?: number };
+
+/**
+ * Everything the VM needs that doesn't depend on the heph release. It runs
+ * once, and the VM is then snapshotted; later starts boot that snapshot. The
+ * snapshot is keyed on a hash of these steps (see snapshotKey), so editing
+ * any of them — a package, the shim, the wrapper — builds a fresh one.
+ */
+const BASE_SETUP: SetupStep[] = [
+  { run: `apk add --no-cache ${PACKAGES}` },
+  { write: '/opt/heph/lib/compat.c', content: COMPAT_SHIM },
+  { run: `tcc -shared -nostdlib -o ${COMPAT_LIB} /opt/heph/lib/compat.c` },
+  {
+    write: '/usr/local/bin/heph',
+    mode: 0o755,
+    content: [
+      '#!/bin/sh',
+      // The VM is offline: skip the self-update check and telemetry.
+      'export HEPH_NO_SELF_UPDATE=1 HEPH_DISABLE_TELEMETRY=1',
+      `LD_PRELOAD=${COMPAT_LIB} exec ${HEPH_BIN} "$@"`,
+      '',
+    ].join('\n'),
+  },
+  {
+    write: '/etc/profile.d/heph.sh',
+    content: ['export PS1="\\w \\$ "', 'cat /etc/heph-welcome', ''].join('\n'),
+  },
+];
+
+// Marks this page's snapshots among any others the origin keeps.
+const SNAPSHOT_APP = 'heph-playground';
 
 // Options a plugin refuses to load without. The go plugin needs a toolchain;
 // `host` uses the one `apk add go` installs.
@@ -59,27 +96,91 @@ function sequence(steps: (() => Promise<unknown>)[]): Promise<void> {
   );
 }
 
-async function bootAlpine(): Promise<Booted> {
+async function snapshotKey(): Promise<string> {
+  const recipe = JSON.stringify({ image: IMAGE, vcpus: VCPUS, steps: BASE_SETUP });
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(recipe));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function isOurs(meta: unknown, key?: string): boolean {
+  const m = meta as { app?: string; key?: string } | null;
+  return m?.app === SNAPSHOT_APP && (key === undefined || m.key === key);
+}
+
+async function bootFresh(): Promise<{ vm: Vm; vcpus: number }> {
   const { Arm64JS } = await import('arm64js');
   try {
-    return { vm: await Arm64JS.boot('alpine', { vcpus: VCPUS }), vcpus: VCPUS };
+    return { vm: await Arm64JS.boot(IMAGE, { vcpus: VCPUS }), vcpus: VCPUS };
   } catch (e) {
     if (!/vcpu/i.test(String((e as Error)?.message))) throw e;
-    return { vm: await Arm64JS.boot('alpine', { vcpus: 1 }), vcpus: 1 };
+    return { vm: await Arm64JS.boot(IMAGE, { vcpus: 1 }), vcpus: 1 };
   }
 }
 
 /**
- * Download heph + every plugin of `release`, boot Alpine, and install them.
- * Plugins are mounted read-only (no VM memory); the binary is written into the
- * VM because it has to be executable.
+ * A VM with BASE_SETUP applied: resumed from this browser's snapshot for the
+ * current key when there is one, otherwise booted, set up and snapshotted.
+ * Snapshots are an optimisation only — no storage (private window, blocked
+ * third-party storage) or a snapshot that won't boot just means a full setup.
+ */
+async function bootBase(onProgress: (p: Progress) => void): Promise<Booted> {
+  const { Arm64JS } = await import('arm64js');
+  const key = await snapshotKey();
+  const snapshots = await Arm64JS.snapshots.list().catch(() => []);
+
+  const hit = snapshots.find((s) => isOurs(s.meta, key));
+  if (hit) {
+    onProgress({ stage: 'boot', detail: 'from snapshot' });
+    try {
+      return { vm: await Arm64JS.boot(hit.id), vcpus: hit.vcpus, restored: true };
+    } catch {
+      await Arm64JS.snapshots.remove(hit.id, { force: true }).catch(() => {});
+    }
+  }
+
+  onProgress({ stage: 'boot' });
+  const { vm, vcpus } = await bootFresh();
+  try {
+    onProgress({ stage: 'packages', detail: PACKAGES });
+    await sequence(BASE_SETUP.map((step) => () => ('run' in step
+      ? run(vm, step.run)
+      : vm.writeFile(step.write, step.content, { mode: step.mode }))));
+
+    onProgress({ stage: 'packages', detail: 'saving snapshot', fraction: 0 });
+    try {
+      await vm.snapshot({
+        name: 'heph playground base',
+        meta: { app: SNAPSHOT_APP, key },
+        onProgress: (done, total) => onProgress({
+          stage: 'packages', detail: 'saving snapshot', fraction: total ? done / total : undefined,
+        }),
+      });
+      // Drop the snapshots of earlier setups.
+      await Promise.all(snapshots
+        .filter((s) => isOurs(s.meta) && !isOurs(s.meta, key))
+        .map((s) => Arm64JS.snapshots.remove(s.id, { force: true }).catch(() => {})));
+    } catch {
+      // No storage here: the next start sets up from scratch again.
+    }
+  } catch (e) {
+    vm.dispose();
+    throw e;
+  }
+  return { vm, vcpus, restored: false };
+}
+
+/**
+ * Download heph + every plugin of `release`, get a set-up VM, and install
+ * them. Plugins are mounted read-only (no VM memory); the binary is written
+ * into the VM because it has to be executable. None of it is in the
+ * snapshot, so one snapshot serves every release.
  */
 export async function bootPlayground(
   release: Release,
   onProgress: (p: Progress) => void,
   signal: AbortSignal,
 ): Promise<Booted> {
-  // --- download, one asset at a time, while the VM boots ------------------
+  // --- download, one asset at a time ---------------------------------------
   const names = [release.binary, ...release.plugins.flatMap((p) => [p.manifest, p.lib])];
   const total = names.reduce((n, name) => n + (release.sizes[name] ?? 0), 0);
   let finished = 0;
@@ -93,9 +194,17 @@ export async function bootPlayground(
   };
   report(0);
 
-  const booting = bootAlpine();
+  // The VM boots and sets up meanwhile; its progress shows once the downloads
+  // are done, so the two don't fight over the progress display.
+  let downloading = true;
+  let baseProgress: Progress = { stage: 'boot' };
+  const basing = bootBase((p) => {
+    baseProgress = p;
+    if (!downloading) onProgress(p);
+  });
   // Surfaced below, after the downloads; don't let it go unhandled meanwhile.
-  booting.catch(() => {});
+  basing.catch(() => {});
+
   const assets = new Map<string, Blob>();
   try {
     // Sequential: the proxy drops concurrent streams.
@@ -105,12 +214,13 @@ export async function bootPlayground(
       finished += blob.size;
     }));
   } catch (e) {
-    booting.then(({ vm }) => vm.dispose(), () => {});
+    basing.then(({ vm }) => vm.dispose(), () => {});
     throw e;
   }
+  downloading = false;
+  onProgress(baseProgress);
 
-  onProgress({ stage: 'boot' });
-  const booted = await booting;
+  const booted = await basing;
   const { vm } = booted;
   if (signal.aborted) {
     vm.dispose();
@@ -118,20 +228,8 @@ export async function bootPlayground(
   }
 
   try {
-    onProgress({ stage: 'packages', detail: PACKAGES });
-    await run(vm, `apk add --no-cache ${PACKAGES}`);
-
     onProgress({ stage: 'install', detail: 'heph binary' });
     await vm.writeFile(HEPH_BIN, assets.get(release.binary)!, { mode: 0o755 });
-    await vm.writeFile('/opt/heph/lib/compat.c', COMPAT_SHIM);
-    await run(vm, `tcc -shared -nostdlib -o ${COMPAT_LIB} /opt/heph/lib/compat.c`);
-    await vm.writeFile('/usr/local/bin/heph', [
-      '#!/bin/sh',
-      // The VM is offline: skip the self-update check and telemetry.
-      'export HEPH_NO_SELF_UPDATE=1 HEPH_DISABLE_TELEMETRY=1',
-      `LD_PRELOAD=${COMPAT_LIB} exec ${HEPH_BIN} "$@"`,
-      '',
-    ].join('\n'), { mode: 0o755 });
 
     // Rewrite each manifest to point at the mounted library instead of its
     // download URL, so heph loads plugins without network access.
@@ -167,16 +265,13 @@ export async function bootPlayground(
       ];
     });
     const pluginNames = release.plugins.map((p) => p.stem.replace(/^heph-|-plugin$/g, ''));
-    files.push(
-      ['/etc/heph-welcome', WELCOME(release.tag, EXAMPLES, pluginNames)],
-      ['/etc/profile.d/heph.sh', [
-        'export PS1="\\w \\$ "',
-        'cat /etc/heph-welcome',
-        '',
-      ].join('\n')],
-    );
-    await sequence(files.map(([path, content]) => () => vm.writeFile(path, content)));
-    await run(vm, 'heph version');
+    files.push(['/etc/heph-welcome', WELCOME(release.tag, EXAMPLES, pluginNames)]);
+    // One script of heredocs instead of a round-trip per file: much faster.
+    const script = files.map(([path, content]) => (
+      `mkdir -p '${path.replace(/\/[^/]+$/, '')}'\ncat > '${path}' <<'HEPH_PLAYGROUND_EOF'\n${content}${content.endsWith('\n') ? '' : '\n'}HEPH_PLAYGROUND_EOF\n`
+    )).join('');
+    await vm.writeFile('/tmp/heph-install.sh', script);
+    await run(vm, 'sh /tmp/heph-install.sh && rm /tmp/heph-install.sh && heph version');
   } catch (e) {
     vm.dispose();
     throw e;

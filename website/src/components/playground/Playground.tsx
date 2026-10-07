@@ -22,7 +22,7 @@ const STAGES: { id: Stage; label: string }[] = [
 type Status =
   | { kind: 'idle' }
   | { kind: 'running'; progress: Progress }
-  | { kind: 'ready'; vcpus: number }
+  | { kind: 'ready'; vcpus: number; restored: boolean }
   | { kind: 'error'; message: string };
 
 function errorMessage(e: unknown): string {
@@ -99,7 +99,7 @@ export function Playground() {
     abortRef.current = ac;
     setStatus({ kind: 'running', progress: { stage: 'download' } });
     try {
-      const { vm, vcpus } = await bootPlayground(release, (progress) => {
+      const { vm, vcpus, restored } = await bootPlayground(release, (progress) => {
         if (!ac.signal.aborted) setStatus({ kind: 'running', progress });
       }, ac.signal);
       if (ac.signal.aborted) {
@@ -117,7 +117,7 @@ export function Playground() {
       });
       await enterShell(vm);
       termRef.current.xterm.focus();
-      setStatus({ kind: 'ready', vcpus });
+      setStatus({ kind: 'ready', vcpus, restored });
     } catch (e) {
       if (!ac.signal.aborted) setStatus({ kind: 'error', message: errorMessage(e) });
     }
@@ -188,6 +188,7 @@ export function Playground() {
           <div className="pg-plugins">
             <span>vm</span>
             <code>{`${status.vcpus} vCPU${status.vcpus > 1 ? 's' : ''}`}</code>
+            {status.restored && <code>from snapshot</code>}
           </div>
         )}
       </div>
