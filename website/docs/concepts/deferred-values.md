@@ -70,9 +70,10 @@ target normally with `deps` instead if you need those too.
 ## Where you can use one
 
 Support is per option, not per driver — an option only accepts a deferred
-value if its documentation says so. Two do today: the `run` option on the
-[`exec` and `bash`](/docs/plugins/exec) drivers, and the `env`/`files` values
-in a [credential](/docs/concepts/credentials)'s `present` block.
+value if its documentation says so. Three do today: the `run` option on the
+[`exec` and `bash`](/docs/plugins/exec) drivers, the `env`/`files` values
+in a [credential](/docs/concepts/credentials)'s `present` block, and the `ref`
+option of [`oci_push`](/docs/plugins/oci#oci_push) (`${read://…}` only).
 
 A reference is always rejected in an option that decides *which targets exist*
 or *what the build graph looks like* — `deps`, `tools`, `runner`, `out`,
