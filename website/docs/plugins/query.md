@@ -50,6 +50,7 @@ address, include the colon: `//foo:bar`.
 | Function | Matches |
 |----------|---------|
 | `label(x)` | targets that carry label `x` |
+| `driver(x)` | targets run by driver `x` — whole name, case-sensitive (e.g. `driver(credential)`) |
 | `addr(//pkg:name)` | the target at that address |
 | `package(//pkg)` | targets in exactly that package |
 | `package_prefix(//pkg)` | targets in `//pkg` or any sub-package |
@@ -96,6 +97,22 @@ heph run -e 'tree_output(gen)'
 
 # Combine group membership with a codegen scope
 heph run -e '(//a/... || //b/...) && tree_output(gen)'
+
+# Every credential target
+heph query -e 'driver(credential)'
+```
+
+## Faster queries
+
+`label()`, `driver()` and `tree_output()` are decided from what providers list,
+without resolving each target they rule out. `heph query` then resolves every
+match and prints only targets that exist.
+
+Pass `--candidates` to skip that last step. It is faster, but may print a listed
+target that does not exist.
+
+```bash
+heph query --candidates -e '//... && label(lint)'
 ```
 
 ## CLI: `-e` / `--expr`
