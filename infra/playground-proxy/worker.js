@@ -26,9 +26,10 @@ function safeDecode(s) {
   }
 }
 
-// A pattern may hold one `*`, standing for exactly one DNS label:
+// A pattern may hold one `*`, standing for exactly one DNS label or port:
 // https://*.example.com admits https://preview.example.com but not
-// https://a.b.example.com or https://example.com.
+// https://a.b.example.com or https://example.com; http://localhost:* admits
+// any port on localhost.
 function originAllowed(origin, patterns) {
   return patterns.some((pattern) => {
     const [prefix, suffix, ...rest] = pattern.split('*');
