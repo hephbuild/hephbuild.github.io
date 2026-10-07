@@ -65,7 +65,11 @@ Typical debugging sequence: `hashin` (what's in the key) → `deps` (the edges) 
 
 Print the address of every matched target, one per line. Same address /
 label+matcher forms as `run`, plus `-e` to exclude. Good for scripting and for
-previewing what a matcher selects before running it.
+previewing what a matcher selects before running it. `-e` accepts query
+expressions including `label()`, `driver()` (whole name, case-sensitive) and
+`tree_output()`. `--candidates` prints targets as providers list them without
+resolving each one: faster, but may include targets that do not exist. Set
+`HEPH_NO_LISTED_FACTS=1` to resolve every candidate instead of trusting listings.
 
 ```bash
 heph query //...
