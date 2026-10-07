@@ -5,6 +5,11 @@ import {
 import { GITHUB_URL, GITHUB_LABEL } from '../../constants';
 import { useLatestVersion } from '../../hooks/useLatestVersion';
 
+const NAV_LINKS = [
+  { to: '/docs', label: 'DOCS' },
+  { to: '/playground', label: 'PLAYGROUND' },
+];
+
 const STATUS_TAIL = [
   { label: 'MIT LICENSE' },
   { label: 'LLMS.TXT', href: '/llms.txt' },
@@ -91,26 +96,29 @@ export function Nav() {
           <Logo height={26} />
         </div>
         <div className="heph-nav-docs" style={{ display: 'flex', height: '100%' }}>
-          <Link
-            to="/docs"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '0 18px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 12.5,
-              letterSpacing: '0.08em',
-              color: 'var(--muted)',
-              textDecoration: 'none',
-              borderRight: '1px solid var(--hair)',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--ink)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; }}
-            onFocus={(e) => { e.currentTarget.style.color = 'var(--ink)'; }}
-            onBlur={(e) => { e.currentTarget.style.color = 'var(--muted)'; }}
-          >
-            DOCS
-          </Link>
+          {NAV_LINKS.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 18px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 12.5,
+                letterSpacing: '0.08em',
+                color: 'var(--muted)',
+                textDecoration: 'none',
+                borderRight: '1px solid var(--hair)',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--ink)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)'; }}
+              onFocus={(e) => { e.currentTarget.style.color = 'var(--ink)'; }}
+              onBlur={(e) => { e.currentTarget.style.color = 'var(--muted)'; }}
+            >
+              {l.label}
+            </Link>
+          ))}
         </div>
         <Flex className="heph-nav-actions" align="center" gap={16} style={{ marginLeft: 'auto', paddingRight: 18 }}>
           {/* Star count hidden for now (no real number yet); flip display to

@@ -123,6 +123,7 @@ const config: Config = {
       },
       items: [
         { to: '/docs', label: 'Docs', position: 'left' },
+        { to: '/playground', label: 'Playground', position: 'left' },
         // Search sits left, right after the wordmark — the blueprint DocTopNav
         // search field. (Without an explicit item Docusaurus auto-appends it to
         // the right; we want the kit's position.)
