@@ -375,13 +375,40 @@ target(
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `image` | `string` | **required** | Target address of the image to push — a `docker_build`, `oci_image`, or `oci_index` target. Only its archive output is consumed. |
-| `ref` | `string` | **required** | Destination registry reference, e.g. `registry.io/me/app:1.2`. |
+| `ref` | `string` | **required** | Destination registry reference, e.g. `registry.io/me/app:1.2`. May use `${read://pkg:name}` and `${image_hashout}`, see [Computed references](#computed-references). |
 | `insecure` | `bool` | `false` | Push to an insecure (HTTP / self-signed) registry: plain HTTP, certificate validation off. |
 | `credentials` | `string[]` | `[]` | [Credential](/docs/concepts/credentials) targets to push with, presented with `heph.auth.docker([...])`. See [Registry authentication](#registry-authentication). |
 | `ambient_credentials` | `bool` | `false` | Push with the host's own `docker login`. Not combinable with `credentials`. |
 
 A multi-platform archive pushes every instance plus the manifest list that
 ties them together. Blobs the registry already has are skipped.
+
+#### Computed references
+
+`ref` can take its repository from another target and its tag from the image
+itself:
+
+```python title="BUILD"
+target(name = "registry", driver = "bash", run = "echo registry.io/me/app > $OUT", out = "registry.txt")
+
+target(
+    name = "publish",
+    driver = "oci_push",
+    image = ":img",
+    ref = "${read://pkg:registry}:${image_hashout}",
+)
+```
+
+| Variable | Value |
+|----------|-------|
+| `${read://pkg:name}` | The contents of that target's single output. See [Deferred values](/docs/concepts/deferred-values). |
+| `${image_hashout}` | The hash of the `image` archive, so every distinct image gets its own tag. |
+
+`${image_hashout}` is heph's content hash of the image, **not** the registry
+digest, so it won't match what `docker images` or the registry reports. Any
+other `${…}` in `ref` is refused before anything runs, and a value produced by
+a `${read://…}` target must not contain `$`. On success, the run logs the
+reference it pushed along with the registry digest.
 
 ### `oci_load`
 
