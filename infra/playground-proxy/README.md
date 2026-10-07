@@ -5,7 +5,7 @@ release assets. GitHub serves release downloads without CORS headers, so the
 browser can't fetch them directly.
 
 ```
-GET https://heph-playground-proxy.<account>.workers.dev/heph-release?https://github.com/hephbuild/heph-artifacts-v1/releases/download/<tag>/<asset>
+GET https://proxy.hephbuild.workers.dev/heph-release?https://github.com/hephbuild/heph-artifacts-v1/releases/download/<tag>/<asset>
 ```
 
 ## Abuse and cost
@@ -34,9 +34,7 @@ Custom Domains: Edit* and the zone's *DNS: Edit* for a custom domain).
 ```sh
 export CLOUDFLARE_API_TOKEN=...
 terraform init
-terraform apply \
-  -var account_id=<account id> \
-  -var workers_dev_subdomain=<name in name.workers.dev>
+terraform apply   # values in terraform.tfvars
 ```
 
 Then set `PLAYGROUND_PROXY` in `website/src/constants.ts` to the

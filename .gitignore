@@ -29,3 +29,4 @@ website/.search-cache/
 *.tfstate
 *.tfstate.*
 *.tfvars
+!infra/playground-proxy/terraform.tfvars
