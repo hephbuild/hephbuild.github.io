@@ -28,15 +28,20 @@ the Worker.
 
 ## Deploy
 
-Needs an API token with *Workers Scripts: Edit* on the account (plus *Workers
-Custom Domains: Edit* and the zone's *DNS: Edit* for a custom domain).
+Needs a Cloudflare API token with *Workers Scripts: Edit* and *Workers R2
+Storage: Edit* on the account (plus *Workers Custom Domains: Edit* and the
+zone's *DNS: Edit* for a custom domain).
 
 ```sh
-export CLOUDFLARE_API_TOKEN=...
+export CLOUDFLARE_API_TOKEN=...   # or save it in ~/.cloudflare-heph-token
+source env.sh                     # derives the R2 credentials for the state
 terraform init
-terraform apply   # values in terraform.tfvars
+terraform apply                   # values in terraform.tfvars
 ```
 
-Then set `PLAYGROUND_PROXY` in `website/src/constants.ts` to the
-`proxy_prefix` output. State is local (`terraform.tfstate`, gitignored); add a
-`backend` block to keep it elsewhere.
+State is in the R2 bucket `heph-tf-state` (`playground-proxy/terraform.tfstate`),
+locked during runs. `env.sh` derives its S3 credentials from the same API
+token, so there is no second secret to keep.
+
+If `proxy_prefix` changes, update `PLAYGROUND_PROXY` in
+`website/src/constants.ts`.

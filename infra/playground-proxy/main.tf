@@ -10,6 +10,24 @@ terraform {
       version = "~> 5.27"
     }
   }
+
+  # State lives in the R2 bucket heph-tf-state, through R2's S3-compatible API.
+  # Credentials come from the environment: `source env.sh`.
+  backend "s3" {
+    bucket       = "heph-tf-state"
+    key          = "playground-proxy/terraform.tfstate"
+    region       = "auto"
+    endpoints    = { s3 = "https://b9d7099532d2613531d6f54b60211d0c.r2.cloudflarestorage.com" }
+    use_lockfile = true
+
+    # R2 is not AWS: skip the AWS-only checks.
+    skip_credentials_validation = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_metadata_api_check     = true
+    skip_s3_checksum            = true
+    use_path_style              = true
+  }
 }
 
 # Authenticates with the CLOUDFLARE_API_TOKEN environment variable.
