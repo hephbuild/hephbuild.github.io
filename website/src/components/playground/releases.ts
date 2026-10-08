@@ -73,7 +73,7 @@ async function gh<T>(path: string, signal?: AbortSignal): Promise<T> {
  */
 export async function listReleases(signal?: AbortSignal): Promise<Release[]> {
   const [recent, latest] = await Promise.all([
-    gh<GhRelease[]>('releases?per_page=40', signal),
+    gh<GhRelease[]>('releases?per_page=100', signal),
     gh<GhRelease>('releases/latest', signal),
   ]);
   const all = recent.some((r) => r.tag_name === latest.tag_name) ? recent : [latest, ...recent];
