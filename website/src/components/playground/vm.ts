@@ -89,7 +89,9 @@ const PLUGIN_OPTIONS: Record<string, string> = {
   'heph-go-plugin': '    options:\n      gotool: host\n',
 };
 
-async function run(vm: Vm, command: string, timeoutMs = 300_000): Promise<string> {
+/** Run `commands` in one exec, stopping at the first that fails. */
+async function run(vm: Vm, commands: string | string[], timeoutMs = 300_000): Promise<string> {
+  const command = [commands].flat().join(' && ');
   const { output, exitCode } = await vm.exec(command, { timeoutMs });
   if (exitCode !== 0) {
     throw new Error(`\`${command}\` exited ${exitCode}:\n${output.slice(-2000)}`);
@@ -279,17 +281,19 @@ export async function bootPlayground(
     const script = files.map(([path, content]) => (
       `mkdir -p '${path.replace(/\/[^/]+$/, '')}'\ncat > '${path}' <<'HEPH_PLAYGROUND_EOF'\n${content}${content.endsWith('\n') ? '' : '\n'}HEPH_PLAYGROUND_EOF\n`
     )).join('');
-    // Mounts the image lacks: pseudo-terminals for `heph run --shell`, and,
-    // for the examples, a filesystem with extended attributes, which
-    // `codegen = "copy"` needs (the root filesystem has none).
-    const mounts = [
+    await vm.writeFile('/tmp/heph-install.sh', script);
+    await run(vm, [
+      // Mounts the image lacks: pseudo-terminals for `heph run --shell`, and,
+      // for the examples, a filesystem with extended attributes, which
+      // `codegen = "copy"` needs (the root filesystem has none).
       'mountpoint -q /dev/pts || { mkdir -p /dev/pts && mount -t devpts devpts /dev/pts; }',
       'mkdir -p /root/examples && { mountpoint -q /root/examples || mount -t tmpfs tmpfs /root/examples; }',
-    ].join(' && ');
-    await vm.writeFile('/tmp/heph-install.sh', script);
-    // Releases without `heph tool completions` just go without completion.
-    const completion = `{ heph tool completions bash > ${COMPLETION} 2>/dev/null || rm -f ${COMPLETION}; }`;
-    await run(vm, `${mounts} && sh /tmp/heph-install.sh && rm /tmp/heph-install.sh && ${completion} && heph version`);
+      'sh /tmp/heph-install.sh',
+      'rm /tmp/heph-install.sh',
+      // Releases without `heph tool completions` just go without completion.
+      `{ heph tool completions bash > ${COMPLETION} 2>/dev/null || rm -f ${COMPLETION}; }`,
+      'heph version',
+    ]);
   } catch (e) {
     vm.dispose();
     throw e;
