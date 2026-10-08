@@ -1,10 +1,11 @@
 import {
   useEffect, useId, useRef, useState, type KeyboardEvent,
 } from 'react';
-import type { Release } from './releases';
+import { listTags, type Release } from './releases';
 
 interface Props {
   id: string;
+  /** Recent releases, listed before anything is typed. */
   releases: Release[] | null;
   /** Shown in place of the input while `releases` is null. */
   placeholder: string;
@@ -13,9 +14,22 @@ interface Props {
   disabled?: boolean;
 }
 
-const label = (r: Release) => (r.latest ? `${r.tag} (latest)` : r.tag);
+// Matches shown at once; the query narrows the rest.
+const MAX_MATCHES = 50;
+const SEARCH_DELAY_MS = 200;
 
-/** A version select you can type into: the list narrows to tags containing the query. */
+const norm = (s: string) => s.trim().toLowerCase().replace(/^v/, '');
+
+type Search =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'done'; tags: string[] }
+  | { kind: 'error'; message: string };
+
+/**
+ * A version select you can type into. Before typing it lists the recent
+ * releases; a query searches every release tag on GitHub for tags containing it.
+ */
 export function VersionPicker({
   id, releases, placeholder, value, onChange, disabled,
 }: Props) {
@@ -24,23 +38,47 @@ export function VersionPicker({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
+  const [search, setSearch] = useState<Search>({ kind: 'idle' });
 
-  const q = query.trim().toLowerCase().replace(/^v/, '');
-  const matches = (releases ?? []).filter((r) => r.tag.toLowerCase().replace(/^v/, '').includes(q));
-  const selected = releases?.find((r) => r.tag === value);
-  const shown = selected ? label(selected) : placeholder;
+  const q = norm(query);
+  const latest = releases?.find((r) => r.latest)?.tag;
+  const recent = (releases ?? []).map((r) => r.tag);
+  let matches = recent;
+  if (q) {
+    // Until GitHub answers, narrow the recent releases already on hand.
+    const pool = search.kind === 'done' ? search.tags : recent;
+    matches = pool.filter((t) => norm(t).includes(q)).slice(0, MAX_MATCHES);
+  }
 
   useEffect(() => {
-    listRef.current?.children[active]?.scrollIntoView({ block: 'nearest' });
+    if (!q) return undefined;
+    let live = true;
+    const timer = setTimeout(() => {
+      setSearch((s) => (s.kind === 'done' ? s : { kind: 'loading' }));
+      listTags().then(
+        (tags) => live && setSearch({ kind: 'done', tags }),
+        (e: unknown) => live && setSearch({ kind: 'error', message: e instanceof Error ? e.message : String(e) }),
+      );
+    }, SEARCH_DELAY_MS);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [q]);
+
+  useEffect(() => {
+    listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: 'nearest' });
   }, [active, open]);
+
+  const label = (tag: string) => (tag === latest ? `${tag} (latest)` : tag);
 
   const show = () => {
     setQuery('');
-    setActive(Math.max(0, (releases ?? []).findIndex((r) => r.tag === value)));
+    setActive(Math.max(0, recent.indexOf(value)));
     setOpen(true);
   };
-  const pick = (r: Release | undefined) => {
-    if (r) onChange(r.tag);
+  const pick = (tag: string | undefined) => {
+    if (tag) onChange(tag);
     setOpen(false);
   };
 
@@ -64,6 +102,11 @@ export function VersionPicker({
     }
   };
 
+  let status: string | null = null;
+  if (q && search.kind === 'error') status = `search unavailable: ${search.message}`;
+  else if (q && search.kind !== 'done') status = 'searching GitHub releases…';
+  else if (matches.length === 0) status = 'no matching version';
+
   return (
     <div className="pg-picker">
       <input
@@ -78,7 +121,7 @@ export function VersionPicker({
         spellCheck={false}
         disabled={disabled || !releases}
         placeholder={open ? 'search versions…' : undefined}
-        value={open ? query : shown}
+        value={open ? query : (value && label(value)) || placeholder}
         onFocus={show}
         onClick={() => !open && show()}
         onBlur={() => setOpen(false)}
@@ -90,24 +133,24 @@ export function VersionPicker({
       />
       {open && (
         <ul id={listId} ref={listRef} role="listbox" className="pg-picker-list">
-          {matches.length === 0 && <li className="pg-picker-empty">no matching version</li>}
-          {matches.map((r, i) => (
+          {matches.map((tag, i) => (
             <li
-              key={r.tag}
+              key={tag}
               id={`${listId}-${i}`}
               role="option"
-              aria-selected={r.tag === value}
+              aria-selected={tag === value}
               data-active={i === active}
               // mousedown, not click: it fires before the input's blur closes the list.
               onMouseDown={(e) => {
                 e.preventDefault();
-                pick(r);
+                pick(tag);
               }}
               onMouseEnter={() => setActive(i)}
             >
-              {label(r)}
+              {label(tag)}
             </li>
           ))}
+          {status && <li className="pg-picker-empty">{status}</li>}
         </ul>
       )}
     </div>

@@ -6,7 +6,7 @@ import type { AttachedTerminal } from 'arm64js/terminal';
 import { Eyebrow } from '@heph/uikit';
 import '@xterm/xterm/css/xterm.css';
 import { EXAMPLES, type Example } from './examples';
-import { listReleases, type Release } from './releases';
+import { getRelease, listReleases, type Release } from './releases';
 import { VersionPicker } from './VersionPicker';
 import {
   bootPlayground, enterShell, type Progress, type Stage,
@@ -76,6 +76,10 @@ export function Playground() {
   const [releases, setReleases] = useState<Release[] | null>(null);
   const [releasesError, setReleasesError] = useState<string | null>(null);
   const [tag, setTag] = useState('');
+  // A release picked from search, outside the recent list.
+  const [picked, setPicked] = useState<Release | null>(null);
+  const [pickError, setPickError] = useState<string | null>(null);
+  const pickAbortRef = useRef<AbortController | null>(null);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const termEl = useRef<HTMLDivElement>(null);
   const vmRef = useRef<Vm | null>(null);
@@ -106,7 +110,21 @@ export function Playground() {
 
   useEffect(() => teardown, [teardown]);
 
-  const release = releases?.find((r) => r.tag === tag);
+  const release = releases?.find((r) => r.tag === tag)
+    ?? (picked?.tag === tag ? picked : undefined);
+
+  const pickTag = (next: string) => {
+    pickAbortRef.current?.abort();
+    setTag(next);
+    setPickError(null);
+    if (releases?.some((r) => r.tag === next) || picked?.tag === next) return;
+    const ac = new AbortController();
+    pickAbortRef.current = ac;
+    const latest = releases?.find((r) => r.latest)?.tag ?? '';
+    getRelease(next, latest, ac.signal).then(setPicked, (e: unknown) => {
+      if (!ac.signal.aborted) setPickError(errorMessage(e));
+    });
+  };
 
   const start = async () => {
     if (!release || !termEl.current) return;
@@ -184,7 +202,7 @@ export function Playground() {
             releases={releases}
             placeholder={releasesError ? 'unavailable' : 'loading releases…'}
             value={tag}
-            onChange={setTag}
+            onChange={pickTag}
             disabled={running}
           />
         </div>
@@ -210,6 +228,11 @@ export function Playground() {
       {releasesError && (
         <div className="pg-error">
           {`Could not list releases: ${releasesError}`}
+        </div>
+      )}
+      {pickError && (
+        <div className="pg-error">
+          {`Could not load ${tag}: ${pickError}`}
         </div>
       )}
 
