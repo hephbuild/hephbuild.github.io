@@ -110,6 +110,12 @@ export function Playground() {
 
   useEffect(() => teardown, [teardown]);
 
+  // The terminal stays hidden until the VM is ready, and a hidden element
+  // can't take focus: focus it once the render that reveals it is done.
+  useEffect(() => {
+    if (status.kind === 'ready') termRef.current?.xterm.focus();
+  }, [status.kind]);
+
   const release = releases?.find((r) => r.tag === tag)
     ?? (picked?.tag === tag ? picked : undefined);
 
@@ -151,7 +157,6 @@ export function Playground() {
         },
       });
       await enterShell(vm);
-      termRef.current.xterm.focus();
       setStatus({ kind: 'ready', vcpus, restored });
     } catch (e) {
       if (!ac.signal.aborted) setStatus({ kind: 'error', message: errorMessage(e) });
