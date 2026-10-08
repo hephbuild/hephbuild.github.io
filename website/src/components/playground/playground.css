@@ -45,7 +45,7 @@
   min-width: 0;
 }
 
-.pg-field span,
+.pg-field > label,
 .pg-plugins span {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
@@ -54,7 +54,13 @@
   color: var(--muted);
 }
 
-.pg-field select {
+.pg-picker {
+  max-width: 100%;
+  position: relative;
+}
+
+.pg-picker input {
+  width: 44ch;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   height: 38px;
@@ -64,6 +70,49 @@
   border-radius: 0;
   background: var(--paper);
   color: var(--ink);
+}
+
+.pg-picker input:disabled {
+  opacity: 0.6;
+}
+
+.pg-picker-list {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% - 1px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  border: 1px solid var(--hair-strong);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.pg-picker-list li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.pg-picker-list li[data-active='true'] {
+  background: var(--hair);
+}
+
+.pg-picker-list li[aria-selected='true'] {
+  color: var(--ac);
+}
+
+.pg-picker-list .pg-picker-empty {
+  color: var(--muted);
+  cursor: default;
 }
 
 .pg-start {

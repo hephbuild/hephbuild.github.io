@@ -6,7 +6,8 @@ import type { AttachedTerminal } from 'arm64js/terminal';
 import { Eyebrow } from '@heph/uikit';
 import '@xterm/xterm/css/xterm.css';
 import { EXAMPLES, type Example } from './examples';
-import { listReleases, type Release } from './releases';
+import { getRelease, listReleases, type Release } from './releases';
+import { VersionPicker } from './VersionPicker';
 import {
   bootPlayground, enterShell, type Progress, type Stage,
 } from './vm';
@@ -75,6 +76,10 @@ export function Playground() {
   const [releases, setReleases] = useState<Release[] | null>(null);
   const [releasesError, setReleasesError] = useState<string | null>(null);
   const [tag, setTag] = useState('');
+  // A release picked from search, outside the recent list.
+  const [picked, setPicked] = useState<Release | null>(null);
+  const [pickError, setPickError] = useState<string | null>(null);
+  const pickAbortRef = useRef<AbortController | null>(null);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const termEl = useRef<HTMLDivElement>(null);
   const vmRef = useRef<Vm | null>(null);
@@ -105,7 +110,21 @@ export function Playground() {
 
   useEffect(() => teardown, [teardown]);
 
-  const release = releases?.find((r) => r.tag === tag);
+  const release = releases?.find((r) => r.tag === tag)
+    ?? (picked?.tag === tag ? picked : undefined);
+
+  const pickTag = (next: string) => {
+    pickAbortRef.current?.abort();
+    setTag(next);
+    setPickError(null);
+    if (releases?.some((r) => r.tag === next) || picked?.tag === next) return;
+    const ac = new AbortController();
+    pickAbortRef.current = ac;
+    const latest = releases?.find((r) => r.latest)?.tag ?? '';
+    getRelease(next, latest, ac.signal).then(setPicked, (e: unknown) => {
+      if (!ac.signal.aborted) setPickError(errorMessage(e));
+    });
+  };
 
   const start = async () => {
     if (!release || !termEl.current) return;
@@ -174,22 +193,19 @@ export function Playground() {
       </header>
 
       <div className="pg-controls">
-        <label className="pg-field" htmlFor="pg-version">
-          <span>heph version</span>
-          <select
+        {/* Not a wrapping <label>: its click would reopen the list after a pick. */}
+        <div className="pg-field">
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- in VersionPicker */}
+          <label htmlFor="pg-version">heph version</label>
+          <VersionPicker
             id="pg-version"
+            releases={releases}
+            placeholder={releasesError ? 'unavailable' : 'loading releases…'}
             value={tag}
-            onChange={(e) => setTag(e.target.value)}
-            disabled={!releases || running}
-          >
-            {!releases && <option>{releasesError ? 'unavailable' : 'loading releases…'}</option>}
-            {releases?.map((r) => (
-              <option key={r.tag} value={r.tag}>
-                {r.latest ? `${r.tag} (latest)` : r.tag}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={pickTag}
+            disabled={running}
+          />
+        </div>
         <button type="button" className="pg-start" onClick={start} disabled={!release || running}>
           {startLabel(status)}
         </button>
@@ -212,6 +228,11 @@ export function Playground() {
       {releasesError && (
         <div className="pg-error">
           {`Could not list releases: ${releasesError}`}
+        </div>
+      )}
+      {pickError && (
+        <div className="pg-error">
+          {`Could not load ${tag}: ${pickError}`}
         </div>
       )}
 

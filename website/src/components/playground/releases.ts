@@ -82,6 +82,38 @@ export async function listReleases(signal?: AbortSignal): Promise<Release[]> {
     .map((r) => toRelease(r, latest.tag_name));
 }
 
+let allTags: Promise<string[]> | null = null;
+
+/**
+ * Every release tag on GitHub, newest first. The API has no release search,
+ * but the tag refs come back in a single response, so the picker fetches them
+ * once and matches locally. A failed fetch is retried on the next call.
+ */
+export function listTags(): Promise<string[]> {
+  allTags ??= gh<{ ref: string }[]>('git/matching-refs/tags/')
+    .then((refs) => refs
+      .map((r) => r.ref.replace(/^refs\/tags\//, ''))
+      .sort((a, b) => b.localeCompare(a, undefined, { numeric: true })))
+    .catch((e: unknown) => {
+      allTags = null;
+      throw e;
+    });
+  return allTags;
+}
+
+/** One release by tag, or an error if it has no linux/arm64 binary. */
+export async function getRelease(
+  tag: string,
+  latestTag: string,
+  signal?: AbortSignal,
+): Promise<Release> {
+  const r = await gh<GhRelease>(`releases/tags/${encodeURIComponent(tag)}`, signal);
+  if (r.draft || !r.assets.some((a) => a.name === BINARY_ASSET)) {
+    throw new Error(`${tag} has no linux/arm64 build`);
+  }
+  return toRelease(r, latestTag);
+}
+
 export function assetUrl(tag: string, name: string): string {
   return `https://github.com/${ARTIFACTS_REPO}/releases/download/${encodeURIComponent(tag)}/${name}`;
 }
