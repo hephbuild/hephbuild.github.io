@@ -40,7 +40,7 @@ A good heph CI run rests on three guarantees, plus cache reuse:
 **Warm cache.** Pin `version:` in `.hephconfig` so every CI job resolves the
 same toolchain byte-for-byte. Persist/restore heph's cache directory between
 runs (its home/cache location follows `homeDir`; the local cache lives under
-`.heph3/cache`) using your CI's cache action keyed on the lockfiles/inputs.
+`.heph/cache`) using your CI's cache action keyed on the lockfiles/inputs.
 Enable remote cache on targets (`cache = {remote: True}`) where the runners can
 share a backend, so a cold runner still gets hits. Note the `nix` driver
 disables remote caching (host-local `/nix/store` paths).
