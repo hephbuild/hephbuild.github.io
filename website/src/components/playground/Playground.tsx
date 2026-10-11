@@ -67,6 +67,20 @@ function Inline({ text }: { text: string }) {
   );
 }
 
+const VERSION_PARAM = 'version';
+
+/** The release requested with `?version=<tag>`, if any. */
+function versionFromUrl(): string | null {
+  return new URLSearchParams(window.location.search).get(VERSION_PARAM) || null;
+}
+
+/** Keep `?version=` in step with the picker, so the URL can be shared. */
+function versionToUrl(tag: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.set(VERSION_PARAM, tag);
+  window.history.replaceState(window.history.state, '', url);
+}
+
 function startLabel(status: Status): string {
   if (status.kind === 'running') return 'Starting…';
   return status.kind === 'ready' ? 'Restart' : 'Start VM';
@@ -89,16 +103,33 @@ export function Playground() {
   // Steps run in this VM, as "<dir>/<index>".
   const [doneSteps, setDoneSteps] = useState<ReadonlySet<string>>(new Set());
 
+  // Fetch a release outside the recent list: one picked from search, or
+  // asked for with `?version=`.
+  const loadPicked = useCallback((next: string, latest: string) => {
+    pickAbortRef.current?.abort();
+    const ac = new AbortController();
+    pickAbortRef.current = ac;
+    getRelease(next, latest, ac.signal).then(setPicked, (e: unknown) => {
+      if (!ac.signal.aborted) setPickError(errorMessage(e));
+    });
+  }, []);
+
   useEffect(() => {
     const ac = new AbortController();
+    const wanted = versionFromUrl();
     listReleases(ac.signal).then((rs) => {
       setReleases(rs);
-      setTag((rs.find((r) => r.latest) ?? rs[0])?.tag ?? '');
+      const latest = (rs.find((r) => r.latest) ?? rs[0])?.tag ?? '';
+      setTag(wanted ?? latest);
+      if (wanted && !rs.some((r) => r.tag === wanted)) loadPicked(wanted, latest);
     }).catch((e: unknown) => {
       if (!ac.signal.aborted) setReleasesError(errorMessage(e));
     });
-    return () => ac.abort();
-  }, []);
+    return () => {
+      ac.abort();
+      pickAbortRef.current?.abort();
+    };
+  }, [loadPicked]);
 
   const teardown = useCallback(() => {
     abortRef.current?.abort();
@@ -123,13 +154,9 @@ export function Playground() {
     pickAbortRef.current?.abort();
     setTag(next);
     setPickError(null);
+    versionToUrl(next);
     if (releases?.some((r) => r.tag === next) || picked?.tag === next) return;
-    const ac = new AbortController();
-    pickAbortRef.current = ac;
-    const latest = releases?.find((r) => r.latest)?.tag ?? '';
-    getRelease(next, latest, ac.signal).then(setPicked, (e: unknown) => {
-      if (!ac.signal.aborted) setPickError(errorMessage(e));
-    });
+    loadPicked(next, releases?.find((r) => r.latest)?.tag ?? '');
   };
 
   const start = async () => {
