@@ -70,7 +70,7 @@ Every key below is optional.
 | `version`   | string                        | unset   | Pins the heph release for this workspace. When set, heph automatically downloads and re-execs into the pinned version on startup. See [Pinning the version](#pinning-the-version). |
 | `versionFlavour` | string                   | `""` (std) | Selects which release flavour self-upgrade downloads: `""` for std, or `debug` for the unstripped build. See [Pinning a release flavour](#pinning-a-release-flavour). |
 | `plugins`   | list of plugin entries        | `[]`    | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map and, for `url:` entries, an optional `checksum`. |
-| `homeDir`   | path                          | unset   | Where heph keeps its home and cache. |
+| `homeDir`   | path                          | `.heph` | Where heph keeps its home and cache. Relative paths are under the workspace root; absolute paths are used as written. No `~` or `$VAR` expansion. Must be a subdirectory of the workspace root or elsewhere — not the root itself or a parent of it. See [Home directory](#home-directory). |
 | `fs`        | `{skip: string[]}`            | `{}`    | Workspace-wide ignore patterns shared with all tree-walking plugins. |
 | `memCache`  | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
 | `cache`     | `{spillThresholdBytes: number}` | `{}`  | Durable local-cache tuning. |
@@ -192,7 +192,21 @@ Each entry is interpreted by its shape:
 | Literal path (no `*`, `?`, `[`, `{`) | Pruned by exact match against workspace-relative paths. `./`-prefixed forms normalize to bare paths (`./vendor` → `vendor`). |
 | Glob pattern (contains metacharacters) | Matched against workspace-relative paths using glob semantics. |
 
-`.git` is always ignored — you do not need to list it.
+`.git` is always ignored — you do not need to list it. So is every directory whose name starts with `.heph` (the default home `.heph`, a leftover `.heph3`, tool caches like `.heph-gocache`): the prefix is reserved for heph's own state, so a `BUILD` file inside one is not a package.
+
+## Home directory
+
+The home holds the local cache, sandboxes, credentials, locks and diagnostics. It defaults to `.heph` under the workspace root.
+
+```yaml title=".hephconfig"
+homeDir: state/heph
+```
+
+heph refuses a `homeDir` that resolves to the workspace root or above it (`.`, `..`, `/`, empty). `.` and `..` are resolved textually, not through symlinks.
+
+:::note
+The default was previously `.heph3`. An existing `.heph3` is no longer used; delete it, or set `homeDir: .heph3` to keep it.
+:::
 
 ### `fs.skip` vs per-plugin `skip`
 

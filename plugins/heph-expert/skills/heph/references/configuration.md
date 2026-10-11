@@ -18,7 +18,7 @@ plugins:
 | `version` | semver string | — | Pins the heph release that runs this workspace, so every machine/CI job resolves the same toolchain. Set it once at the top. |
 | `versionFlavour` | string | `""` (std) | Which release flavour self-upgrade downloads: `""` for the default stripped "std" build, or `debug` for the unstripped build (symbolicated backtraces). |
 | `plugins` | list of plugin entries | `[]` | Plugins to register. Each entry sets exactly one of `builtin`, `path`, or `url`, plus an optional `options` map. |
-| `homeDir` | path | unset | Where heph keeps its home and cache. |
+| `homeDir` | path | `.heph` | Where heph keeps its home and cache. Relative = under workspace root; absolute used as written; no `~`/`$VAR` expansion; the root itself or a parent is refused. Directories named `.heph*` are reserved and never walked as source. |
 | `memCache` | `{perEntryBytes, capacityBytes}` | unset | In-memory cache sizing. |
 | `scratch` | `{scope, restoreScopes, seedOnFork}` | unset | Which scratch-cache lineage a run reads and writes. |
 | `fuse` | `{enabled: true \| false \| "auto"}` | off | Sandbox overlay mode. |
@@ -45,7 +45,7 @@ plugins:
       skip: [vendor, "third_party/**"]
   - builtin: bash
   - builtin: nix
-  - path: .heph3/heph-go-plugin.json
+  - path: tools/heph-go-plugin.json
     options:
       gotool: "//@heph/bin:go"
 ```
