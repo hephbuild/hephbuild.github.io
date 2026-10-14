@@ -10,17 +10,17 @@ Provides Go language support for heph. The `go` provider analyzes Go packages
 and generates targets for building libraries, binaries, and tests. It reads
 package metadata, resolves source files and module dependencies, and wires up
 the targets needed to compile and run Go code. Managed drivers do the
-underlying work: toolchain provisioning (`go_toolchain`), package metadata
-analysis (`go_golist`), Go package compilation (`go_compile`), test main
-generation (`go_testmain`), and per-package lint/format analysis (`go_lint`,
-`go_lint_gate`, `go_lint_fix`, `go_format`, `go_format_check`).
+underlying work: toolchain provisioning (`go.toolchain`), package metadata
+analysis (`go.golist`), Go package compilation (`go.compile`), test main
+generation (`go.testmain`), and per-package lint/format analysis (`go.lint`,
+`go.lint_gate`, `go.lint_fix`, `go.format`, `go.format_check`).
 
 ## Driver
 
 A driver is the execution backend that knows how to run a particular kind of
-target. This plugin registers nine drivers: `go_toolchain`, `go_golist`,
-`go_compile`, `go_testmain`, `go_lint`, `go_lint_gate`, `go_lint_fix`,
-`go_format`, and `go_format_check`. These are internal — you should not
+target. This plugin registers nine drivers: `go.toolchain`, `go.golist`,
+`go.compile`, `go.testmain`, `go.lint`, `go.lint_gate`, `go.lint_fix`,
+`go.format`, and `go.format_check`. These are internal — you should not
 interact with them directly.
 
 ## Enabling it
@@ -914,7 +914,7 @@ installs the plugin. Restart Claude Code if prompted.
 
 | Piece | What it does |
 |---|---|
-| **Skill `heph-go`** | Auto-activates whenever Claude works on Go under heph — enabling the provider and the `go_golist` / `go_compile` / `go_testmain` drivers, building and testing packages, wiring `go_src` / `go_embed_src` / `go_codegen_root` / `go_codegen_deps` / `go_embed_deps` and `go_test_data`, pinning `gotool`, or debugging missing generated code, embeds, modules, or testdata. Carries this page's reference bundled. |
+| **Skill `heph-go`** | Auto-activates whenever Claude works on Go under heph — enabling the provider and the `go.golist` / `go.compile` / `go.testmain` drivers, building and testing packages, wiring `go_src` / `go_embed_src` / `go_codegen_root` / `go_codegen_deps` / `go_embed_deps` and `go_test_data`, pinning `gotool`, or debugging missing generated code, embeds, modules, or testdata. Carries this page's reference bundled. |
 | **Agent `heph-go-expert`** | A specialist subagent for non-trivial Go-in-heph jobs: standing up the provider, wiring cross-package codegen, staging fixtures, or diagnosing why a `:build` / `:test` fails to see what it needs. |
 | **`/heph-go-setup`** | Turn on and configure Go support — provider, the three drivers, `gotool`, and `skip`. |
 | **`/heph-go-codegen`** | Wire generated code and test fixtures into a package via `go_src`, `go_codegen_root`, `go_codegen_deps`, and `go_test_data`. |

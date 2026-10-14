@@ -6,7 +6,7 @@ description: Describes a devenv shell environment other targets can run inside.
 
 # Devenv
 
-The Devenv plugin registers one driver, `devenv_runner`, that captures a
+The Devenv plugin registers one driver, `devenv.runner`, that captures a
 [devenv](https://devenv.sh) shell environment into a **runner** — a target
 other targets point at with `runner = "//pkg:name"` to run inside that
 environment instead of on the bare host. See [Runners](/docs/concepts/runners)
@@ -15,7 +15,7 @@ for what a runner is and how a target uses one.
 ## Driver
 
 A **driver** is the component that knows how to execute a target's action.
-This plugin registers a single driver, `devenv_runner`.
+This plugin registers a single driver, `devenv.runner`.
 
 ## Enabling it
 
@@ -46,7 +46,7 @@ for details.
 ```python title="BUILD"
 target(
     name = "runner",
-    driver = "devenv_runner",
+    driver = "devenv.runner",
     deps = glob("devenv.*"),
 )
 

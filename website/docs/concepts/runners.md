@@ -58,8 +58,8 @@ a workspace-wide default turns them into a cycle too.
 
 | Plugin | Driver | Describes |
 |---|---|---|
-| [Devenv](/docs/plugins/devenv) | `devenv_runner` | A [devenv](https://devenv.sh) shell. |
-| [OCI](/docs/plugins/oci#running-targets-inside-a-container) | `oci_runner` | A running container. |
+| [Devenv](/docs/plugins/devenv) | `devenv.runner` | A [devenv](https://devenv.sh) shell. |
+| [OCI](/docs/plugins/oci#running-targets-inside-a-container) | `oci.runner` | A running container. |
 
 Both are targets like any other: build one, point other targets at its
 address. Nothing else about the consuming target changes — its own `deps`,

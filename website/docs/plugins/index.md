@@ -15,6 +15,17 @@ when you write `driver = "bash"` in a BUILD file, you are reaching for a driver
 registered by the [Exec](./exec.md) plugin; when heph scans the workspace for
 BUILD files, that is a provider at work.
 
+## Naming
+
+A plugin's drivers are named `<plugin>.<driver>` in a BUILD file: `driver = "oci.pull"`, `driver = "go.lint"`, `driver = "devenv.runner"`, `driver = "auth.credential"`. A plugin's functions are `heph.<plugin>.<function>`, such as `heph.fs.glob` and `heph.auth.env`. A driver that carries the plugin's own name, like `bash` or `group`, is written bare.
+
+List every loaded plugin with the full name of each driver, function and runner it provides:
+
+```bash title="terminal"
+heph tool plugins
+heph tool plugins --json
+```
+
 ## Drivers
 
 Each driver plugin registers one or more named executors a target can run
@@ -37,7 +48,7 @@ drivers that build its libraries, binaries, and tests.
 
 | Plugin        | Driver                                   | Purpose                                        |
 |---------------|---------------------------------------------|--------------------------------------------------|
-| [Go](./go.md) | `go_golist`, `go_embed`, `go_testmain`   | Go language support: libraries, binaries, tests. |
+| [Go](./go.md) | `go.golist`, `go_embed`, `go.testmain`   | Go language support: libraries, binaries, tests. |
 
 ## Containers
 
@@ -46,7 +57,7 @@ Dockerfile and with or without a daemon.
 
 | Plugin        | Driver                                                                                        | Purpose                                        |
 |---------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------|
-| [OCI](./oci.md) | `docker_build`, `oci_image`, `oci_layer`, `oci_index`, `oci_pull`, `oci_push`, `oci_load`, `oci_runner` | Build an image (with a Dockerfile or from target outputs), group multi-platform images, move images between a registry, the cache, and a local docker daemon, and run targets inside a running container. |
+| [OCI](./oci.md) | `oci.docker_build`, `oci.image`, `oci.layer`, `oci.index`, `oci.pull`, `oci.push`, `oci.load`, `oci.runner` | Build an image (with a Dockerfile or from target outputs), group multi-platform images, move images between a registry, the cache, and a local docker daemon, and run targets inside a running container. |
 
 ## Runners
 
@@ -56,8 +67,8 @@ host. Any [Exec](./exec.md) or [Go](./go.md) target can point at one.
 
 | Plugin              | Driver          | Describes                        |
 |----------------------|-----------------|-----------------------------------|
-| [Devenv](./devenv.md) | `devenv_runner` | A [devenv](https://devenv.sh) shell. |
-| [OCI](./oci.md#running-targets-inside-a-container)  | `oci_runner`    | A running container.              |
+| [Devenv](./devenv.md) | `devenv.runner` | A [devenv](https://devenv.sh) shell. |
+| [OCI](./oci.md#running-targets-inside-a-container)  | `oci.runner`    | A running container.              |
 
 ## Providers
 

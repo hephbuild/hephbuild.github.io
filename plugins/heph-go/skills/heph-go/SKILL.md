@@ -3,7 +3,7 @@ name: heph-go
 description: >-
   Set up and maintain Go in a heph workspace so it builds and tests correctly.
   Use this skill whenever the user is working with Go code under heph: enabling
-  the `go` provider and the `go_golist`/`go_embed`/`go_testmain` drivers in
+  the `go` provider and the `go.golist`/`go_embed`/`go.testmain` drivers in
   .hephconfig, building or testing Go packages (`heph run //pkg:build`,
   `//pkg:test`, `//pkg:xtest`), wiring generated `.go` code into a package
   (the `go_src` label, `go_codegen_root`, `go_codegen_deps`), staging test
@@ -65,9 +65,9 @@ providers:
       gotool: "//@heph/bin:go"   # optional; this is the default
 
 drivers:
-  - name: go_golist     # package metadata analysis (go list)
+  - name: go.golist     # package metadata analysis (go list)
   - name: go_embed      # //go:embed processing
-  - name: go_testmain   # generated test main
+  - name: go.testmain   # generated test main
 ```
 
 | Option   | Type       | Default            | Purpose |
@@ -188,7 +188,7 @@ provider_state(provider = "go", test = {"skip": False})
 
 | You want to…                                   | Do this |
 |------------------------------------------------|---------|
-| Turn on Go support                             | `providers: [{name: go}]` + register `go_golist`, `go_embed`, `go_testmain` under `drivers:` |
+| Turn on Go support                             | `providers: [{name: go}]` + register `go.golist`, `go_embed`, `go.testmain` under `drivers:` |
 | Use a pinned Go toolchain                      | `options.gotool = "//path/to:go"` |
 | Hide a directory from Go discovery             | `options.skip: ["vendor", "…/**"]` |
 | Compile generated `.go` in the same package    | label the codegen target `go_src` (+ `codegen = "copy"`) |

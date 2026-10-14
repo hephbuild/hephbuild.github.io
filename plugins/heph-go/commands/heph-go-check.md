@@ -11,7 +11,7 @@ Scope (optional package/subtree or specific complaint): $ARGUMENTS
 Work through the checklist; report each item as ✅ / ⚠️ / ❌ with the exact fix.
 
 1. **Provider & drivers registered.** `.hephconfig` has `providers: [{name:
-   go}]` and all three of `go_golist`, `go_embed`, `go_testmain` under `drivers:`.
+   go}]` and all three of `go.golist`, `go_embed`, `go.testmain` under `drivers:`.
    Missing any driver = generated targets can't run.
 
 2. **Targets are actually generated.** `heph query all //...` (or the scoped

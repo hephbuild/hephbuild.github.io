@@ -12,15 +12,15 @@ hand. Nine **managed drivers** do the underlying work:
 
 | Driver          | Does                                                                            |
 |-----------------|---------------------------------------------------------------------------------|
-| `go_toolchain`  | Downloads and provisions the hermetic Go SDK.                                   |
-| `go_golist`     | Package metadata analysis — the equivalent of `go list`.                        |
-| `go_compile`    | Compiles a Go package archive (importcfg, `//go:embed` resolution, asm, pack).  |
-| `go_testmain`   | Generates the test `main` for `go test`.                                        |
-| `go_lint`       | Analyze unit: runs `heph-govet`, produces facts + a lint report (backs the internal `_lint-analyze` target). |
-| `go_lint_gate`  | Fails the build on lint findings (backs `lint-check`).                          |
-| `go_lint_fix`   | Applies suggested fixes in place (backs `lint`).                                |
-| `go_format`     | Reformats sources in place (backs `format`).                                    |
-| `go_format_check` | Fails the build if sources aren't formatted (backs `format-check`).           |
+| `go.toolchain`  | Downloads and provisions the hermetic Go SDK.                                   |
+| `go.golist`     | Package metadata analysis — the equivalent of `go list`.                        |
+| `go.compile`    | Compiles a Go package archive (importcfg, `//go:embed` resolution, asm, pack).  |
+| `go.testmain`   | Generates the test `main` for `go test`.                                        |
+| `go.lint`       | Analyze unit: runs `heph-govet`, produces facts + a lint report (backs the internal `_lint-analyze` target). |
+| `go.lint_gate`  | Fails the build on lint findings (backs `lint-check`).                          |
+| `go.lint_fix`   | Applies suggested fixes in place (backs `lint`).                                |
+| `go.format`     | Reformats sources in place (backs `format`).                                    |
+| `go.format_check` | Fails the build if sources aren't formatted (backs `format-check`).           |
 
 You should not interact with these drivers directly; they are internal plumbing.
 
@@ -227,10 +227,10 @@ boundaries.
 
 | Target | Driver | Does |
 |---|---|---|
-| `lint-check` | `go_lint_gate` | Gate: fails on lint findings. Reports only. |
-| `lint` | `go_lint_fix` | Fixer: applies suggested fixes back into sources (in-place codegen). |
-| `format-check` | `go_format_check` | Gate: fails if any file isn't formatted. Reports only. |
-| `format` | `go_format` | Fixer: reformats sources in place (in-place codegen). |
+| `lint-check` | `go.lint_gate` | Gate: fails on lint findings. Reports only. |
+| `lint` | `go.lint_fix` | Fixer: applies suggested fixes back into sources (in-place codegen). |
+| `format-check` | `go.format_check` | Gate: fails if any file isn't formatted. Reports only. |
+| `format` | `go.format` | Fixer: reformats sources in place (in-place codegen). |
 
 Within a module that opts in, `provider_state(lint = False)` drops
 `lint-check`/`lint` for a package (or subtree with `recursive = True`) while
@@ -615,7 +615,7 @@ one.
 5. The `go_embed_deps` from the closest ancestor BUILD state.
 
 Items 4 and 5 are deliberately excluded from `_golist`, so `query`/`list`/IDE
-metadata never trigger expensive asset builds. They only run when `go_compile`
+metadata never trigger expensive asset builds. They only run when `go.compile`
 actually needs the bytes to satisfy `//go:embed` patterns.
 
 ## Troubleshooting

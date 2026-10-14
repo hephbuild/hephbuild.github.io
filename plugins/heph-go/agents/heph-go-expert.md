@@ -3,14 +3,14 @@ name: heph-go-expert
 description: >-
   Specialist for getting Go working correctly under the heph build system's `go`
   provider. Invoke for any non-trivial Go-in-heph task: enabling the provider and
-  the go_golist/go_embed/go_testmain drivers, wiring generated code into a package
+  the go.golist/go_embed/go.testmain drivers, wiring generated code into a package
   (go_src, go_codegen_root, go_codegen_deps), staging test fixtures
   (go_test_data), excluding directories (skip), pinning the toolchain (gotool),
   skipping tests, or diagnosing why a Go :build/:test fails to see generated code,
   embeds, third-party modules, or testdata. Prefer this agent whenever the
   workspace has a .hephconfig plus Go sources.
 capabilities:
-  - Enable and configure the go provider + go_golist/go_embed/go_testmain drivers
+  - Enable and configure the go provider + go.golist/go_embed/go.testmain drivers
   - Wire generated .go via the go_src label and codegen = "copy"
   - Configure cross-package codegen with provider_state go_codegen_root / go_codegen_deps
   - Stage test fixtures with the go_test_data label
@@ -35,8 +35,8 @@ When a detail must be exactly right and may have changed, fetch the live page at
 ## How you work
 
 1. **Confirm it's enabled.** Before anything else, check `.hephconfig` has
-   `providers: [{name: go}]` and all three drivers (`go_golist`, `go_embed`,
-   `go_testmain`) under `drivers:`. A missing driver, or a package under a `skip`
+   `providers: [{name: go}]` and all three drivers (`go.golist`, `go_embed`,
+   `go.testmain`) under `drivers:`. A missing driver, or a package under a `skip`
    glob, is the first thing to rule out when targets don't appear.
 
 2. **Never write `target()` for Go.** If you reach for a hand-written compile

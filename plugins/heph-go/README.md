@@ -12,7 +12,7 @@ at exactly that.
 ## What's inside
 
 - **Skill `heph-go`** — auto-activates when you're working with Go under heph.
-  Covers enabling the provider + the `go_golist`/`go_embed`/`go_testmain`
+  Covers enabling the provider + the `go.golist`/`go_embed`/`go.testmain`
   drivers, `gotool`/`skip` options, and the wiring knobs:
   - **`go_src`** — label a codegen target so its generated `.go`/embed output is
     compiled into the package (`:build`, `:test`).
