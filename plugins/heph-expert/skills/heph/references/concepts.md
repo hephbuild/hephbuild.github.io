@@ -244,8 +244,8 @@ Or set it once for the whole workspace, on the exec/bash driver's own
 `runner:` option (a target's own `runner` field wins over it).
 `runner = "local"` is the explicit opt-out.
 
-A runner is itself a target — built by the `devenv` plugin's `devenv_runner`
-driver or the `oci` plugin's `oci_runner` driver, or hand-written. It is a
+A runner is itself a target — built by the `devenv` plugin's `devenv.runner`
+driver or the `oci` plugin's `oci.runner` driver, or hand-written. It is a
 **hashed dependency**: naming one, or a change to the environment it resolves
 to, changes the consumer's cache key.
 

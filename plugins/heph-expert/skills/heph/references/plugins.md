@@ -31,7 +31,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 
 | Plugin | Driver(s) | Purpose |
 |---|---|---|
-| Go | `go_golist`, `go_embed`, `go_testmain` | Go support: libraries, binaries, tests. Drivers are internal — you don't call them directly. **Setup/usage is owned by the dedicated `heph-go` plugin.** |
+| Go | `go.golist`, `go_embed`, `go.testmain` | Go support: libraries, binaries, tests. Drivers are internal — you don't call them directly. **Setup/usage is owned by the dedicated `heph-go` plugin.** |
 
 ## Providers
 
@@ -51,8 +51,8 @@ bare host. The exec drivers (`exec`/`bash`) take a `runner` field/option (see
 
 | Plugin | Driver | Describes | Registration |
 |---|---|---|---|
-| Devenv | `devenv_runner` | A [devenv](https://devenv.sh) shell. | External plugin. Load via `plugins: - path:` or `- url:` pointing at `heph-devenv-plugin.json`. |
-| OCI | `oci_runner` | A running container, held open for the build. | Part of the `oci` plugin's manifest (`heph-oci-plugin.json`). |
+| Devenv | `devenv.runner` | A [devenv](https://devenv.sh) shell. | External plugin. Load via `plugins: - path:` or `- url:` pointing at `heph-devenv-plugin.json`. |
+| OCI | `oci.runner` | A running container, held open for the build. | Part of the `oci` plugin's manifest (`heph-oci-plugin.json`). |
 
 Full contract (the `runner.json` shape, environment composition, writing your
 own): `concepts.md` → *Runners*, or

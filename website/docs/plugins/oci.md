@@ -6,21 +6,21 @@ description: Build, assemble, pull, push, and load OCI/Docker container images �
 
 # OCI
 
-The OCI plugin builds and moves container images. `docker_build` builds one
-from a Dockerfile with `docker buildx`; `oci_image` assembles one directly
+The OCI plugin builds and moves container images. `oci.docker_build` builds one
+from a Dockerfile with `docker buildx`; `oci.image` assembles one directly
 from target outputs, with no Dockerfile, no daemon, and nothing executed.
-`oci_pull`, `oci_push`, and `oci_load` move an image between a registry,
-heph's cache, and a local docker daemon. `oci_index` groups images built
-separately, one per platform, into a single multi-platform image. `oci_runner`
+`oci.pull`, `oci.push`, and `oci.load` move an image between a registry,
+heph's cache, and a local docker daemon. `oci.index` groups images built
+separately, one per platform, into a single multi-platform image. `oci.runner`
 turns a running container into a [runner](/docs/concepts/runners) other
 targets can execute inside.
 
 ## Driver
 
 A **driver** is the component that knows how to execute a target's action.
-This plugin registers eight drivers: `docker_build`, `oci_image`,
-`oci_layer`, `oci_index`, `oci_pull`, `oci_push`, `oci_load`, and
-`oci_runner`.
+This plugin registers eight drivers: `oci.docker_build`, `oci.image`,
+`oci.layer`, `oci.index`, `oci.pull`, `oci.push`, `oci.load`, and
+`oci.runner`.
 
 ## Enabling it
 
@@ -45,23 +45,23 @@ Two drivers build an image. Pick by whether the image needs to run a command.
 
 | Driver | Use when | Needs |
 |---|---|---|
-| [`docker_build`](#docker_build) | The image needs a `RUN` step — installing packages, compiling, a multi-stage build. | A running docker daemon and a `docker buildx` builder that can export to a file. |
-| [`oci_image`](#oci_image-and-oci_layer) | The image is a base plus files on top — a static binary, a few assets. Nothing needs to execute. | Nothing. No daemon, no `docker` binary, no execution of any kind. |
+| [`oci.docker_build`](#ocidocker_build) | The image needs a `RUN` step — installing packages, compiling, a multi-stage build. | A running docker daemon and a `docker buildx` builder that can export to a file. |
+| [`oci.image`](#ociimage-and-ocilayer) | The image is a base plus files on top — a static binary, a few assets. Nothing needs to execute. | Nothing. No daemon, no `docker` binary, no execution of any kind. |
 
-Prefer `oci_image` when it fits. Its cache key covers everything that can
+Prefer `oci.image` when it fits. Its cache key covers everything that can
 change the image: there is no base resolved from the network at build time,
 no un-hashed toolchain version, no secret value that can't be hashed. It also
 cross-builds for free — assembling a `linux/arm64` image on an `amd64` machine
-needs no emulation, because nothing runs. `docker_build` is the escape hatch
+needs no emulation, because nothing runs. `oci.docker_build` is the escape hatch
 for a real build step, at the cost of leaving some of those factors outside
-the cache key — see [What `docker_build` does not hash](#what-docker_build-does-not-hash).
+the cache key — see [What `oci.docker_build` does not hash](#what-ocidocker_build-does-not-hash).
 
-### `docker_build`
+### `oci.docker_build`
 
 ```python title="BUILD"
 target(
     name = "img",
-    driver = "docker_build",
+    driver = "oci.docker_build",
     dockerfile = "Dockerfile",
     context = [":srcs"],
     build_args = {"VERSION": "1.2.3"},
@@ -74,7 +74,7 @@ target(
 | `dockerfile` | `string` | `"Dockerfile"` | The Dockerfile, as either a **target address** or a path. An address (starting with `:` or `//`) makes the target that produces it a dependency, hashed on its own. A path is relative to the target's package and must be produced by a `context` dependency (a plain checked-in `Dockerfile` comes from the [Filesystem](./fs.md) provider). Absolute paths are rejected. |
 | `context` | list or dict of `string` → target addresses | `{}` | Build-context dependencies. A bare list is the default group, exported to the build as the `SRC` build arg; a dict names groups, each exported as `SRC_<GROUP>` (context-relative paths of that group's outputs). Group names are uppercased and non-alphanumerics become `_`. |
 | `context_by_platform` | dict of platform → (list or dict as `context`) | `{}` | Context dependencies that differ **per platform**, keyed `"os/arch"` — e.g. `{"linux/amd64": {"bin": [":bin_amd64"]}, "linux/arm64": {"bin": [":bin_arm64"]}}`. One buildx invocation builds every platform from one context, so a dependency that differs by architecture (a cross-compiled binary, for example) can't go in `context` — it stages under a per-platform prefix instead, and the Dockerfile selects with BuildKit's `TARGETPLATFORM` build arg. Group names must not collide with `context`; every platform in `platforms` needs an entry and vice versa; requires `platforms` to be set explicitly. |
-| `bases` | dict of `string` → target address | `{}` | Base images, by build-context name → a single `oci_pull(layout = True)` (or `oci_image`/`docker_build`) target. Wired to `docker buildx --build-context <name>=…`, so the Dockerfile does `FROM <name>` (and can `COPY --from=<name>` for multi-stage). A multi-platform build needs the base pulled with `all_platforms = True` too. |
+| `bases` | dict of `string` → target address | `{}` | Base images, by build-context name → a single `oci.pull(layout = True)` (or `oci.image`/`oci.docker_build`) target. Wired to `docker buildx --build-context <name>=…`, so the Dockerfile does `FROM <name>` (and can `COPY --from=<name>` for multi-stage). A multi-platform build needs the base pulled with `all_platforms = True` too. |
 | `format` | `string` | `"oci"` | Archive format: `oci` or `docker`. |
 | `build_args` | dict of `string` → `string` | `{}` | `--build-arg` values. Hashed — they change the image. A key may not contain `=`. |
 | `stage` | `string` | unset | Build a specific stage (`--target`) of a multi-stage Dockerfile — the name in `FROM … AS <stage>`. Named `stage` rather than buildx's `target`, since a heph *target* is a different thing. |
@@ -103,10 +103,10 @@ target(
 
 #### The builder
 
-`docker_build` needs `docker buildx` with a builder that can **write an image
+`oci.docker_build` needs `docker buildx` with a builder that can **write an image
 archive to a file**. The plain `docker` driver — what a stock Docker Engine
 selects by default — cannot: `--output type=oci,dest=…` and
-`type=docker,dest=…` both fail on it, and with them every `docker_build`
+`type=docker,dest=…` both fail on it, and with them every `oci.docker_build`
 target regardless of `format`. Either turn on the daemon's containerd image
 store, or create a container-driver builder and name it:
 
@@ -115,16 +115,16 @@ $ docker buildx create --name heph --driver docker-container
 ```
 
 ```python title="BUILD"
-target(name = "img", driver = "docker_build", builder = "heph", ...)
+target(name = "img", driver = "oci.docker_build", builder = "heph", ...)
 ```
 
 Multi-platform builds have the same requirement, plus a container-driver
 builder specifically — the default daemon builder only builds one platform at
 a time.
 
-#### What `docker_build` does not hash
+#### What `oci.docker_build` does not hash
 
-`docker_build`'s cache key covers the build context, Dockerfile, build args,
+`oci.docker_build`'s cache key covers the build context, Dockerfile, build args,
 stage, platforms, and base-image contexts — an unchanged context is a cache
 hit, and the archive is served from cache without rebuilding. It does **not**
 cover everything that can change the resulting image bytes:
@@ -132,7 +132,7 @@ cover everything that can change the resulting image bytes:
 - **`FROM` base images** not passed through `bases`. BuildKit resolves a plain
   `FROM alpine:3.20` itself, from the network — whatever that tag pointed at
   when the machine that populated the cache last resolved it. Pin `FROM` by
-  `@sha256:`, or pull the base with [`oci_pull`](#oci_pull) and wire it
+  `@sha256:`, or pull the base with [`oci.pull`](#ocipull) and wire it
   through `bases`, which *is* a hashed input.
 - **Anything `RUN` fetches** — `apt-get`, `curl`, `npm ci`. Execution-time
   downloads are neither content-addressed nor verified.
@@ -146,15 +146,15 @@ cover everything that can change the resulting image bytes:
   produces it the build sees none — a heph-built image can differ from the
   same `docker build` run by hand in the repo.
 
-The build's environment is not on this list: every `docker_build` runs with a
+The build's environment is not on this list: every `oci.docker_build` runs with a
 cleared environment and an explicit passthrough allowlist, so a stray
 `BUILDX_BUILDER` or `SOURCE_DATE_EPOCH` on the host cannot change the build
 behind the cache key's back.
 
-### `oci_image` and `oci_layer`
+### `oci.image` and `oci.layer`
 
-`oci_layer` turns target outputs into one image layer — a tar of a file tree,
-nothing executes. `oci_image` stacks `oci_layer` targets on an optional base
+`oci.layer` turns target outputs into one image layer — a tar of a file tree,
+nothing executes. `oci.image` stacks `oci.layer` targets on an optional base
 into a built image. Splitting the two means a big shared layer (static
 assets, a CA bundle) is built and cached once and reused by every image that
 lists it.
@@ -162,22 +162,22 @@ lists it.
 ```python title="BUILD"
 target(
     name = "bin_layer",
-    driver = "oci_layer",
+    driver = "oci.layer",
     srcs = [":server"],
     prefix = "/usr/bin",
 )
 
 target(
     name = "img",
-    driver = "oci_image",
-    base = ":base_alpine",   # an oci_pull(layout = True) target
+    driver = "oci.image",
+    base = ":base_alpine",   # an oci.pull(layout = True) target
     layers = [":bin_layer"],
     entrypoint = ["/usr/bin/server"],
     platforms = ["linux/amd64", "linux/arm64"],
 )
 ```
 
-#### `oci_layer` fields
+#### `oci.layer` fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -191,12 +191,12 @@ A layer's bytes are written to be reproducible regardless of the host: file
 timestamps, uid, and gid are zeroed; entries are sorted by path; symlinks are
 preserved (never followed); and the layer is written uncompressed.
 
-#### `oci_image` fields
+#### `oci.image` fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `base` | `string` | unset | Base image — an `oci_pull(layout = True)` (or another `oci_image`) target. Omitted, the image starts from scratch. This target's layers go on top; the base's config (`Env`, `Entrypoint`, `Cmd`, `User`, `WorkingDir`, `Labels`, `ExposedPorts`) is inherited, and anything set below wins. A multi-platform build needs a base with an instance per platform: `oci_pull(layout = True, all_platforms = True)`. |
-| `layers` | `string[]` | `[]` | `oci_layer` targets, bottom to top. Order matters — a later layer's file shadows the same path in an earlier one. |
+| `base` | `string` | unset | Base image — an `oci.pull(layout = True)` (or another `oci.image`) target. Omitted, the image starts from scratch. This target's layers go on top; the base's config (`Env`, `Entrypoint`, `Cmd`, `User`, `WorkingDir`, `Labels`, `ExposedPorts`) is inherited, and anything set below wins. A multi-platform build needs a base with an instance per platform: `oci.pull(layout = True, all_platforms = True)`. |
+| `layers` | `string[]` | `[]` | `oci.layer` targets, bottom to top. Order matters — a later layer's file shadows the same path in an earlier one. |
 | `layers_by_platform` | dict of platform → `string[]` | `{}` | Layers that differ per platform, appended after `layers`. Every platform in `platforms` needs an entry and vice versa — a missing one would silently ship an image without its binary for that platform. |
 | `platforms` | `string[]` | **required** | Target platforms, e.g. `["linux/amd64", "linux/arm64"]`. No default: `platforms` is a label written into the image config with nothing relating it to `layers`, so defaulting to the host's architecture would let an `amd64` laptop and an `arm64` CI runner build different images from one BUILD file, or let an `amd64` binary ship inside a config claiming `arm64` — an `exec format error` at run time, correctly cached, with no build-time error. |
 | `entrypoint` | `string[]` | `[]` | The image's entrypoint (`ENTRYPOINT`). Setting it clears any `cmd` inherited from the base, mirroring a Dockerfile's `ENTRYPOINT`. |
@@ -207,27 +207,27 @@ preserved (never followed); and the layer is written uncompressed.
 | `labels` | dict of `string` → `string` | `{}` | Image labels, merged over the base's. |
 | `exposed_ports` | `string[]` | `[]` | Ports the image declares (`EXPOSE`), e.g. `["8080/tcp"]`. |
 | `format` | `string` | `"oci"` | Archive format: `oci` or `docker`. |
-| `layout` | `bool` | `false` | Write an OCI **layout directory** instead of a single archive file — the shape another image's `base`, and `docker_build`'s `bases`, consume. |
+| `layout` | `bool` | `false` | Write an OCI **layout directory** instead of a single archive file — the shape another image's `base`, and `oci.docker_build`'s `bases`, consume. |
 | `out` | `string` | `<target name>.tar`, or `.oci` with `layout = True` | Output filename (or directory name), relative to the target's package. Must be a bare name. |
 | `cache` | bool or dict | both tiers on | Caching for the built image. See [Cache control](#cache-control). |
 
-Like `docker_build`, `oci_image` has a default output group (the
+Like `oci.docker_build`, `oci.image` has a default output group (the
 archive/layout) plus a `digest` group holding the image digest as text.
 
 ## Multi-platform images
 
-`docker_build(platforms = [...])` and `oci_image(platforms = [...])` build
+`oci.docker_build(platforms = [...])` and `oci.image(platforms = [...])` build
 every platform from one recipe — one Dockerfile (or one set of layers), with
 per-platform differences limited to `context_by_platform` /
 `layers_by_platform`. When the platforms genuinely need different recipes — a
 different base, a different package manager, a stage that only exists on one
 architecture — build them as separate targets and group the results with
-`oci_index`.
+`oci.index`.
 
 ```python title="BUILD"
 target(
     name = "amd64",
-    driver = "docker_build",
+    driver = "oci.docker_build",
     dockerfile = "Dockerfile.amd64",
     context = [":srcs"],
     platforms = ["linux/amd64"],
@@ -235,7 +235,7 @@ target(
 
 target(
     name = "arm64",
-    driver = "docker_build",
+    driver = "oci.docker_build",
     dockerfile = "Dockerfile.arm64",
     context = [":srcs"],
     platforms = ["linux/arm64"],
@@ -243,25 +243,25 @@ target(
 
 target(
     name = "img",
-    driver = "oci_index",
+    driver = "oci.index",
     images = [":amd64", ":arm64"],
 )
 ```
 
-`//pkg:img` is then one image everywhere downstream: `oci_push` sends the
-whole manifest list under one tag, `oci_load` picks the instance for the
-host, and `docker_build`'s `bases` resolves the right platform out of it.
+`//pkg:img` is then one image everywhere downstream: `oci.push` sends the
+whole manifest list under one tag, `oci.load` picks the instance for the
+host, and `oci.docker_build`'s `bases` resolves the right platform out of it.
 
-Nothing is rebuilt or re-hashed by `oci_index` — it reads the layouts its
+Nothing is rebuilt or re-hashed by `oci.index` — it reads the layouts its
 inputs already produced and writes one index over them, copying blobs by
 reference. Each input still caches on its own inputs, so changing the arm64
 Dockerfile doesn't rebuild amd64.
 
-### `oci_index` fields
+### `oci.index` fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `images` | `string[]` | **required** | The images to group, one per platform — `docker_build`, `oci_image`, `oci_pull`, or another `oci_index` target. Each contributes every instance it holds, so grouping two single-platform builds is the common case, but a multi-platform input is merged rather than rejected. Two inputs claiming the same platform is an error. |
+| `images` | `string[]` | **required** | The images to group, one per platform — `oci.docker_build`, `oci.image`, `oci.pull`, or another `oci.index` target. Each contributes every instance it holds, so grouping two single-platform builds is the common case, but a multi-platform input is merged rather than rejected. Two inputs claiming the same platform is an error. |
 | `format` | `string` | `"oci"` | `docker` is rejected — a docker-format archive holds a single image, which is the one thing this rule doesn't produce. |
 | `layout` | `bool` | `false` | Write an OCI **layout directory** instead of a single archive file. |
 | `out` | `string` | `<target name>.tar`, or `.oci` with `layout = True` | Output filename (or directory name), relative to the target's package. Must be a bare name. |
@@ -269,18 +269,18 @@ Dockerfile doesn't rebuild amd64.
 
 ## Moving images
 
-### `oci_pull`
+### `oci.pull`
 
 Pulls an image from a registry into a cacheable archive output — the
 image-world analogue of [HTTP Fetch](./http-fetch.md): bytes come from the
 network, not from other targets, and the pulled archive is a cacheable
-target output, so a base image shared by many `docker_build` or `oci_image`
+target output, so a base image shared by many `oci.docker_build` or `oci.image`
 targets is pulled once and served from cache thereafter.
 
 ```python title="BUILD"
 target(
     name = "alpine",
-    driver = "oci_pull",
+    driver = "oci.pull",
     ref = "alpine:3.20",
     layout = True,
 )
@@ -289,9 +289,9 @@ target(
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `ref` | `string` | **required** | Source image reference, e.g. `docker.io/library/alpine:3.20` or, pinned, `alpine@sha256:…`. |
-| `layout` | `bool` | `false` | Write an OCI **layout directory** instead of a single archive file — the shape `docker_build`'s `bases` and another image's `base` consume. Without it the pulled archive can only be pushed or loaded. |
+| `layout` | `bool` | `false` | Write an OCI **layout directory** instead of a single archive file — the shape `oci.docker_build`'s `bases` and another image's `base` consume. Without it the pulled archive can only be pushed or loaded. |
 | `platforms` | `string[]` | Linux on the host's architecture | Which platforms to pull out of a multi-platform manifest list, as `"os/arch"`. One entry selects one instance; several keep an index holding exactly those. Always part of the cache key. Mutually exclusive with `all_platforms`. |
-| `all_platforms` | `bool` | `false` | Pull **every** instance of the manifest list instead of naming them, keeping the whole index. This is what a base for a multi-platform `docker_build`/`oci_image` needs. |
+| `all_platforms` | `bool` | `false` | Pull **every** instance of the manifest list instead of naming them, keeping the whole index. This is what a base for a multi-platform `oci.docker_build`/`oci.image` needs. |
 | `out` | `string` | `<target name>.tar`, or `.oci` with `layout = True` | Output filename (or directory name), relative to the target's package. Must be a bare name. |
 | `insecure` | `bool` | `false` | Pull from an insecure (HTTP / self-signed) registry: plain HTTP, certificate validation off. |
 | `credentials` | `string[]` | `[]` | [Credential](/docs/concepts/credentials) targets to pull with, presented with `heph.auth.docker([...])`. See [Registry authentication](#registry-authentication). |
@@ -313,7 +313,7 @@ stale, already-cached archive. Pin by digest for a reproducible pull:
 ```python title="BUILD"
 target(
     name = "alpine",
-    driver = "oci_pull",
+    driver = "oci.pull",
     ref = "alpine@sha256:9f2c4e1b7a0d38560c1a4c9b6e...",
     layout = True,
 )
@@ -322,7 +322,7 @@ target(
 Leaving `ref` on a mutable tag logs a warning at parse time, on every run:
 
 ```text
-WARN oci_pull: pulling a mutable tag "alpine:3.20" — heph caches on the ref
+WARN oci.pull: pulling a mutable tag "alpine:3.20" — heph caches on the ref
      string, so a moved tag serves the stale archive; pin the ref by
      @sha256:digest to make the pull reproducible
 ```
@@ -332,7 +332,7 @@ second warning names the exact digest the tag currently resolves to — paste
 it straight back into `ref`:
 
 ```text
-WARN oci_pull: "alpine:3.20" currently resolves to
+WARN oci.pull: "alpine:3.20" currently resolves to
      "docker.io/library/alpine@sha256:9f2c4e1b7a0d38560c1a4c9b6e..." — pin
      `src` to that to make this pull reproducible
 ```
@@ -345,7 +345,7 @@ applied elsewhere in heph.
 
 #### Shared blob cache
 
-Every `oci_pull` target draws downloaded registry blobs from one shared
+Every `oci.pull` target draws downloaded registry blobs from one shared
 [scratch cache](/docs/concepts/scratch), keyed by nothing but its own
 address — blobs are content-addressed by digest, so one store holds `amd64`
 and `arm64` layers side by side. Two images sharing a base layer download it
@@ -357,7 +357,7 @@ heph tool scratch ls          # the blob store shows up alongside your own cache
 heph tool scratch rm --all    # drop it if it ever needs a clean slate
 ```
 
-### `oci_push`
+### `oci.push`
 
 Pushes an image archive to a registry. An **action**, not an artifact — it
 has an external side effect (the upload) and is therefore never cached; it
@@ -366,7 +366,7 @@ runs every time it's requested.
 ```python title="BUILD"
 target(
     name = "publish",
-    driver = "oci_push",
+    driver = "oci.push",
     image = ":img",
     ref = "registry.io/me/app:1.2",
 )
@@ -374,7 +374,7 @@ target(
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `image` | `string` | **required** | Target address of the image to push — a `docker_build`, `oci_image`, or `oci_index` target. Only its archive output is consumed. |
+| `image` | `string` | **required** | Target address of the image to push — a `oci.docker_build`, `oci.image`, or `oci.index` target. Only its archive output is consumed. |
 | `ref` | `string` | **required** | Destination registry reference, e.g. `registry.io/me/app:1.2`. May use `${read://pkg:name}` and `${image_hashout}`, see [Computed references](#computed-references). |
 | `insecure` | `bool` | `false` | Push to an insecure (HTTP / self-signed) registry: plain HTTP, certificate validation off. |
 | `credentials` | `string[]` | `[]` | [Credential](/docs/concepts/credentials) targets to push with, presented with `heph.auth.docker([...])`. See [Registry authentication](#registry-authentication). |
@@ -393,7 +393,7 @@ target(name = "registry", driver = "bash", run = "echo registry.io/me/app > $OUT
 
 target(
     name = "publish",
-    driver = "oci_push",
+    driver = "oci.push",
     image = ":img",
     ref = "${read://pkg:registry}:${image_hashout}",
 )
@@ -410,7 +410,7 @@ other `${…}` in `ref` is refused before anything runs, and a value produced by
 a `${read://…}` target must not contain `$`. On success, the run logs the
 reference it pushed along with the registry digest.
 
-### `oci_load`
+### `oci.load`
 
 Loads an image archive into the local docker daemon. Also an action, not
 cached — it mutates the daemon's image store and runs every time. Its output
@@ -421,7 +421,7 @@ downstream target reads the ref instead of reconstructing it.
 ```python title="BUILD"
 target(
     name = "load",
-    driver = "oci_load",
+    driver = "oci.load",
     image = ":img",
 )
 ```
@@ -446,7 +446,7 @@ target(
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `image` | `string` | **required** | Target address of the image to load — a `docker_build`, `oci_image`, or `oci_index` target. Only its archive output is consumed. |
+| `image` | `string` | **required** | Target address of the image to load — a `oci.docker_build`, `oci.image`, or `oci.index` target. Only its archive output is consumed. |
 | `tag` | `string` | derived | Local ref to give the loaded image. Takes either half of a ref, or both — whichever half is left out is derived. See below. |
 | `platform` | `string` | Linux on the host's architecture | Which instance to load out of a multi-platform archive, as `"os/arch"`. A daemon holds one image per tag, so a multi-arch archive must be narrowed to one instance on the way in. |
 
@@ -458,10 +458,10 @@ target's address turned into a docker-legal name (`//cmd/server:img` becomes
 `cmd_server_img`). Whichever half is written is carried through as-is:
 
 ```python title="BUILD"
-oci_load(image = ":img")                          # app_img:9f2c4e1b7a0d3856
-oci_load(image = ":img", tag = "app")              # app:9f2c4e1b7a0d3856
-oci_load(image = ":img", tag = "ghcr.io/me/app")   # ghcr.io/me/app:9f2c4e1b7a0d3856
-oci_load(image = ":img", tag = "app:dev")          # app:dev
+target(driver = "oci.load", image = ":img")                          # app_img:9f2c4e1b7a0d3856
+target(driver = "oci.load", image = ":img", tag = "app")              # app:9f2c4e1b7a0d3856
+target(driver = "oci.load", image = ":img", tag = "ghcr.io/me/app")   # ghcr.io/me/app:9f2c4e1b7a0d3856
+target(driver = "oci.load", image = ":img", tag = "app:dev")          # app:dev
 ```
 
 A `tag` with no `:` after its last `/` names a repository only — this
@@ -472,7 +472,7 @@ digest (`app@sha256:…`) — is rejected at parse.
 
 ## Registry authentication
 
-`oci_pull` and `oci_push` are **anonymous by default**. A target that needs a
+`oci.pull` and `oci.push` are **anonymous by default**. A target that needs a
 registry login says which identity it uses, in the BUILD file:
 
 | The target sets | It authenticates as |
@@ -493,13 +493,13 @@ target:
 ```python title="BUILD"
 ghcr = target(
     name    = "ghcr",
-    driver  = "credential",
+    driver  = "auth.credential",
     sources = [heph.auth.env(["USERNAME", "PASSWORD"])],
     present = heph.auth.docker(["ghcr.io"]),
 )
 
-oci_pull(name = "base", ref = "ghcr.io/acme/base@sha256:…", credentials = [ghcr])
-oci_push(name = "push", image = ":img", ref = "ghcr.io/acme/app:1.2", credentials = [ghcr])
+target(driver = "oci.pull", name = "base", ref = "ghcr.io/acme/base@sha256:…", credentials = [ghcr])
+target(driver = "oci.push", name = "push", image = ":img", ref = "ghcr.io/acme/app:1.2", credentials = [ghcr])
 ```
 
 - The credential must provide a `username` and a secret (`password`). A credential with no `username` is refused. The username depends on the registry: ghcr.io and GitLab accept any name, Google Artifact Registry wants `oauth2accesstoken`, ECR wants `AWS`, Docker Hub wants your account name.
@@ -509,7 +509,7 @@ oci_push(name = "push", image = ":img", ref = "ghcr.io/acme/app:1.2", credential
 ### Using your own docker login
 
 ```python title="BUILD"
-oci_pull(name = "base", ref = "registry.corp/base@sha256:…", ambient_credentials = True)
+target(driver = "oci.pull", name = "base", ref = "registry.corp/base@sha256:…", ambient_credentials = True)
 ```
 
 Handy for a developer's laptop. Because the result then depends on whoever runs
@@ -530,27 +530,27 @@ A digest-pinned pull is cached like any other: anyone who can read the remote
 cache can read the image.
 
 :::note
-`docker_build` doesn't take `credentials`. To build on a private base image,
-pull it with `oci_pull(layout = True, credentials = [...])` and pass it as
+`oci.docker_build` doesn't take `credentials`. To build on a private base image,
+pull it with `oci.pull(layout = True, credentials = [...])` and pass it as
 `bases`.
 :::
 
 ## Running targets inside a container
 
-`oci_runner` describes a running container as a [runner](/docs/concepts/runners)
+`oci.runner` describes a running container as a [runner](/docs/concepts/runners)
 other targets execute inside:
 
 ```python title="BUILD"
 target(
     name = "load",
-    driver = "oci_load",
+    driver = "oci.load",
     image = ":img",
     tag = "app:runner",
 )
 
 target(
     name = "runner",
-    driver = "oci_runner",
+    driver = "oci.runner",
     image = "app:runner",
     deps = [":load"],
 )
@@ -565,8 +565,8 @@ target(
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `image` | `string` | **required** | Image reference to run targets in, e.g. the tag `oci_load` gave it. Must already be in the local docker daemon. |
-| `deps` | `string[]` | `[]` | Targets that must build first — normally the `oci_load` target that puts `image` in the daemon. Hashed: rebuilding the image re-derives the runner. |
+| `image` | `string` | **required** | Image reference to run targets in, e.g. the tag `oci.load` gave it. Must already be in the local docker daemon. |
+| `deps` | `string[]` | `[]` | Targets that must build first — normally the `oci.load` target that puts `image` in the daemon. Hashed: rebuilding the image re-derives the runner. |
 | `run_args` | `string[]` | `[]` | Extra `docker run` arguments for the held container — `--network`, additional `-v` mounts, `--user`. The workspace root and heph's own home are mounted automatically; do not repeat them here. |
 
 One container is held open for the whole build and each target runs inside it
@@ -580,7 +580,7 @@ another's builds.
 
 ## Cache control
 
-`docker_build`, `oci_image`, `oci_layer`, `oci_index`, and `oci_pull` all
+`oci.docker_build`, `oci.image`, `oci.layer`, `oci.index`, and `oci.pull` all
 accept `cache` as a bare bool or a dict with up to three keys:
 
 | Key | Type | Default | Meaning |
@@ -590,6 +590,6 @@ accept `cache` as a bare bool or a dict with up to three keys:
 | `history` | int | `1` | Number of past revisions to retain in the local cache (minimum `1`). |
 
 A bare `True` sets both `enabled` and `remote` to `true`. A bare `False`
-disables both. `oci_push`, `oci_load`, and `oci_runner` have no `cache`
-field — as actions with an external side effect (or, for `oci_runner`, an
+disables both. `oci.push`, `oci.load`, and `oci.runner` have no `cache`
+field — as actions with an external side effect (or, for `oci.runner`, an
 answer scoped to this machine's own daemon), they're never remotely cached.

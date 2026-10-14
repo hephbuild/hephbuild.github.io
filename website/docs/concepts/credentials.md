@@ -6,7 +6,7 @@ description: Declare an identity a build needs as a target, and let heph obtain 
 
 # Credentials
 
-A **credential** is a target — `driver = "credential"` — that declares an
+A **credential** is a target — `driver = "auth.credential"` — that declares an
 identity a build needs: an ordered list of ways to obtain it, and the shape
 it's handed to consumers in. A consuming target names it with
 `credentials = [...]` and never learns which of the ways supplied it.
@@ -29,7 +29,7 @@ cache hit, never a re-acquire.
 ```python title="BUILD"
 aws = target(
     name = "aws",
-    driver = "credential",
+    driver = "auth.credential",
     sources = [
         # CI: exchange the runner's own OIDC token for the role, no secret
         # stored anywhere.
@@ -138,7 +138,7 @@ mint = target(
 
 cf = target(
     name = "cf",
-    driver = "credential",
+    driver = "auth.credential",
     sources = [mint],
     present = {"env": {"CLOUDFLARE_API_TOKEN": "${token}"}},
 )
@@ -231,7 +231,7 @@ regardless of which identity ran it, leave caching on; if the output embeds
 the identity — a plan naming an account, a presigned URL — set
 `cache = False`.
 
-[`oci_pull` and `oci_push`](/docs/plugins/oci#registry-authentication) take `credentials` too, presented with `heph.auth.docker`; they are anonymous unless one is named.
+[`oci.pull` and `oci.push`](/docs/plugins/oci#registry-authentication) take `credentials` too, presented with `heph.auth.docker`; they are anonymous unless one is named.
 
 A target cannot reference the same credential twice, and two credentials
 can't both present the same variable name to one target — both are rejected

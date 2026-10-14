@@ -1,6 +1,6 @@
 ---
 name: heph-go-setup
-description: Enable and configure the heph go provider (provider + go_golist/go_embed/go_testmain drivers, gotool, skip) in a workspace.
+description: Enable and configure the heph go provider (provider + go.golist/go_embed/go.testmain drivers, gotool, skip) in a workspace.
 ---
 
 You are turning on Go support in a heph workspace. Use the `heph-go` skill
@@ -27,9 +27,9 @@ Steps:
          gotool: "//@heph/bin:go"   # or a pinned nix/hostbin toolchain target
          skip: []                    # workspace-relative globs to exclude
    drivers:
-     - name: go_golist
+     - name: go.golist
      - name: go_embed
-     - name: go_testmain
+     - name: go.testmain
    ```
 
    All three drivers are mandatory — generated targets won't run without them.

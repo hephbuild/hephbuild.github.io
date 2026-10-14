@@ -180,6 +180,6 @@ The [Go plugin](/docs/plugins/go#build-and-module-caches) shares one
 `GOCACHE` per module and per build variant, and one portable `GOMODCACHE`
 for downloaded modules, both without any configuration.
 
-The [OCI plugin](/docs/plugins/oci#oci_pull)'s `oci_pull` shares one
+The [OCI plugin](/docs/plugins/oci#ocipull)'s `oci.pull` shares one
 registry blob store across every pull in the workspace — two images sharing
 a base layer download it once, not once per pull.
