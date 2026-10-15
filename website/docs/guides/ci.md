@@ -70,7 +70,7 @@ from a `ci.hephconfig` overlay so it only activates in CI:
 
 ```yaml title="ci.hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-gha-plugin.json
+  - url: <HEPH_ARTIFACTS_URL>/heph-gha-plugin.json
 ```
 
 ```yaml title=".github/workflows/build.yml"

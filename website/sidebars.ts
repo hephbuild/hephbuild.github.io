@@ -62,7 +62,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Reference',
       collapsible: false,
-      items: ['reference/configuration', 'reference/addresses', 'reference/cli'],
+      items: ['reference/configuration', 'reference/release-channels', 'reference/addresses', 'reference/cli'],
     },
   ],
 };
