@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
         'concepts/codegen',
         'concepts/approval',
         'concepts/runners',
+        'concepts/builtin-tools',
       ],
     },
     {
