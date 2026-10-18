@@ -39,6 +39,7 @@ through.
 | [Hostbin](./hostbin.md) | `hostbin`                                | Wraps host `PATH` binaries as targets for the build system.          |
 | [HTTP Fetch](./http-fetch.md) | `http_fetch`                       | Downloads a URL, templated over the target's address args, into a cacheable file output. |
 | [Nix](./nix.md)         | `nix`                                    | Builds reproducible tool environments via Nix flakes.                |
+| [Template](./template.md) | `template`                             | Renders a template file with declared variables into a cacheable output. |
 | [Textfile](./textfile.md) | `textfile`                             | Generates text files with optional executable permissions.           |
 
 ## Languages
