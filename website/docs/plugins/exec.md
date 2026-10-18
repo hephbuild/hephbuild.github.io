@@ -26,6 +26,8 @@ Built-in. Register in `.hephconfig` under `plugins` with `builtin: exec` or
 override, which defaults to `/usr/local/bin:/usr/bin:/bin` if empty or unset.
 The optional `runner` option sets a workspace-wide default
 [runner](/docs/concepts/runners) for every target using this driver.
+The optional `coreutils` option (default `true`) puts the
+[builtin tools](/docs/concepts/builtin-tools) on every target's `PATH`; set it to `false` to use the host's.
 
 ## Configuration
 
