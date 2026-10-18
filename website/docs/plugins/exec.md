@@ -267,6 +267,49 @@ for the full picture, including what environment a target actually sees.
 path — and heph resolves the reference once that target has run. See
 [Deferred values](/docs/concepts/deferred-values).
 
+## Builtin coreutils
+
+heph ships 40 common POSIX utilities in its own binary. With the toolbox on,
+they are available on every target's `PATH`, so `cp`, `install` or `sha256sum`
+behave the same on Linux and macOS instead of resolving to GNU or BSD variants.
+
+It is off by default. Enable it per driver:
+
+```yaml title=".hephconfig"
+plugins:
+  - builtin: exec
+    options:
+      coreutils: true
+  - builtin: bash
+    options:
+      coreutils: true
+```
+
+Included: `base64`, `basename`, `cat`, `chmod`, `comm`, `cp`, `cut`, `date`,
+`dirname`, `echo`, `env`, `false`, `head`, `install`, `ln`, `md5sum`, `mkdir`,
+`mktemp`, `mv`, `nproc`, `printf`, `readlink`, `realpath`, `rm`, `rmdir`, `seq`,
+`sha1sum`, `sha256sum`, `sha512sum`, `sleep`, `sort`, `stat`, `tail`, `tee`,
+`timeout`, `touch`, `tr`, `true`, `uniq`, `wc`.
+
+The builtins fill gaps, they don't override anything: they come last on `PATH`,
+after the target's `tools`, its declared dependencies and the
+[runner](/docs/concepts/runners)'s environment. A tool you provide yourself
+always wins. Targets under a container runner (such as `oci`) use the image's own
+utilities.
+
+:::warning
+Turning the toolbox on changes the cache key of every `exec` and `bash` target.
+A new heph release that changes the toolbox does so again.
+:::
+
+Inspect the set from the CLI:
+
+```bash
+heph tool coreutils list        # the bundled utilities and the toolbox version
+heph tool coreutils which cp    # is `cp` builtin, and what the host provides instead
+heph tool coreutils run cp -r a b   # run one directly, outside a sandbox
+```
+
 ## Interactive debugging with `--shell`
 
 When a target fails, drop into its sandbox with the exact inputs, tools, and
