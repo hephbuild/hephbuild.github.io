@@ -22,10 +22,13 @@ and `bash`.
 ## Enabling it
 
 Built-in. Register in `.hephconfig` under `plugins` with `builtin: exec` or
-`builtin: bash`. The optional `path` option sets the `PATH`
-override, which defaults to `/usr/local/bin:/usr/bin:/bin` if empty or unset.
-The optional `runner` option sets a workspace-wide default
-[runner](/docs/concepts/runners) for every target using this driver.
+`builtin: bash`. Options:
+
+| Option      | Meaning |
+|-------------|---------|
+| `path`      | Host directories to put on a target's `PATH`. Empty by default — see [The `PATH` a target sees](#the-path-a-target-sees). |
+| `coreutils` | Builtin utilities on every target's `PATH`. `true` by default; `false` opts out. |
+| `runner`    | Workspace-wide default [runner](/docs/concepts/runners) for every target using this driver. |
 
 ## Configuration
 
@@ -33,10 +36,11 @@ The optional `runner` option sets a workspace-wide default
 plugins:
   - builtin: exec
     options:
-      path:
+      path:                             # optional; host directories, none by default
         - /usr/local/bin
         - /usr/bin
         - /bin
+      coreutils: true                   # optional; the default
       runner: "//tools/devenv:runner"   # optional; see Runners
   - builtin: bash
     options:
@@ -104,6 +108,70 @@ These environment variables are available inside the sandbox:
 | `OUT` / `OUT_<group>`         | Output paths.            |
 | `WORKSPACE_ROOT`              | Root of the workspace.   |
 | `PATH`                        | Executables search path. |
+
+## The `PATH` a target sees
+
+A target's `PATH` holds its [`tools`](#notes), any `PATH` it declares through
+`env`, and heph's builtin utilities. **The host's directories are not on it.**
+A command that relies on an undeclared host binary fails with `command not
+found` instead of passing on whichever machine happens to have it.
+
+```python title="BUILD"
+target(
+    name = "pack",
+    driver = "bash",
+    tools = "//toolchain:tar",   # declared: on PATH
+    run = "tar -cf $OUT $SRC",   # declared tool, or a builtin
+    deps = "//src:files",
+    out = "pack.tar",
+)
+```
+
+If a command needs something else, declare it as a `tools` entry, call it by
+absolute path, or list host directories in the driver's `path` option:
+
+```yaml title=".hephconfig"
+plugins:
+  - builtin: bash
+    options:
+      path: [/usr/local/bin, /usr/bin, /bin]
+```
+
+The `bash` driver itself finds `bash` on the `PATH` heph was launched with, so
+you don't need `path` for the shell. Under a [runner](/docs/concepts/runners),
+the runner's environment supplies the `PATH` and `path` is not applied. The
+interactive `--shell` session keeps the host's directories.
+
+### Builtin utilities
+
+heph ships POSIX utilities (`cp`, `install`, `sed`, `sort`, `sha256sum`, …) in
+its own binary and appends them to every target's `PATH`, so a recipe behaves
+the same on Linux and macOS. They fill gaps only: a tool the target declares, or
+a binary the runner's environment ships, wins over the builtin of the same name.
+Inside an [OCI](/docs/plugins/oci) container the builtins are not available;
+the image's own utilities apply.
+
+`heph tool coreutils list` prints the set, `heph tool coreutils which cp` shows
+whether heph ships a name, and `heph tool coreutils run cp -r a b` runs one
+directly.
+
+To use the host's utilities instead, opt out per driver:
+
+```yaml title=".hephconfig"
+plugins:
+  - builtin: exec
+    options:
+      coreutils: false
+  - builtin: bash
+    options:
+      coreutils: false
+```
+
+:::warning
+Changing `coreutils` (or upgrading to a heph release with updated builtins)
+invalidates the cache of every `exec` and `bash` target, since their outputs may
+change.
+:::
 
 ## Dependencies
 
