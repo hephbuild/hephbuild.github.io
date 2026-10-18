@@ -55,6 +55,7 @@ const sidebars: SidebarsConfig = {
         'plugins/oci',
         'plugins/query',
         'plugins/textfile',
+        'plugins/template',
         'plugins/gha',
       ],
     },
