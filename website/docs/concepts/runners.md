@@ -80,17 +80,17 @@ what it declared, even inside an environment that has an opinion of its own.
 sides legitimately contribute:
 
 ```text
-PATH = the target's tools  ++  the target's own declared PATH entries  ++  the runner's PATH
+PATH = the target's tools  ++  the target's own declared PATH entries  ++  the runner's PATH  ++  heph's builtin utilities
 ```
 
 Tools lead, so a target that declares a tool gets that one even when the
-runner's environment ships a program by the same name.
+runner's environment ships a program by the same name. The builtin utilities
+come last: they fill gaps and never shadow a binary the environment ships. They
+are not added under an [OCI](/docs/plugins/oci) runner.
 
 :::note
-The exec driver's own fallback `PATH` (`/usr/local/bin:/usr/bin:/bin`, or its
-[`path`](/docs/plugins/exec#configuration) option) does not apply under a
-runner — it exists only as a fallback for a target with no environment of its
-own.
+The driver's [`path`](/docs/plugins/exec#the-path-a-target-sees) option does not
+apply under a runner — the runner's environment supplies the `PATH`.
 :::
 
 ## Writing your own

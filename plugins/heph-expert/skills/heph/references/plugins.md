@@ -86,8 +86,11 @@ own): `concepts.md` → *Runners*, or
 
 ### Exec (`exec` / `bash`)
 Full field list, dependency kinds, output groups and sandbox env vars are in
-`authoring.md`. `path` option sets the `PATH` override (default
-`/usr/local/bin:/usr/bin:/bin`). `runner` option sets a workspace-wide default
+`authoring.md`. A target's `PATH` is its `tools`, any `PATH` it declares, and
+heph's builtin utilities (`cp`, `sed`, `install`, … — `coreutils: false` opts
+out); host directories are not on it, so an undeclared host binary fails with
+`command not found`. The `path` option (empty by default) names host
+directories back. `runner` option sets a workspace-wide default
 [runner](#runners) for every target using this driver.
 
 ### Nix (`nix`)

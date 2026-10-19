@@ -98,10 +98,7 @@ plugins:
       patterns: [BUILD, "*.BUILD"]
   - builtin: exec
     options:
-      path:
-        - /usr/local/bin
-        - /usr/bin
-        - /bin
+      coreutils: true   # builtin utilities on every target's PATH (default)
   - path: ./path/to/my-plugin.json
     options:
       some_option: value
