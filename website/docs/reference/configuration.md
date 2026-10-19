@@ -429,32 +429,6 @@ command:
 rm -f ~/.config/heph/telemetry-spool.db*
 ```
 
-### Inspecting the state
-
-```sh
-heph tool telemetry status
-heph tool telemetry status --json
-```
-
-Prints whether telemetry is on (and which switch turned it off), the spool
-path, how many events are pending, how the last flush went, and when the next
-one is due. The JSON keys are stable: fields may be added, never renamed or
-removed.
-
-| Key | Meaning |
-|---|---|
-| `enabled` | Whether this process records and sends events |
-| `disabled_by` | Opt-outs in force (`"env"`, `"config"`); empty when enabled |
-| `ci` | Whether this looks like a CI runner |
-| `flush_mode` | `"detached"`, `"synchronous"` (CI) or `"off"` |
-| `endpoint` | Where events are sent |
-| `spool_path` | The spool file, or `null` |
-| `pending_events` | Events waiting to be sent |
-| `oldest_event_ms`, `oldest_event_age_ms` | When the oldest pending event was recorded, and its age (ms) |
-| `last_flush_ms`, `last_flush_ok`, `last_flush_error` | Outcome of the last flush |
-| `next_flush_due_ms` | When the next command will start a flush; `null` if nothing is pending, on CI, or when disabled |
-| `now_ms` | The clock the other times are relative to |
-
 ## Profiles — layered config overlays
 
 Set the `HEPH_PROFILES` environment variable to a comma-separated list of
