@@ -99,11 +99,15 @@ const C_APP: Example = {
     },
   ],
   files: {
-    BUILD: `# One compile step per source file: change one, recompile one.
+    BUILD: `# A target's PATH holds only what it declares: tcc comes from the host.
+TCC = "//@heph/bin:tcc"
+
+# One compile step per source file: change one, recompile one.
 def c_object(name):
     return target(
         name = name + ".o",
         driver = "bash",
+        tools = TCC,
         deps = {"c": file("src/" + name + ".c"), "h": glob("src/*.h")},
         run = "tcc -c $SRC_C -o $OUT",
         out = name + ".o",
@@ -114,6 +118,7 @@ objects = [c_object(name) for name in ["main", "greet", "stats", "strutil"]]
 target(
     name = "app",
     driver = "bash",
+    tools = TCC,
     deps = objects,
     run = "tcc $SRC -o $OUT",
     out = "app",
@@ -123,6 +128,7 @@ target(
     name = "strutil_test",
     driver = "bash",
     labels = ["test"],
+    tools = TCC,
     deps = {"test": file("src/strutil_test.c"), "h": glob("src/*.h"), "lib": ":strutil.o"},
     run = "tcc $SRC_TEST $SRC_LIB -o strutil_test && ./strutil_test > $OUT",
     out = "test.log",
@@ -215,7 +221,7 @@ const SANDBOX: Example = {
     {
       label: 'Look inside the sandbox',
       run: 'heph run //:banner --shell',
-      expect: 'A shell in the sandbox: `ls` shows only config.txt, `run` runs the command, `exit` leaves.',
+      expect: 'A shell in the sandbox: `find .` shows only config.txt, `run` runs the command, `exit` leaves.',
     },
   ],
   files: {
@@ -302,6 +308,7 @@ const appBuild = (out: string, want: string) => `target(
     name = "bin",
     driver = "bash",
     labels = ["bin"],
+    tools = "//@heph/bin:tcc",
     deps = {
         "c": file("main.c"),
         # The library's two output groups: its header and its object.
@@ -376,9 +383,12 @@ int main(void) {
     return 0;
 }
 `,
-    'libs/strutil/BUILD': `target(
+    'libs/strutil/BUILD': `TCC = "//@heph/bin:tcc"
+
+target(
     name = "lib",
     driver = "bash",
+    tools = TCC,
     deps = {"c": file("strutil.c"), "h": file("strutil.h")},
     run = "tcc -c $SRC_C -o $OUT_OBJ && cp $SRC_H $OUT_HDR",
     out = {"obj": "strutil.o", "hdr": "include/strutil.h"},
@@ -388,6 +398,7 @@ target(
     name = "test",
     driver = "bash",
     labels = ["test"],
+    tools = TCC,
     deps = {"test": file("strutil_test.c"), "hdr": ":lib|hdr", "obj": ":lib|obj"},
     run = "tcc -I $(dirname $SRC_HDR) $SRC_TEST $SRC_OBJ -o strutil_test && ./strutil_test > $OUT",
     out = "test.log",
@@ -475,6 +486,7 @@ int main(int argc, char **argv) {
 target(
     name = "build",
     driver = "bash",
+    tools = "//@heph/bin:tcc",
     deps = {"c": file("main.c")},
     # \${read://:version} is replaced by the output of :version.
     run = """
