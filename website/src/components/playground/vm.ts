@@ -28,11 +28,14 @@ const PLUGIN_DIR = '/opt/heph/plugins';
 
 // heph and its plugins are glibc builds; Alpine is musl. gcompat bridges the
 // two, libgcc carries the unwinder, bash backs the `bash` driver. tcc builds
-// COMPAT_SHIM and the C examples, with musl-dev for the libc headers.
-const PACKAGES = 'gcompat libgcc libstdc++ bash coreutils tcc tcc-libs tcc-libs-static musl-dev';
+// COMPAT_SHIM and the C examples, with musl-dev for the libc headers. patchelf
+// links the shim into the heph binary.
+const PACKAGES = 'gcompat libgcc libstdc++ bash coreutils tcc tcc-libs tcc-libs-static musl-dev patchelf';
 
 // The two glibc symbols gcompat lacks, forwarded to their musl equivalents.
-// Preloaded into heph, so the plugins it opens resolve them too. (On arm64 a
+// Linked into the heph binary rather than preloaded: heph re-runs itself for
+// builtin tools (`tr` in a `bash` target) with a clean environment, which
+// drops LD_PRELOAD. The plugins it opens resolve them too. (On arm64 a
 // variadic argument travels like a fixed one, so fcntl64 needs no stdarg.)
 const COMPAT_SHIM = `int res_init(void);
 int fcntl(int, int, ...);
@@ -65,7 +68,7 @@ const BASE_SETUP: SetupStep[] = [
       '#!/bin/sh',
       // The VM is offline: skip the self-update check and telemetry.
       'export HEPH_NO_SELF_UPDATE=1 HEPH_DISABLE_TELEMETRY=1',
-      `LD_PRELOAD=${COMPAT_LIB} exec ${HEPH_BIN} "$@"`,
+      `exec ${HEPH_BIN} "$@"`,
       '',
     ].join('\n'),
   },
@@ -241,6 +244,7 @@ export async function bootPlayground(
   try {
     onProgress({ stage: 'install', detail: 'heph binary' });
     await vm.writeFile(HEPH_BIN, assets.get(release.binary)!, { mode: 0o755 });
+    await run(vm, `patchelf --add-needed ${COMPAT_LIB} ${HEPH_BIN}`);
 
     // Rewrite each manifest to point at the mounted library instead of its
     // download URL, so heph loads plugins without network access.

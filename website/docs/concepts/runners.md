@@ -123,7 +123,7 @@ hand-written [Textfile](/docs/plugins/textfile) target is a legitimate runner.
 
 | `runner` | Behavior | `config` |
 |---|---|---|
-| `wrap` | Static rewrite of the command: an argv prefix and an environment, applied at spawn. | `prefix` — argv prepended to the command; its head becomes the program. `env` — hashed, applied over the target's own. `runtime_pass_env` — host variables pulled in by name at spawn time; unhashed. |
+| `wrap` | Static rewrite of the command: an argv prefix and an environment, applied at spawn. | `prefix` — argv prepended to the command; its head becomes the program. `env` — hashed base environment; a variable the target also sets keeps the target's value (`PATH` is composed instead). `runtime_pass_env` — host variables pulled in by name at spawn time, under the same rule; unhashed. |
 | `session` | Holds one process open inside the environment for the whole build, and runs each target inside it. | `launch` — argv that enters the environment; the target's command is appended to it. `cwd` — where `launch` runs. |
 
 `session` has no `env` key, deliberately: the held process's own environment

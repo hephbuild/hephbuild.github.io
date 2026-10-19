@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
         'concepts/codegen',
         'concepts/approval',
         'concepts/runners',
+        'concepts/builtin-tools',
       ],
     },
     {
@@ -55,6 +56,7 @@ const sidebars: SidebarsConfig = {
         'plugins/oci',
         'plugins/query',
         'plugins/textfile',
+        'plugins/template',
         'plugins/gha',
       ],
     },

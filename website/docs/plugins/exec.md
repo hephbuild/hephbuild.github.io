@@ -27,7 +27,7 @@ Built-in. Register in `.hephconfig` under `plugins` with `builtin: exec` or
 | Option      | Meaning |
 |-------------|---------|
 | `path`      | Host directories to put on a target's `PATH`. Empty by default — see [The `PATH` a target sees](#the-path-a-target-sees). |
-| `coreutils` | Builtin utilities on every target's `PATH`. `true` by default; `false` opts out. |
+| `coreutils` | [Builtin tools](/docs/concepts/builtin-tools) on every target's `PATH`. `true` by default; `false` opts out. |
 | `runner`    | Workspace-wide default [runner](/docs/concepts/runners) for every target using this driver. |
 
 ## Configuration
@@ -144,34 +144,12 @@ interactive `--shell` session keeps the host's directories.
 
 ### Builtin utilities
 
-heph ships POSIX utilities (`cp`, `install`, `sed`, `sort`, `sha256sum`, …) in
-its own binary and appends them to every target's `PATH`, so a recipe behaves
-the same on Linux and macOS. They fill gaps only: a tool the target declares, or
-a binary the runner's environment ships, wins over the builtin of the same name.
-Inside an [OCI](/docs/plugins/oci) container the builtins are not available;
-the image's own utilities apply.
-
-`heph tool coreutils list` prints the set, `heph tool coreutils which cp` shows
-whether heph ships a name, and `heph tool coreutils run cp -r a b` runs one
-directly.
-
-To use the host's utilities instead, opt out per driver:
-
-```yaml title=".hephconfig"
-plugins:
-  - builtin: exec
-    options:
-      coreutils: false
-  - builtin: bash
-    options:
-      coreutils: false
-```
-
-:::warning
-Changing `coreutils` (or upgrading to a heph release with updated builtins)
-invalidates the cache of every `exec` and `bash` target, since their outputs may
-change.
-:::
+heph appends its [builtin tools](/docs/concepts/builtin-tools) (`cp`, `sed`,
+`install`, …) to every target's `PATH`. They fill gaps only: a tool the target
+declares, or a binary the runner's environment ships, wins over the builtin of
+the same name. Inside an [OCI](/docs/plugins/oci) container they are not
+available; the image's own utilities apply. Set `coreutils: false` on the driver
+to use the host's utilities instead.
 
 ## Dependencies
 
@@ -334,6 +312,49 @@ for the full picture, including what environment a target actually sees.
 `${read://pkg:name}` for its contents, `${src://pkg:name}` for its sandbox
 path — and heph resolves the reference once that target has run. See
 [Deferred values](/docs/concepts/deferred-values).
+
+## Builtin coreutils
+
+heph ships 40 common POSIX utilities in its own binary. With the toolbox on,
+they are available on every target's `PATH`, so `cp`, `install` or `sha256sum`
+behave the same on Linux and macOS instead of resolving to GNU or BSD variants.
+
+It is off by default. Enable it per driver:
+
+```yaml title=".hephconfig"
+plugins:
+  - builtin: exec
+    options:
+      coreutils: true
+  - builtin: bash
+    options:
+      coreutils: true
+```
+
+Included: `base64`, `basename`, `cat`, `chmod`, `comm`, `cp`, `cut`, `date`,
+`dirname`, `echo`, `env`, `false`, `head`, `install`, `ln`, `md5sum`, `mkdir`,
+`mktemp`, `mv`, `nproc`, `printf`, `readlink`, `realpath`, `rm`, `rmdir`, `seq`,
+`sha1sum`, `sha256sum`, `sha512sum`, `sleep`, `sort`, `stat`, `tail`, `tee`,
+`timeout`, `touch`, `tr`, `true`, `uniq`, `wc`.
+
+The builtins fill gaps, they don't override anything: they come last on `PATH`,
+after the target's `tools`, its declared dependencies and the
+[runner](/docs/concepts/runners)'s environment. A tool you provide yourself
+always wins. Targets under a container runner (such as `oci`) use the image's own
+utilities.
+
+:::warning
+Turning the toolbox on changes the cache key of every `exec` and `bash` target.
+A new heph release that changes the toolbox does so again.
+:::
+
+Inspect the set from the CLI:
+
+```bash
+heph tool coreutils list        # the bundled utilities and the toolbox version
+heph tool coreutils which cp    # is `cp` builtin, and what the host provides instead
+heph tool coreutils run cp -r a b   # run one directly, outside a sandbox
+```
 
 ## Interactive debugging with `--shell`
 
