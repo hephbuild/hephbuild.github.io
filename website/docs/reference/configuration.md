@@ -371,8 +371,8 @@ telemetry:
   enabled: false
 ```
 
-You can also opt out via environment variable, which takes precedence over the
-config file:
+You can also opt out with an environment variable. Either switch turns
+telemetry off:
 
 ```sh
 export HEPH_DISABLE_TELEMETRY=1
@@ -384,6 +384,50 @@ want to touch the config file.
 | Key       | Type               | Default | Description |
 |-----------|--------------------|---------|-------------|
 | `enabled` | `true` \| `false`  | `true`  | Set to `false` to disable all reporting. |
+
+### What is sent
+
+One event per command, containing:
+
+- **Command shape**: the subcommand (`run`, `inspect deps`, …), the *names* of
+  the flags set (never their values), success or a coarse failure class, and
+  wall time.
+- **Run counters**: targets resolved, cache hits/misses/writes, execution
+  counts and timings, artifact counts and sizes.
+- **Environment**: OS, CPU architecture, heph version, whether it looks like CI,
+  enabled plugin types, and the kind of each configured remote cache (never
+  its URI).
+- **Two identifiers**: a random per-install ID (`~/.config/heph/telemetry-id`)
+  and a one-way hash of the repository's root commit, so events group by
+  project without naming it.
+
+Target addresses, labels, file paths, flag values, user and host names, and
+IP-derived location are never sent.
+
+### When it is sent
+
+Commands never wait on the network. Each command appends its event to a local
+spool (`~/.config/heph/telemetry-spool.db`, or under `$XDG_CONFIG_HOME/heph/`),
+which keeps at most 200 events. When events have been waiting for 5 minutes, or
+50 are queued, the next command starts a detached background `heph` process
+that sends them and exits. You may see it in `ps` as `heph __telemetry-flush`.
+
+On CI, every command sends its event synchronously at exit, waiting at most 10
+seconds.
+
+:::note
+Events from a container that is destroyed before a flush came due are lost.
+:::
+
+### Opting out
+
+When you opt out, events already spooled are sent **once**, then the spool is
+deleted. To drop them without sending, delete the spool before your next
+command:
+
+```sh
+rm -f ~/.config/heph/telemetry-spool.db*
+```
 
 ## Profiles — layered config overlays
 
