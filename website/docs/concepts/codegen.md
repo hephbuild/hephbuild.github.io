@@ -160,6 +160,14 @@ declares both a directory output and a file inside it is valid.
 Run `heph validate` in CI alongside `heph tool gen-gitignore` to ensure no two targets
 compete for the same part of the source tree.
 
+## Reached through a dependency
+
+A codegen target updates the tree whenever it is part of the run — not only when
+you name it. If `//app:bin` depends on `//fmt:generated`, running `//app:bin`
+writes `fmt/generated.txt` too, and `--frozen` on a run that reaches a codegen
+target verifies it the same way. The target is written once per run, however many
+targets depend on it.
+
 ## Verifying the tree in CI: `--frozen`
 
 Running a codegen target normally **writes** its outputs into the tree — `copy`
