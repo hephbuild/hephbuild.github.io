@@ -194,6 +194,11 @@ export async function bootPlayground(
   onProgress: (p: Progress) => void,
   signal: AbortSignal,
 ): Promise<Booted> {
+  // Load the VM runtime first: it rejects with `unsupported-browser` where
+  // the VM can't run, before a couple hundred MB of downloads.
+  const { Arm64JS } = await import('arm64js');
+  await Arm64JS.mode();
+
   // --- download, one asset at a time ---------------------------------------
   const names = [release.binary, ...release.plugins.flatMap((p) => [p.manifest, p.lib])];
   const total = names.reduce((n, name) => n + (release.sizes[name] ?? 0), 0);
