@@ -243,7 +243,7 @@ at parse time rather than silently picked between.
 |---|---|
 | `heph auth status` | One row per declared credential, its state, source, and expiry. `--json` for machine-readable output. |
 | `heph auth explain <addr>` | Walks the whole chain: every source, why each was skipped, which won. |
-| `heph auth login [addr]` | Runs whichever login commands their probes found stale. |
+| `heph auth login [addr] [--force]` | Runs the login commands of sources that are stale: skipped because their tool is missing, or the chosen source failing to produce the credential (an expired session). `--force` signs in to the chosen source anyway and discards the credential's cached material — to switch accounts, or when a session is broken in a way heph can't see. |
 | `heph auth logout` | Clears cached material from disk. |
 
 A build never signs you in on its own — it fails, naming the exact
