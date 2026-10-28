@@ -308,10 +308,19 @@ for the full picture, including what environment a target actually sees.
 
 ## Deferred values
 
-`run` can reference another target's output instead of a literal —
-`${read://pkg:name}` for its contents, `${src://pkg:name}` for its sandbox
-path — and heph resolves the reference once that target has run. See
-[Deferred values](/docs/concepts/deferred-values).
+`run`, and the values of `env` and `runtime_env`, can reference another
+target's output instead of a literal — `${read://pkg:name}` for its contents,
+`${src://pkg:name}` for its sandbox path — and heph resolves the reference once
+that target has run. See [Deferred values](/docs/concepts/deferred-values).
+
+```python title="BUILD"
+target(
+    name = "deploy",
+    driver = "bash",
+    run = 'echo "deploying $VERSION"',
+    env = {"VERSION": "${read://:version}"},
+)
+```
 
 ## Builtin coreutils
 

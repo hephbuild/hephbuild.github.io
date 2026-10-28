@@ -70,10 +70,17 @@ target normally with `deps` instead if you need those too.
 ## Where you can use one
 
 Support is per option, not per driver — an option only accepts a deferred
-value if its documentation says so. Three do today: the `run` option on the
-[`exec` and `bash`](/docs/plugins/exec) drivers, the `env`/`files` values
+value if its documentation says so. Three do today: the `run`, `env` and
+`runtime_env` options on the [`exec` and `bash`](/docs/plugins/exec) drivers,
+the `env`/`files` values
 in a [credential](/docs/concepts/credentials)'s `present` block, and the `ref`
 option of [`oci.push`](/docs/plugins/oci#ocipush) (`${read://…}` only).
+
+In `env` and `runtime_env`, only a variable's **value** may hold a reference,
+not its name. A `runtime_env` value stays out of the cache key as usual, but
+the target it references does not: the consumer reruns when that target's
+output changes. A reference in an `env` inherited from a dependency's
+`transitive` is rejected.
 
 A reference is always rejected in an option that decides *which targets exist*
 or *what the build graph looks like* — `deps`, `tools`, `runner`, `out`,
