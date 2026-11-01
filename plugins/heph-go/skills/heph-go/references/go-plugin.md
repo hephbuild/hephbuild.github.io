@@ -215,6 +215,55 @@ target(
 variant you're building against declares, or the target warms a different
 cache than the one it meant to share.
 
+## Private modules
+
+Set `GOPRIVATE` the way you already do for `go get`. Either of these works:
+
+```bash
+export GOPRIVATE=github.com/acme/*
+go env -w GOPRIVATE=github.com/acme/*
+```
+
+`go` then skips the proxy and the checksum database for those modules and runs
+`git` directly. This works with every `gotool`, including a pinned SDK. No heph
+configuration is needed.
+
+Fetching needs the same things it needs outside heph:
+
+- **`git` on `PATH`**, plus `ssh` and any credential helper your git config names.
+  heph downloads the Go SDK, but it doesn't provide git.
+- **Your git config**, read from `HOME` or `XDG_CONFIG_HOME`, or from
+  `GIT_CONFIG_GLOBAL` if set (so `url.insteadOf` and `credential.helper` work).
+- **Your credentials**, from `SSH_AUTH_SOCK`, `GIT_SSH_COMMAND`, `GIT_ASKPASS` or a
+  credential helper. Git's terminal prompts are off, so a missing credential fails
+  instead of hanging.
+
+Module downloads see the host's `PATH` (other targets don't) so `go` can find
+`git`. Under a runner (see "Running under a runner") the runner's own
+environment applies instead: `git`, `ssh` and your config must exist there.
+
+If a fetch fails, the target fails and names the package. Run `go list <package>`
+in the same shell to reproduce it. A failure isn't cached, so a fixed credential
+takes effect on the next run. Every command that resolves targets, including
+`heph query`, needs access to the private module.
+
+Only these host variables reach a fetch: the Go ones that say where modules come
+from (`GOPATH`, `GOPROXY`, `GONOPROXY`, `GOSUMDB`, `GONOSUMDB`, `GOPRIVATE`,
+`GOINSECURE`, `GOVCS`, `GOAUTH`), git and credential settings (`HOME`, `NETRC`,
+`XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`, `GIT_ASKPASS`, `GIT_SSH`,
+`GIT_SSH_COMMAND`, `SSH_AUTH_SOCK`), and certificate and proxy settings
+(`SSL_CERT_FILE`, `SSL_CERT_DIR`, `GIT_SSL_CAINFO`, `HTTP_PROXY`, `HTTPS_PROXY`,
+`NO_PROXY`). `GOFLAGS` is not passed; set build tags in heph instead.
+
+**Warning:** None of these variables is part of a cache key, and `GOPRIVATE` turns off the
+checksum check. A moved tag keeps serving the cached bytes, so publish a new
+version instead of moving a tag. Git config can also change the bytes (Git LFS
+gives real files with the filter configured, pointer files without), so machines
+sharing a remote cache need the same setup.
+
+A private module is fetched twice on a cold build, once into your own Go module
+cache and once into heph's. Warm builds fetch nothing.
+
 ## Linting and formatting
 
 A Go module gets `lint-check`, `lint`, `format-check`, and `format` targets the
@@ -628,6 +677,7 @@ actually needs the bytes to satisfy `//go:embed` patterns.
 | `//go:embed` finds nothing | embedded asset not produced/labelled | Label the producing target `go_src` (cheap assets) or `go_embed_src` (expensive assets). |
 | `query`/`list`/IDE is slow because of an embed asset build | embed asset is labelled `go_src` — it runs during analysis | Relabel it `go_embed_src`; the build will only run at actual compile time. |
 | Test panics: open testdata/...: no such file | fixture not staged into the sandbox | Label the producing target `go_test_data`. |
+| Private module fetch fails | `GOPRIVATE` unset, or `git`/credentials unavailable to heph | Set `GOPRIVATE`; make sure `git`, `ssh` and credentials work (`go list <pkg>` in the same shell). Not cached, so retry after fixing. |
 | Wrong/old third-party version compiled | `go.mod` version drift vs the generated `@version` address | Reconcile `go.mod`; the address (and thus cache key) follows the pinned version. |
 | Non-reproducible builds across machines | using `gotool = "host"` | Switch to a pinned version: `gotool: "1.27.0"` and add `checksums`. |
 | SDK checksum mismatch | `checksums` entry doesn't match the tarball | Look up the correct SHA-256 at https://go.dev/dl/?mode=json. |
