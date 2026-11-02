@@ -138,7 +138,9 @@ plugins:
 ```
 
 The `bash` driver itself finds `bash` on the `PATH` heph was launched with, so
-you don't need `path` for the shell. Under a [runner](/docs/concepts/runners),
+you don't need `path` for the shell. That same shell, and only it, is also on the
+target's `PATH`, so a recipe can call `bash -c …` or run a `#!/usr/bin/env bash`
+script. A `bash` you declare as a tool wins over it. Under a [runner](/docs/concepts/runners),
 the runner's environment supplies the `PATH` and `path` is not applied. The
 interactive `--shell` session keeps the host's directories.
 
