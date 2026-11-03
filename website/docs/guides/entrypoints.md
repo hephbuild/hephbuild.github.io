@@ -31,7 +31,7 @@ invoked on its own, by address.
 |---|---|---|
 | `entrypoint` | `False` | Run the target in the caller's world instead of building it. |
 | `args` | `False` | Append the arguments after `--` to the command (`"$@"` in `bash`). Without it, arguments are refused before anything builds. |
-| `workdir` | `"caller"` | Where the command runs: `"caller"` (the directory you ran `heph` from), `"root"` (the workspace root), or `"sandbox"` (a private sandbox, as a build runs; nothing written there survives the run). |
+| `workdir` | `"caller"` | Where the command runs: `"caller"` (the directory you ran `heph` from), `"tree_root"` (the workspace root, in your tree), `"tree_package"` (the directory of the package the target is declared in, in your tree), or `"sandbox"` (a private sandbox, as a build runs; nothing written there survives the run). |
 
 `out`, `cache`, `codegen`, `support_files`, `pass_env`, `runtime_pass_env`,
 `runtime_env` and `runner` are refused on an entrypoint.
