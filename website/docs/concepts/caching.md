@@ -116,6 +116,21 @@ that's no longer reachable (removed targets, orphaned entries):
 heph tool gc
 ```
 
+### Failure logs
+
+When a target fails, heph keeps its log in `<homeDir>/failures/<target>/log.txt`,
+whichever driver ran it. The next run of that target (or a cache hit on it)
+clears it. Nothing else removes the log of a target that is never built again,
+so `heph tool gc` sweeps those too: logs of targets that no longer exist, and
+logs older than 7 days. Change the age with `--failure-max-age-days`; `0`
+removes every failure log.
+
+```bash title="terminal"
+heph tool gc --failure-max-age-days 1
+```
+
+The summary ends with the number of failure logs removed and the space freed.
+
 To deliberately remove cached entries for a specific target selection instead —
 every revision, regardless of `history`, whether or not the target still
 exists — use `heph tool clean`. Targets are selected the same way as for
