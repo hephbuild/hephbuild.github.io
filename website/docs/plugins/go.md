@@ -871,6 +871,7 @@ provider_state(
 | `runtime_env`      | `map[string]`  | no     | Like `env` but excluded from the cache key. |
 | `runtime_pass_env` | `list[string]` | no     | Like `pass_env` but excluded from the cache key. |
 | `pre_run`          | `list[string]` | yes    | Shell lines run before the test binary. When non-empty, the target switches from the `exec` driver to the `bash` driver so the lines execute as shell. |
+| `resources`        | `map[string]`  | no     | [Resources](/docs/concepts/resources) each generated test run reserves, e.g. `{"cpu": 4, "memory": "2G"}`. Not part of the cache key. Compile, link and `build_test` targets are unaffected. Per pool, the deepest declaration wins. |
 | `runner`           | `string` (target address) | yes | Exec [runner](/docs/concepts/runners) the test runs under, overriding the plugin's own `runner` option for this package's tests. See [Running Go tools under a runner](#running-go-tools-under-a-runner). |
 
 ### Link configuration

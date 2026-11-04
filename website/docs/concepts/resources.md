@@ -113,11 +113,7 @@ This is the machine's value, not the current run's pool. Use it only for a `reso
 
 ### Go tests
 
-The `go` provider's `test` state takes the same map for generated test targets:
-
-```python title="BUILD"
-provider_state(provider = "go", test = {"resources": {"cpu": 4, "memory": "2G"}}, recursive = True)
-```
+The `go` provider's `test` state accepts `resources` for generated test targets. See [Test environment](/docs/plugins/go#test-environment).
 
 ## How targets are admitted
 
