@@ -229,6 +229,19 @@ memCache:
   capacityBytes: 67108864   # total budget; 0 disables the in-memory cache
 ```
 
+## `resources` — capacity pools
+
+Sets how much of each resource a run may use at once. `cpu` and `memory` always exist; add your own pools alongside them.
+
+```yaml title=".hephconfig"
+resources:
+  cpu: 8
+  memory: 24G
+  docker: 2
+```
+
+See [Resources](/docs/concepts/resources) for units, percentages, per-run overrides (`--resource`, `-j`) and how targets declare what they need.
+
 ## `cache` — local cache storage
 
 Controls how heph stores artifacts in the durable on-disk cache.
