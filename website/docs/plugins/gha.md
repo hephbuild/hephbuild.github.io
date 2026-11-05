@@ -228,7 +228,7 @@ options:
     "blocked": 4117, "cached": 15802, "executed": 338
   },
   "cache": {
-    "local_hits": 15650, "remote_hits": 152, "misses": 338, "hit_rate": 0.983
+    "local_hits": 15650, "remote_hits": 152, "misses": 338, "rebuilt": 0, "hit_rate": 0.983
   },
   "failures": [
     {
@@ -250,6 +250,14 @@ options:
 `failures` lists only targets that failed on their own; a target blocked by
 one of those failures is counted in that entry's `blocked_count` instead of
 getting its own entry. Unset by default — no file is written.
+
+The `cache` block counts targets, once per cacheable target per run:
+`local_hits + remote_hits + misses` is the number of targets that consulted the
+cache. `rebuilt` is the subset of `misses` that hit the cache but had missing
+blobs, so the target was built after all. `cached` under `targets` equals
+`local_hits + remote_hits`. The rendered hit rate never rounds to `100.0%`
+while anything missed, nor to `0.0%` while anything hit (26,921 hits and 3
+misses read `99.9%`).
 
 ### The embedded copy in the step summary
 
