@@ -78,6 +78,23 @@ An entrypoint's output is neither logged nor redacted. A tool that prints a
 credential shows it.
 :::
 
+## Running a build target
+
+`heph run` on a target that is not an entrypoint builds it. With `--raw`, the
+action's output is printed plainly instead of through the progress display;
+capture, runners and the cache are unchanged, and a cache hit prints nothing.
+
+A build target's action reads no stdin, with or without `--raw`: it gets
+`/dev/null`, whether `heph run` was given a pipe, a file or your terminal. What
+an action reads from stdin is not part of its cache key, so two runs fed
+different bytes would share one artifact. Only `--shell` hands a build target
+your keyboard.
+
+:::warning
+An action that prompts for input during a plain build no longer receives your
+keystrokes. To type into it, use `--shell`.
+:::
+
 ## Exit status
 
 | Status | When |
