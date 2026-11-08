@@ -578,6 +578,20 @@ Cached locally, never remotely: the answer is a fact about this daemon's
 image store, and publishing it would let one machine's resolution key
 another's builds.
 
+### Interactive shells
+
+`heph run --shell` on a target that uses an `oci.runner` opens the shell
+inside the container, with a terminal: typed input and Ctrl-C reach the tool,
+and resizing your terminal resizes it. `heph run --raw` of an entrypoint gets
+the same when stdin, stdout and stderr are all terminals; if any is
+redirected, the tool gets plain pipes and no stdin. A captured run never gets
+a terminal, so tools don't switch to colour or progress bars.
+
+:::note
+The terminal is allocated by docker, so `stty -a` inside the container shows
+docker's defaults rather than your terminal's settings.
+:::
+
 ## Cache control
 
 `oci.docker_build`, `oci.image`, `oci.layer`, `oci.index`, and `oci.pull` all
