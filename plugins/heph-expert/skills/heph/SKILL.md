@@ -5,7 +5,7 @@ description: >-
   skill whenever the user is working in a heph workspace or mentions heph,
   .hephconfig, BUILD files with target()/glob()/file(), heph addresses like
   //pkg:name or //@heph/..., the heph CLI (heph run, heph inspect, heph query,
-  heph validate, heph tool gc/gen-gitignore), heph caching/cache hits, target
+  heph validate, heph tool gc/codegen), heph caching/cache hits, target
   sandboxes, codegen (copy / in_place), output groups, drivers (bash, exec,
   nix, go_*) or providers (buildfile, go, query). Also use it for ANY task that
   involves writing, reading, debugging, or reviewing heph BUILD files, tuning
@@ -62,7 +62,7 @@ is self-contained and mirrors the official docs.
 |---|---|
 | The mental model: targets, the DAG, dependencies, sandbox, caching, reproducibility, codegen | `references/concepts.md` |
 | Writing/editing BUILD files: `target()`, `file()`, `glob()`, `load()`, `heph.core`, exec driver fields, env vars, dep kinds, output groups, codegen modes | `references/authoring.md` |
-| Running heph: every CLI command and flag (`run`, `inspect …`, `query`, `validate`, `tool gc/gen-gitignore/completions`) | `references/cli.md` |
+| Running heph: every CLI command and flag (`run`, `inspect …`, `query`, `validate`, `tool gc/codegen/completions`) | `references/cli.md` |
 | `.hephconfig`: registering plugins, `version`, `homeDir`, `memCache`, `fuse`, `lock` | `references/configuration.md` |
 | Which plugin/driver/provider does what (exec, fs, group, hostbin, nix, textfile, go, buildfile, query) and addresses | `references/plugins.md` |
 
@@ -97,7 +97,7 @@ is self-contained and mirrors the official docs.
    driver, which defines its meaning. Check the driver's page when unsure.
 7. **CI = warm cache + frozen codegen.** `heph run <target> --frozen` asserts
    the committed tree already matches generated output; `heph validate` catches
-   codegen output conflicts; `heph tool gen-gitignore` keeps `copy` outputs out
+   codegen output conflicts; `heph tool codegen gitignore` keeps `copy` outputs out
    of git. See the `/heph-ci` command and `references/cli.md`.
 8. **Reproducibility is the contract.** Non-hermetic targets opt out of caching
    guarantees — flag them and recommend keeping them rare.

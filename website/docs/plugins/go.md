@@ -692,7 +692,7 @@ heph run //api:test      # tests see the generated code too
 :::tip
 Pair `go_src` with `codegen = "copy"` (see [Codegen](../concepts/codegen.md))
 so the generated files also land in the tree for your editor and `gofmt`, and
-`heph tool gen-gitignore` keeps them out of git.
+`heph tool codegen gitignore` keeps them out of git.
 :::
 
 ### `go_embed_src` — embed assets excluded from package analysis

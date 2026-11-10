@@ -443,7 +443,7 @@ target(
 
 `//api:build` and `//api:test` now include `api.pb.go` with no `deps` entry. Pair
 with `codegen = "copy"` so files also land in the tree for editors/`gofmt`;
-`heph tool gen-gitignore` keeps them untracked.
+`heph tool codegen gitignore` keeps them untracked.
 
 ### `go_embed_src` — embed assets excluded from package analysis
 

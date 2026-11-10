@@ -28,7 +28,7 @@ A good heph CI run rests on three guarantees, plus cache reuse:
    anyone who forgot to run codegen locally, for both `copy` and `in_place`.
 
 3. **`.gitignore` for `copy` outputs is in sync.** Either run
-   `heph tool gen-gitignore` and fail if it produces a diff, or rely on the
+   `heph tool codegen gitignore` and fail if it produces a diff, or rely on the
    `--frozen` codegen check above to cover the generated files themselves.
 
 4. **The actual build/tests**, reusing cache:

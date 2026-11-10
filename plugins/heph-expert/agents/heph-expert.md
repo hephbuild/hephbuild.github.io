@@ -50,7 +50,7 @@ exactly right and might have changed, fetch the live doc page (the docs expose a
      build; changing them is still a cache hit).
 
 4. **Get the codegen mode right:** `copy` for files born from the build (keep
-   out of git via `heph tool gen-gitignore`); `in_place` for rewrites of tracked
+   out of git via `heph tool codegen gitignore`); `in_place` for rewrites of tracked
    sources (keep idempotent). Use `heph validate` for output conflicts and
    `heph run <t> --frozen` as the CI check.
 

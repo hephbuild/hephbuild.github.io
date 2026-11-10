@@ -32,7 +32,7 @@ target(
 )
 ```
 
-Then `heph tool gen-gitignore` to keep `copy` outputs untracked. No `deps` entry
+Then `heph tool codegen gitignore` to keep `copy` outputs untracked. No `deps` entry
 on `:build` — the label is the wiring.
 
 ### Generator feeds many packages, or isn't labelled `go_src` → `provider_state`

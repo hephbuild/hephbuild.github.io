@@ -38,7 +38,7 @@ Steps:
    `$OUT`/`$OUT_<GROUP>`, `$WORKSPACE_ROOT`).
 
 6. **Codegen?** If the output must land back in the source tree, add
-   `codegen = "copy"` (new file → also run `heph tool gen-gitignore`) or
+   `codegen = "copy"` (new file → also run `heph tool codegen gitignore`) or
    `codegen = "in_place"` (rewrite tracked sources, keep it idempotent).
 
 Produce the `target()` block, explain each non-obvious field in one line, then

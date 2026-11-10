@@ -200,7 +200,7 @@ field on an exec target, choosing **how** outputs land:
 | `in_place` | Rewrites of **existing** sources (formatters, codemods, auto-fixing linters) | Yes | No |
 
 - `copy` outputs are stamped so a later `glob()` **excludes** them, and they
-  belong in `.gitignore`. `heph tool gen-gitignore` scans every `copy` output
+  belong in `.gitignore`. `heph tool codegen gitignore` scans every `copy` output
   and maintains a managed block in the root `.gitignore` (scoped, anchored to
   workspace root, idempotent, non-destructive).
 - `in_place` transforms tracked files in place; keep them **idempotent** (run

@@ -114,7 +114,7 @@ heph run //api:test    # tests see the generated code too
 
 No `deps` entry on `:build`, no reference to `:proto` anywhere — the label is the
 whole wiring. Pair `go_src` with `codegen = "copy"` so the files also exist for
-your editor, and run `heph tool gen-gitignore` to keep them out of git.
+your editor, and run `heph tool codegen gitignore` to keep them out of git.
 
 ## Step 3 — codegen that lives elsewhere: `go_codegen_root` & `go_codegen_deps`
 
@@ -214,4 +214,4 @@ provider_state(provider = "go", test = {"skip": False})
    landed; `heph run //pkg:build --shell` (bash codegen targets) reproduces the
    sandbox to see exactly which files arrived. Diagnose with these before editing.
 6. **Keep it reproducible.** Pin `gotool`; keep codegen deterministic; prefer
-   `codegen = "copy"` + `gen-gitignore` for generated sources.
+   `codegen = "copy"` + `heph tool codegen gitignore` for generated sources.

@@ -256,5 +256,5 @@ Available inside an exec sandbox:
 
 Set `codegen = "copy"` (new generated file, gitignored) or
 `codegen = "in_place"` (rewrite a tracked source). See `concepts.md` →
-*Codegen* for the full rules, `heph tool gen-gitignore`, conflict detection via
+*Codegen* for the full rules, `heph tool codegen gitignore`, conflict detection via
 `heph validate`, and CI verification via `--frozen`.
