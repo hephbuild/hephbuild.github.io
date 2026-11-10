@@ -91,7 +91,10 @@ heph's builtin utilities (`cp`, `sed`, `install`, … — `coreutils: false` opt
 out); host directories are not on it, so an undeclared host binary fails with
 `command not found`. The `path` option (empty by default) names host
 directories back. `runner` option sets a workspace-wide default
-[runner](#runners) for every target using this driver.
+[runner](#runners) for every target using this driver. `timeout = "10m"` (a
+duration string or whole seconds, above zero) fails the target once its run
+exceeds it: process group `SIGINT` then `SIGKILL`, nothing cached, never part of
+the cache key. Per target only; `--shell` is never timed.
 
 ### Nix (`nix`)
 Builds a reproducible environment from a `nixpkgs` flake URL and exposes
