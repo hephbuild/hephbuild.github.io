@@ -286,6 +286,47 @@ target(
 The target still builds and caches locally; it is never uploaded to or pulled
 from a remote cache.
 
+## Timeouts
+
+`timeout` bounds how long a target's run may take. Past it, heph stops the
+run and fails the target.
+
+```python title="BUILD"
+target(
+    name = "integration",
+    driver = "bash",
+    run = "./run-integration-tests.sh",
+    timeout = "10m",
+)
+```
+
+The value is a duration string (`"90s"`, `"10m"`, `"1h30m"`) or a whole number
+of seconds (`600`). It must be above zero; leave it out for no limit. Anything
+else is rejected when the target is parsed.
+
+When the limit is hit:
+
+- The command's process group is sent `SIGINT`, then `SIGKILL` once the command
+  has exited or after a 2s grace. Processes it started are killed too.
+- If the run still hasn't returned 10s after being cancelled, heph stops waiting
+  and the failure says the process may still be running.
+- The target fails with `//p:integration timed out after 10m (its `timeout`)`.
+  The log tail is shown, the sandbox is kept for diagnostics, and nothing is
+  cached, so the next build runs the target again.
+
+The clock covers staging inputs, running the command and collecting outputs. It
+does not cover waiting for [resources](/docs/concepts/resources) or building
+dependencies. A cache hit runs nothing, so it never times out.
+
+`timeout` is not part of the cache key: adding, changing or removing it never
+rebuilds a target. `heph run` holds an entrypoint to its `timeout` like any
+build (a timed-out entrypoint exits `125`); `--shell` is never timed.
+
+:::note
+`timeout` is set per target; there is no workspace-wide default. Only `exec`
+and `bash` accept it today.
+:::
+
 ## Runners
 
 By default a command runs on this host. Point it at a
