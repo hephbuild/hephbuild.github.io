@@ -14,7 +14,7 @@ system and task orchestrator ("Build once. Trust the cache.").
   - `authoring.md` — `target()`/`file()`/`glob()`/`load()`, `heph.core`, exec
     driver fields, dependency kinds, output groups, sandbox env vars
   - `cli.md` — every command and flag (`run`, `inspect …`, `query`, `validate`,
-    `tool gc`/`gen-gitignore`/`completions`)
+    `tool gc`/`codegen`/`completions`)
   - `configuration.md` — `.hephconfig` keys and plugin registration
   - `plugins.md` — exec/fs/group/hostbin/nix/textfile/go/buildfile/query and the
     `@heph/*` address families

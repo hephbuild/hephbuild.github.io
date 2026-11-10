@@ -14,7 +14,7 @@ description: Use heph validate to catch broken targets, overlapping codegen outp
 |-------|-----------------|
 | **Target link** | Every in-scope target is parsed and its runtime inputs are resolved. A missing dependency or an unresolvable target surfaces here. No execution happens. |
 | **Codegen overlap** | Two `codegen = copy` targets that write to the same output path. |
-| **`.gitignore` freshness** | The `.gitignore` block maintained by heph is out of date. If stale, the error message tells you to run `heph tool gen-gitignore`. Skipped when a package matcher is provided. |
+| **`.gitignore` freshness** | The `.gitignore` block maintained by heph is out of date (including a block written by an older heph). If stale, the error message tells you to run `heph tool codegen gitignore`. Skipped when a package matcher is provided. |
 
 ## Usage
 

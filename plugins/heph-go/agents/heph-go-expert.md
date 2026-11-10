@@ -62,7 +62,7 @@ When a detail must be exactly right and may have changed, fetch the live page at
 
 6. **Pin for reproducibility.** Default `gotool` is the host Go; for hermetic CI
    point it at a pinned `nix`/`hostbin` target. Keep codegen deterministic and
-   pair `go_src` with `codegen = "copy"` + `heph tool gen-gitignore`.
+   pair `go_src` with `codegen = "copy"` + `heph tool codegen gitignore`.
 
 ## Diagnose before editing
 
