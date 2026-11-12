@@ -367,27 +367,22 @@ target(
 
 ## Builtin coreutils
 
-heph ships 40 common POSIX utilities in its own binary. With the toolbox on,
-they are available on every target's `PATH`, so `cp`, `install` or `sha256sum`
-behave the same on Linux and macOS instead of resolving to GNU or BSD variants.
+heph ships 64 common POSIX utilities in its own binary and puts them on every
+target's `PATH`, so `cp`, `install` or `sha256sum` behave the same on Linux and
+macOS instead of resolving to GNU or BSD variants. The full list is on the
+[builtin tools](/docs/concepts/builtin-tools) page.
 
-It is off by default. Enable it per driver:
+It is on by default. Opt out per driver:
 
 ```yaml title=".hephconfig"
 plugins:
   - builtin: exec
     options:
-      coreutils: true
+      coreutils: false
   - builtin: bash
     options:
-      coreutils: true
+      coreutils: false
 ```
-
-Included: `base64`, `basename`, `cat`, `chmod`, `comm`, `cp`, `cut`, `date`,
-`dirname`, `echo`, `env`, `false`, `head`, `install`, `ln`, `md5sum`, `mkdir`,
-`mktemp`, `mv`, `nproc`, `printf`, `readlink`, `realpath`, `rm`, `rmdir`, `seq`,
-`sha1sum`, `sha256sum`, `sha512sum`, `sleep`, `sort`, `stat`, `tail`, `tee`,
-`timeout`, `touch`, `tr`, `true`, `uniq`, `wc`.
 
 The builtins fill gaps, they don't override anything: they come last on `PATH`,
 after the target's `tools`, its declared dependencies and the
