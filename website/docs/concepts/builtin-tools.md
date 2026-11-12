@@ -71,18 +71,6 @@ A target sees its own tools, what it declared, and the builtins. The host's dire
 
 `which` searches the target's `PATH`, builtins included, not the machine's. Shell builtins take precedence over `PATH`: in a `bash` target, `which printf` names heph's builtin while bash runs its own `printf`. Use `type -a printf` to see what a recipe will actually run.
 
-## Values that describe the machine
-
-`id`, `whoami`, `groups`, `du`, `ls -l`, `pwd` and `which` report facts about the machine running the target: the user, sizes, owners, mtimes, the sandbox path. Those values are not part of the cache key.
-
-Using them at run time is fine:
-
-```bash
-docker run --user "$(id -u):$(id -g)" …
-```
-
-Writing them into an output is not: `docker build --build-arg UID=$(id -u)` built on a macOS laptop (uid 501) is served from cache to a Linux machine (uid 1000). When the value belongs in the output, pass it in through the target's `env` or `pass_env` so it is hashed, or mark the target `cache = False`.
-
 ## Reproducible archives
 
 `tar`, `gzip` and `zstd` produce the same bytes for the same input on every machine, with no flags to remember:
