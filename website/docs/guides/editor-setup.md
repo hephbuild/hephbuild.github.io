@@ -14,7 +14,7 @@ go-to-definition, and document formatting.
 
 | Feature | What you get |
 |---------|-------------|
-| Diagnostics | Syntax errors as you type (the first error on each line), and a `target()` or `provider_state()` call that's missing a required field — a base field like `name`, or, once `driver`/`provider` is set, a field required by that driver or provider. |
+| Diagnostics | Syntax errors as you type (the first error on each line), and a `target()` or `provider_state()` call that's missing a required field — a base field like `name`, or, once `driver`/`provider` is set, a field required by that driver or provider. A field written as a literal of the wrong type, or as a string outside the field's accepted values, is flagged too. |
 | Completion | See [Completion](#completion). |
 | Hover | Signature and documentation for any builtin or provider function. Hover a `target()` call to see the addresses it produced and, once its `driver` is set, that driver's config fields with their types and descriptions. Same for `provider_state()`: once its `provider` is set, hover shows that provider's state fields instead of a generic signature. Hover a field name for its type and description, and a `heph.<plugin>.<function>` name for its signature. |
 | Go-to-definition | Jump to the BUILD file that defines an address — both `//pkg:name` and relative `:name` forms. Also jumps from a `load()` path to the loaded file, from a loaded symbol to its `def`, and from a name to its `def` elsewhere in the package. |
@@ -26,6 +26,7 @@ go-to-definition, and document formatting.
 |---------------------|----------------|
 | `driver = "` in `target()` | Driver names |
 | `provider = "` in `provider_state()` | Provider names |
+| A string value of another field in `target()` or `provider_state()` (`workdir = "`) | The field's accepted values, when it has a fixed set of them |
 | A keyword name in `target()` | The base fields plus the selected driver's fields, minus the ones already written |
 | A keyword name in `provider_state()` | `provider` plus the selected provider's fields, minus the ones already written |
 | A keyword name in a call to another function (`my_rule(`, `glob(`) | The function's remaining parameters, inserted as `name = `, ahead of the usual suggestions |
