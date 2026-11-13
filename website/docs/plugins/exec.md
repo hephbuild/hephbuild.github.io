@@ -219,6 +219,9 @@ Output and support-file paths are lexically normalized: `./` prefixes and empty
 segments are stripped, `..` resolves against the package path, and a path that
 escapes the workspace root is an error.
 
+Symlinks in outputs must stay inside their own output group; see
+[symlinks in outputs](/docs/concepts/sandbox#symlinks-in-outputs).
+
 ## Environment passthrough
 
 `pass_env` and `runtime_pass_env` each accept a list of variable names to
