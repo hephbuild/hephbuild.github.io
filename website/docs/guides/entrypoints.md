@@ -90,8 +90,9 @@ reads from stdin is not part of its cache key, so two runs fed different bytes
 would share one artifact. Only `--shell` hands such a target your keyboard.
 
 :::warning
-A target that prompts for input no longer receives your keystrokes. To type
-into it, use `--shell`.
+A target that prompts for input no longer receives your keystrokes. A tool
+that needs your input is an entrypoint: set `entrypoint = True`. `--shell` is
+for debugging a target by hand.
 :::
 
 ## Exit status
