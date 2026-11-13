@@ -145,8 +145,13 @@ The heading emoji reflects the current state: ⏳ while the command is running,
 A total shown as `~40` means the matcher hasn't resolved all targets yet; the
 tilde drops once resolution is complete.
 
-When failures occur a **Failed** section is appended, listing each failed target
-address and the first line of its error message.
+When failures occur, the comment lists the targets that failed on their own (the
+first few, then a count of the rest), each with
+its error message, the tail of its log, and the command to reproduce it. The
+first failure's log is shown open; the others sit in a collapsed **Log** block,
+so the comment stays readable on a phone. The log tail holds the lines kept by
+`heph run --log-lines` (10 by default), capped at about 2 KiB. A failure whose
+log doesn't fit in the comment is still listed, without its log.
 
 ## One comment per job, one section per step
 
