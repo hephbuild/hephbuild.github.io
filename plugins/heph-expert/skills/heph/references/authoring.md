@@ -239,6 +239,25 @@ target(
 )
 ```
 
+### Symlinks in outputs
+
+Checked when outputs are collected; breaking either rule fails the target:
+
+- **Globs and declared paths never go through a symlinked directory.**
+  `out = "out/**/*.js"` fails if `out/vendor` is a link to a directory; so do
+  `out = "out/vendor/x.js"` and `out = "out/vendor/lib/"`. The error ends in
+  `heph does not follow it`. Fix: output the real directory, or copy instead of
+  linking. Links heph itself makes for a target's deps are followed; a mounted
+  scratch directory is not.
+- **A packed symlink must be relative and point to a file or directory in the
+  same output group.** Absolute links, links climbing out (`../../x`), links to
+  files not output, and links into another output group all fail the pack.
+- A glob that only *matches* a link (last component) outputs the link itself,
+  held to the second rule: `out = ["out/*", "out/real/*"]` with
+  `out/current -> real` is fine.
+- Cache entries made before these rules are still served on a hit; a fresh
+  build of the same target fails.
+
 ## Sandbox environment variables
 
 Available inside an exec sandbox:

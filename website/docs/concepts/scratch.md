@@ -167,7 +167,9 @@ A target's own outputs must never come from inside its scratch — that would
 make the artifact's bytes depend on unhashed, mutable state. Give a mounted
 scratch (one with `path` set) a narrow `out` pattern in the same directory:
 a glob broad enough to reach the mount (`out = "**/*"`, say) fails when heph
-packs the result, naming the mount path in the error.
+collects the result, naming the mount path in the error. heph never follows the
+mount, so nothing behind it is read (see
+[symlinks in outputs](/docs/plugins/exec#symlinks-in-outputs)).
 
 An unmounted scratch (no `path`, the env-var-only form) sidesteps this
 entirely — there's nothing in the sandbox tree for an output to reach, which
