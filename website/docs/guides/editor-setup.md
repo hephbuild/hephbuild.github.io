@@ -14,7 +14,7 @@ go-to-definition, and document formatting.
 
 | Feature | What you get |
 |---------|-------------|
-| Diagnostics | Syntax errors as you type (the first error on each line), and a `target()` or `provider_state()` call that's missing a required field — a base field like `name`, or, once `driver`/`provider` is set, a field required by that driver or provider. A field written as a literal of the wrong type, or as a string outside the field's accepted values (`workdir = "root"` on an `exec` target is reported as expecting `"caller" \| "tree_root" \| "tree_package" \| "sandbox"`), is flagged too. |
+| Diagnostics | Syntax errors as you type (the first error on each line), and a `target()` or `provider_state()` call that's missing a required field — a base field like `name`, or, once `driver`/`provider` is set, a field required by that driver or provider. A field written as a literal of the wrong type, or as a string outside the field's accepted values, is flagged too. |
 | Completion | See [Completion](#completion). |
 | Hover | Signature and documentation for any builtin or provider function. Hover a `target()` call to see the addresses it produced and, once its `driver` is set, that driver's config fields with their types and descriptions. Same for `provider_state()`: once its `provider` is set, hover shows that provider's state fields instead of a generic signature. Hover a field name for its type and description, and a `heph.<plugin>.<function>` name for its signature. |
 | Go-to-definition | Jump to the BUILD file that defines an address — both `//pkg:name` and relative `:name` forms. Also jumps from a `load()` path to the loaded file, from a loaded symbol to its `def`, and from a name to its `def` elsewhere in the package. |
