@@ -95,7 +95,8 @@ The following target config keys are available:
 | `runtime_pass_env` | Host vars passed at run time only, not hashed. Accepts `["*"]` to pass all. |
 | `runtime_env`      | Runtime literal environment variables.               |
 | `cache`            | `True`/`False` toggles local + remote together; dict: `{enabled, remote, history}`. |
-| `codegen`          | Write generated outputs into the source tree (`copy` or `in_place`). |
+| `codegen`          | Write generated outputs into the source tree (`copy`, `in_place` or `in_place_on_success`). |
+| `failure_out`      | Files to keep when the run fails, same shape as `out`. Not hashed. See [Failed targets](/docs/guides/failure-outputs). |
 | `runner`           | Exec runner this command runs under — a target address producing a `runner.json`, or `"local"` to opt out of a workspace-wide default. See [Runners](/docs/concepts/runners). |
 
 These environment variables are available inside the sandbox:

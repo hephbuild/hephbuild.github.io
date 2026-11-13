@@ -198,6 +198,7 @@ field on an exec target, choosing **how** outputs land:
 |---|---|---|---|
 | `copy` | **New** files the target creates (proto stubs, generated clients, asset manifests) | No | Yes |
 | `in_place` | Rewrites of **existing** sources (formatters, codemods, auto-fixing linters) | Yes | No |
+| `in_place_on_success` | As `in_place`, but a failed run writes nothing back | Yes | No |
 
 - `copy` outputs are stamped so a later `glob()` **excludes** them, and they
   belong in `.gitignore`. `heph tool codegen gitignore` scans every `copy` output
@@ -205,6 +206,11 @@ field on an exec target, choosing **how** outputs land:
   workspace root, idempotent, non-destructive).
 - `in_place` transforms tracked files in place; keep them **idempotent** (run
   twice = same bytes) so output stays reproducible and diffs stay stable.
+- `in_place` writes fixes back even when the tool exits 1–127 (the target still
+  fails; the failure box lists the files and a `git checkout` restore command).
+  Nothing is written after a signal, exit 128+, a timeout, `--frozen` or
+  `--shell`. `in_place_on_success` writes nothing back on any failure — use it
+  for tools that can leave a partial file when they fail.
 
 **`in_place` vs. `copy` ownership:** an `in_place` target never writes into a
 file a `copy` target owns (stamped output). A colliding path is left
@@ -222,6 +228,28 @@ a unified diff if they differ. Works for both modes (a `copy` target fails if
 its file is missing/stale; `in_place` fails if a source isn't already in its
 transformed form). Wire it into CI so a forgotten `heph run` becomes a red build
 with an exact diff instead of a drifting tree.
+
+## Failed targets
+
+A failed target's **slot**, `<home>/failures/<addr-key>/`, holds `log.txt`,
+`out/` (its `failure_out` matches, laid out at workspace-relative paths) and
+`fixes.txt` (paths an `in_place` run wrote back while failing). One slot per
+target, no history: the next failure replaces it, the next run or cache hit
+clears it, `heph tool gc --failure-max-age-days N` (default 7) drops old ones.
+
+- `failure_out` (exec/bash): same shape as `out`, package-relative, globs
+  allowed. Collected only when the process exited non-zero (incl. a signal or
+  `timeout`); not after a cancellation, a pre-run failure, or under `--shell`.
+  A non-matching path is skipped. `..`, absolute paths and the package root
+  (`.`, `**`) are refused at parse; entrypoints refuse it entirely. No size cap,
+  no filtering of secrets.
+- `heph inspect failure <addr>` prints the slot paths and builds nothing.
+  `--json` prints `{addr, slot, hashin, failed_at, log, out, fixes}` (absent
+  part = `null`), or `null` with exit 0 when nothing is recorded; the text form
+  exits 1 then.
+- heph uploads nothing; in CI, upload `.heph/failures/*/out/**` on failure.
+- Nothing about failure outputs reaches any hash: `failure_out` and the codegen
+  mode are off the def hash.
 
 ## Runners
 

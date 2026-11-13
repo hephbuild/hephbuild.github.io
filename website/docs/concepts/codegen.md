@@ -31,6 +31,7 @@ target(
 |-------------|-----------------------------------|-----------------|------------------|
 | `copy`      | **New** files the target creates  | No              | Yes              |
 | `in_place`  | Rewrites of **existing** sources  | Yes             | No               |
+| `in_place_on_success` | As `in_place`, but a failed run writes nothing back | Yes | No |
 
 The distinction is about *ownership of the file on disk*:
 
@@ -87,8 +88,20 @@ target(
 :::tip
 Keep `in_place` transforms **idempotent** — running them twice should produce
 the same bytes as running them once. That keeps the output reproducible and the
-diff stable.
+diff stable, and makes the next run over the rewritten tree a cache hit.
 :::
+
+### When the fixer fails
+
+An `in_place` run that exits with a code from 1 to 127 still writes back the
+files it fixed, and the target still fails. A fixer like `eslint --fix` with
+unfixable errors left keeps the fixes it could make, and the failure box lists
+them with a `git checkout` command to undo them. Nothing is written after a
+signal, an exit code of 128 or above, under `--frozen`, or in a `--shell`.
+
+Use `codegen = "in_place_on_success"` for a tool that can leave a partial file
+behind when it fails: a failed run then writes nothing back. See
+[Failed targets](/docs/guides/failure-outputs#fixes-written-back-on-failure).
 
 :::note
 An `in_place` target never writes into a file a `copy` target owns. If an
@@ -295,6 +308,7 @@ exact diff, instead of a drifting tree.
 | Produce a derived file you don't commit                        | `copy`      |
 | Format source files (`gofmt`-style)                            | `in_place`  |
 | Run a codemod or auto-fixing linter over checked-in code       | `in_place`  |
+| Rewrite sources with a tool that can leave a partial file on failure | `in_place_on_success` |
 
 The quick rule: if the file is **born from the build**, use `copy` and let
 `heph tool codegen gitignore` keep it out of git. If the file is **yours and the build edits

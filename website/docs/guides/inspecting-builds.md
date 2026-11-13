@@ -142,6 +142,19 @@ names and types before writing a call.
 matching target — a quick way to see what labels exist in a package before
 writing a [query](/docs/plugins/query) predicate against them.
 
+## "Where did my failure's log and traces go?"
+
+After a failed run, `heph inspect failure` prints where the target's log,
+[`failure_out`](/docs/guides/failure-outputs) files and written-back fixes were
+kept. It builds nothing:
+
+```bash title="terminal"
+heph inspect failure //web:e2e
+heph inspect failure //web:e2e --json   # null when nothing is recorded
+```
+
+See [Failed targets](/docs/guides/failure-outputs#finding-a-failure).
+
 ## Reproducing the environment
 
 To go past inspection and actually poke at a failing target, open its

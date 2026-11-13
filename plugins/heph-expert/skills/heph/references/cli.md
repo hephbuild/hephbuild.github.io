@@ -56,6 +56,7 @@ must run a target to answer the query.
 | `heph inspect spec <ADDR>` | The raw, unresolved spec a provider returns, as pretty JSON. |
 | `heph inspect def <ADDR> [--no-transitive]` | The resolved def (inputs, outputs, sandbox) as pretty JSON; transitive deps applied unless `--no-transitive`. |
 | `heph inspect deps <ADDR> [-i/--interactive]` | The ref of each declared input, one per line; `-i` browses the tree in a TUI. |
+| `heph inspect failure <ADDR> [--json]` | Where the target's last failure was kept (slot, `log`, `out`, `fixes`). Builds nothing; `--json` prints `null` when nothing is recorded. |
 | `heph inspect functions` | Every provider-exposed function, in `heph.<provider>.<fn>` form. |
 
 Typical debugging sequence: `hashin` (what's in the key) → `deps` (the edges) →

@@ -37,7 +37,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Guides',
       collapsible: false,
-      items: ['guides/first-build', 'guides/consuming-outputs', 'guides/ci', 'guides/validate', 'guides/formatting-build-files', 'guides/remote-cache', 'guides/inspecting-builds', 'guides/entrypoints', 'guides/editor-setup', 'guides/claude-code-plugin'],
+      items: ['guides/first-build', 'guides/consuming-outputs', 'guides/ci', 'guides/validate', 'guides/formatting-build-files', 'guides/remote-cache', 'guides/inspecting-builds', 'guides/failure-outputs', 'guides/entrypoints', 'guides/editor-setup', 'guides/claude-code-plugin'],
     },
     {
       type: 'category',
