@@ -359,7 +359,8 @@ heph run //lib/auth:format          # fixer: reformats in place
 
 `lint` and `format` rewrite files in the package directory — the same
 in-place rewrite behavior as any [codegen](../concepts/codegen.md) fixer
-target. A package whose module has no `.golangci.yml` gets none of these four
+target, including on failure: fixes are written back after an exit code from 1
+to 127, and the target still fails. A package whose module has no `.golangci.yml` gets none of these four
 targets; `:build` and `:test` are unaffected either way.
 
 Within a module that does opt in, [`provider_state(lint = False)`](#skipping-lint)

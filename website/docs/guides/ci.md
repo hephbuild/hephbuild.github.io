@@ -55,6 +55,23 @@ heph validate
 
 It reports every problem it finds, not just the first one.
 
+## Upload what a failure kept
+
+heph uploads nothing itself. Add a step that uploads failure slots, so the
+[`failure_out`](/docs/guides/failure-outputs) traces and reports of a red job
+are one click away:
+
+```yaml title=".github/workflows/ci.yml"
+- uses: actions/upload-artifact@v4
+  if: failure()
+  with:
+    name: heph-failures
+    path: .heph/failures/*/out/**
+```
+
+See [Uploading from CI](/docs/guides/failure-outputs#uploading-from-ci) for
+one target's slot wherever the home directory is.
+
 ## Reuse the cache
 
 The [cache](/docs/concepts/caching) is keyed by input hash, so persisting it

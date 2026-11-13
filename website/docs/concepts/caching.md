@@ -118,12 +118,15 @@ heph tool gc
 
 ### Failure logs
 
-When a target fails, heph keeps its log in `<homeDir>/failures/<target>/log.txt`,
-whichever driver ran it. The next run of that target (or a cache hit on it)
-clears it. Nothing else removes the log of a target that is never built again,
-so `heph tool gc` sweeps those too: logs of targets that no longer exist, and
-logs older than 7 days. Change the age with `--failure-max-age-days`; `0`
-removes every failure log.
+When a target fails, heph keeps its log in its failure slot,
+`<homeDir>/failures/<target>/log.txt`, whichever driver ran it, along with any
+[`failure_out`](/docs/guides/failure-outputs) files and the list of fixes an
+`in_place` target wrote back. `heph inspect failure <addr>` prints where they
+are. The next run of that target (or a cache hit on it) clears the slot.
+Nothing else removes the slot of a target that is never built again, so
+`heph tool gc` sweeps those too: slots of targets that no longer exist, and
+slots older than 7 days. Change the age with `--failure-max-age-days`; `0`
+removes every failure slot.
 
 ```bash title="terminal"
 heph tool gc --failure-max-age-days 1
