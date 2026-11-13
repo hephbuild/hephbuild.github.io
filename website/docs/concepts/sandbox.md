@@ -76,6 +76,44 @@ deps = [
 ],
 ```
 
+## Symlinks in outputs
+
+A target may output symlinks, as long as each one stays inside its own output.
+When heph collects a target's outputs from its sandbox, it checks two rules and
+fails the target if either is broken. This holds for every driver that runs in
+a sandbox (`exec`, `bash`, and plugin drivers such as Go and OCI):
+
+| Rule | Fails on |
+|------|----------|
+| An output glob or declared path never goes **through** a symlinked directory. | `out = "out/**/*.js"` when `out/vendor` is a link to a directory; `out = "out/vendor/x.js"` or `out = "out/vendor/lib/"` when `out/vendor` is a link. |
+| A symlink in an output must be **relative** and point to a file or directory in the **same output group**. | `ln -s /etc/hosts l`, `ln -s ../../x l`, a link to a file the target didn't output, a link to a file in another output group. |
+
+A glob that only *matches* a link (its last component) outputs the link itself,
+which is then held to the second rule:
+
+```python title="BUILD"
+target(
+    name = "assets",
+    driver = "bash",
+    run = [
+        "mkdir -p out/real && echo hi > out/real/a.txt",
+        "ln -s real out/current",      # relative, points inside the output
+    ],
+    out = ["out/*", "out/real/*"],     # matches out/current as a link: OK
+)
+```
+
+To output what a linked directory holds, output the real directory, or copy
+the files into place instead of linking them. Links heph creates itself for a
+target's dependencies are followed, so a broad glob over the sandbox still
+collects them. A mounted [scratch directory](/docs/concepts/scratch) is not:
+keep output globs away from it.
+
+The error names the link it refused and why, for example
+`… heph does not follow it`. These rules are checked only when a target runs:
+a result already in the cache from before them is still served, while a fresh
+build of the same target fails.
+
 ## Inspecting a sandbox
 
 When a target fails, step inside its sandbox with the exact inputs, tools, and

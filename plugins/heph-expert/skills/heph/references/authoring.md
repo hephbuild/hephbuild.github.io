@@ -241,7 +241,8 @@ target(
 
 ### Symlinks in outputs
 
-Checked when outputs are collected; breaking either rule fails the target:
+Checked when outputs are collected from the sandbox, for every sandboxed driver
+(`exec`/`bash`, Go, OCI, …); breaking either rule fails the target:
 
 - **Globs and declared paths never go through a symlinked directory.**
   `out = "out/**/*.js"` fails if `out/vendor` is a link to a directory; so do
