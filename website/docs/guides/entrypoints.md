@@ -78,6 +78,23 @@ An entrypoint's output is neither logged nor redacted. A tool that prints a
 credential shows it.
 :::
 
+## Running a target without an entrypoint
+
+`heph run` on a target without `entrypoint = True` runs the target itself. With
+`--raw`, the output is printed plainly instead of through the progress display;
+capture, runners and the cache are unchanged, and a cache hit prints nothing.
+
+The target reads no stdin, with or without `--raw`: it gets `/dev/null`,
+whether `heph run` was given a pipe, a file or your terminal. What a target
+reads from stdin is not part of its cache key, so two runs fed different bytes
+would share one artifact. Only `--shell` hands such a target your keyboard.
+
+:::warning
+A target that prompts for input no longer receives your keystrokes. A tool
+that needs your input is an entrypoint: set `entrypoint = True`. `--shell` is
+for debugging a target by hand.
+:::
+
 ## Exit status
 
 | Status | When |
