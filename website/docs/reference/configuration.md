@@ -253,7 +253,7 @@ cache:
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `spillThresholdBytes` | number | `8388608` (8 MiB) | Artifacts strictly larger than this are stored as plain files under `<homeDir>/cache/blobs/`. Smaller artifacts and all manifests stay in the cache database. |
+| `spillThresholdBytes` | number | `8388608` (8 MiB) | Artifacts whose stored (compressed) size is strictly larger than this are stored as files under `<homeDir>/cache/blobs/`. Smaller artifacts and all manifests stay in the cache database. |
 
 Raising the threshold keeps more artifacts in the database; lowering it spills more to plain files. The default works well for most projects.
 

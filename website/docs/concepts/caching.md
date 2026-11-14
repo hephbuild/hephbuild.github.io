@@ -51,11 +51,31 @@ Within a single run, heph also keeps results in memory. Size it with the
 
 ## Durable cache storage
 
-Between runs, artifacts are stored on disk. Small artifacts (≤ 8 MiB by default)
-are kept in the cache database; larger ones are stored as plain files under
-`<homeDir>/cache/blobs/`. GC reclaims both. The threshold is tunable with
+Between runs, artifacts are stored on disk, compressed with zstd. Small artifacts
+(≤ 8 MiB stored, after compression, by default) are kept in the cache database;
+larger ones are stored as files under `<homeDir>/cache/blobs/`. GC reclaims both.
+The threshold is tunable with
 [`cache.spillThresholdBytes`](/docs/reference/configuration#cache--local-cache-storage)
 in `.hephconfig`.
+
+Compression needs no configuration. A few artifacts are stored as-is instead:
+
+| Artifact | Stored |
+|---|---|
+| Outputs heph packs itself | Compressed |
+| A tar or cpio output of 1 MiB or more whose payload is already compressed (an OCI image of gzip layers, for example) | As-is |
+| Any other tar or cpio output | Compressed |
+| The output of an uncacheable target, or of `--shell` | As-is |
+
+`heph tool gc` and `heph tool clean` report the space they free on disk, so a
+compressed artifact counts its compressed size.
+
+:::note
+A cache written by an older heph stays readable locally, so upgrading keeps
+the local cache warm. The remote cache is not: entries an older heph uploaded
+are not read, and the first builds after the upgrade repopulate it. Older and
+newer heph versions can share one cache directory or bucket.
+:::
 
 ## Remote shared cache
 

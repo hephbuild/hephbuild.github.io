@@ -39,12 +39,14 @@ artifact:
 
 | Target | Object key |
 |---|---|
-| `//some/pkg:tgt` | `some/pkg/tgt/<inputhash>/out.tar` |
-| `//some/pkg:tgt@v=linux,vp=arm64` | `some/pkg/tgt@v=linux,vp=arm64/<inputhash>/out.tar` |
-| `//:root_tgt` | `root_tgt/<inputhash>/out.tar` |
+| `//some/pkg:tgt` | `some/pkg/tgt/<inputhash>/out.tar.zst` |
+| `//some/pkg:tgt@v=linux,vp=arm64` | `some/pkg/tgt@v=linux,vp=arm64/<inputhash>/out.tar.zst` |
+| `//:root_tgt` | `root_tgt/<inputhash>/out.tar.zst` |
 
 `<inputhash>` is the target's input hash — the same value that drives local
-cache hits.
+cache hits. The remote holds the same bytes as the local cache: a compressed
+artifact ends in `.zst`, one stored as-is in `.raw` (see
+[durable cache storage](/docs/concepts/caching#durable-cache-storage)).
 
 Treat the layout as read-only: don't script against it, since it's not a
 part of heph's stable API and can change between versions. If it does
