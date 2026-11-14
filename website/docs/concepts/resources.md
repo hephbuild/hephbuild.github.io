@@ -41,29 +41,30 @@ Pool names match `[a-z][a-z0-9_]{0,63}`, and a target names at most 16 pools. Na
 A target that declares no `cpu` costs 1 CPU. HTTP downloads, OCI and Go module downloads cost 0.1 CPU; `fs` targets and relocating `group` targets cost nothing. Undeclared `memory` and custom pools cost 0.
 
 :::note
-A target that costs nothing on any bounded pool starts immediately and is never queued, so nothing limits how many run together. Don't declare `cpu: 0` on a target that spawns heavy processes.
+A target that costs nothing on any bounded pool starts immediately and is never queued, so nothing limits how many run together. Don't declare `cpu: 0` on a target that spawns heavy processes. An `exec` or `bash` target always takes one [`sandbox`](#the-sandbox-pool) slot, so even at `cpu: 0` it queues.
 :::
 
 ## Configuring pools
 
-`cpu` and `memory` always exist. Declare any other pool in `.hephconfig`:
+`cpu`, `memory` and [`sandbox`](#the-sandbox-pool) always exist. Declare any other pool in `.hephconfig`:
 
 ```yaml title=".hephconfig"
 resources:
   cpu: 8                                   # CPUs, or a percentage of the default
   memory: 24G                              # a size, or a percentage
+  sandbox: 32                              # a count, or a percentage
   docker: 2                                # a count
   scratch_disk: {unit: bytes, value: 64G}  # full form, another unit
   tokens: {unit: count}                    # no value: unbounded
   gpu: 0                                   # exists; each run sets its capacity
 ```
 
-- A bare amount uses the pool's default unit: `cpu` for `cpu`, `bytes` for `memory`, `count` for any other pool.
+- A bare amount uses the pool's default unit: `cpu` for `cpu`, `bytes` for `memory`, `count` for `sandbox` and any other pool.
 - A custom pool without a value is **unbounded**: nothing waits, but usage is still counted and shown.
 - A capacity of `0` means the run must set it. Targets using the pool validate everywhere, and fail at start-up if the pool isn't set.
-- Percentages (`50%`, `75%`) are of the default and only work for `cpu` and `memory`.
+- Percentages (`50%`, `75%`, `200%`) are of the default and only work for `cpu`, `memory` and `sandbox`.
 
-**Defaults.** `cpu` is the number of cores. `memory` is the memory heph may use: the container limit on Linux when one is set, otherwise physical memory. Set `memory` explicitly if you want a laptop and a CI container to behave the same.
+**Defaults.** `cpu` is the number of cores. `memory` is the memory heph may use: the container limit on Linux when one is set, otherwise physical memory. Set `memory` explicitly if you want a laptop and a CI container to behave the same. `sandbox` is 4 per CPU of the run's `cpu` capacity (rounded up, at least 1), so `-j 2` makes it 8.
 
 `resources:` merges per pool across [profiles](/docs/reference/configuration#profiles--layered-config-overlays).
 
@@ -80,6 +81,24 @@ Precedence: flag, then environment, then config, then default.
 :::warning
 `-j N` is the number of **CPUs** the run may reserve at once, not a number of targets. The default is the core count (it used to be twice that in target slots), so a workspace whose targets declare nothing runs fewer at once than before. Use `-j 200%` to restore the old concurrency.
 :::
+
+### The `sandbox` pool
+
+`sandbox` bounds how many build sandboxes exist on disk at once, **running or waiting to be removed**. A build of many short targets can finish sandboxes faster than the disk deletes them; this pool keeps that backlog from filling the disk.
+
+- Every `exec` or `bash` run (any driver that runs in a build sandbox) takes `sandbox: 1` on top of what it declares, admitted together with its CPUs.
+- Its CPUs and other pools come back when the run ends; its `sandbox` slot only once the sandbox directory has been removed.
+- Cache hits, `fs`, `group`, `template` and other drivers that don't use a build sandbox, and `heph run` entrypoints take no slot. A failed target's sandbox, kept for inspection, gives its slot back at once.
+- It is always bounded and always a `count`. Size it with `--resource sandbox=<n>`, `HEPH_RESOURCE_SANDBOX=<n>` or `resources: {sandbox: <n>}`. Like any pool, `.hephconfig` may set it to `0` ("the run sets it"), but a run may not.
+- It belongs to heph: a target can't declare it in `resources` or read `${resource:sandbox}`. If you had your own pool named `sandbox`, rename it.
+
+**If builds stall on `sandbox`, sandboxes are being removed slower than runs create them.** The wait says so:
+
+```
+⧗ //a:b waits for sandbox 1 (0 free, 2 ahead, 41s) — cleanup is behind: 3 removals pending
+```
+
+and the TUI header shows `sandbox: 4 waiting (3 removals pending)`. Raise the pool only if the disk can hold that many more sandboxes.
 
 ## Reading the allotment
 
@@ -121,7 +140,7 @@ The `go` provider's `test` state accepts `resources` for generated test targets.
 - **All or nothing.** A target never holds CPUs while waiting for memory.
 - **Clamped.** A request above a pool's capacity is reduced to it: `cpu: 16` on a 4-CPU run waits for an empty pool, runs alone, and is told `4`.
 
-The TUI header shows each pool in use as `held/capacity`. A clamped target is marked, for example `[cpu 16→4]`. A target waiting more than 5 seconds is listed with what it waits for:
+The TUI header shows each pool in use as `held/capacity`, plus how many targets wait on it (`gpu 1/1, 2 waiting`). A clamped target is marked, for example `[cpu 16→4]`. A target waiting more than 5 seconds is listed with what it waits for:
 
 ```
 ⧗ //a:b waits for cpu 4 (2 free, 6 ahead, 41s)
