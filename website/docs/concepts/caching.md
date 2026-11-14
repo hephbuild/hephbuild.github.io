@@ -116,6 +116,24 @@ that's no longer reachable (removed targets, orphaned entries):
 heph tool gc
 ```
 
+### The cache database
+
+Removing entries leaves free space inside the cache database, `cache.db` under
+the heph home. heph gives that space back to the filesystem on its own: at the
+end of a run that removed entries, at most once an hour (sooner when the free
+space grows large), for a few seconds at most. There's nothing to configure.
+
+`heph tool gc` finishes the job as its last step, returning all of the free
+space. Its summary ends with the database's size and what the step did.
+
+:::note
+A cache created by an older heph version doesn't reclaim space on its own until
+it has been converted. The first `heph tool gc` on it does that by rewriting the
+whole database once — minutes on a large one, during which other heph
+processes' cache writes wait. The conversion is skipped, and the summary says
+how much free disk it needs, when the disk lacks room for the copy it makes.
+:::
+
 ### Failure logs
 
 When a target fails, heph keeps its log in its failure slot,
