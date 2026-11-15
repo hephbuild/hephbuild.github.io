@@ -33,6 +33,7 @@ heph run <LABEL> <PACKAGE_MATCHER>
 | `--list-out` | Print the output file list to stdout. |
 | `-e`, `--exclude <ADDR>` | Exclude a target address (repeatable). |
 | `--frozen` | Fail if generated output differs from the tree (CI codegen check). |
+| `--keep-failed-sandboxes` | Keep a failed target's sandbox on disk (until its next run) instead of removing it; the failure box prints its path. Global flag. |
 
 Examples:
 ```bash
