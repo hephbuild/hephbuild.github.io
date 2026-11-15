@@ -118,7 +118,13 @@ filesystem directly).
 **Reclaim space:** a target's revisions beyond its configured `history` count
 are trimmed automatically at the end of the run that writes the new one — no
 action needed. `heph tool gc` sweeps everything else no longer reachable from
-any current target (removed targets, orphaned entries).
+any current target (removed targets, orphaned entries), then gives the cache
+database's (`cache.db`) free space back to the filesystem. heph also reclaims
+that free space by itself at the end of a run that removed entries (at most
+hourly, sooner when free space is large, a few seconds per run). A cache from
+an older heph version only does so once converted: the first `heph tool gc`
+rewrites the whole database (minutes on a large one; other heph processes'
+cache writes wait), and skips it when the disk lacks room for the copy.
 
 ## Scratch caches
 
