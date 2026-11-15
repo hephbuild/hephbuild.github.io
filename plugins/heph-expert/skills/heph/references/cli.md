@@ -89,6 +89,38 @@ heph validate                 # whole workspace
 heph validate <PACKAGE_MATCHER>
 ```
 
+## `heph session`
+
+Watch heph runs going on in other terminals. Every run records a **session**
+under `~/.heph/sessions/`; these commands only read it (never cancel, signal or
+clean up). Docs: `https://hephbuild.github.io/docs/guides/sessions`.
+
+| Subcommand | Does | Exit |
+|---|---|---|
+| `heph session list [--all] [--json]` | One row per session of this workspace (`--all`: every workspace), live first: ID, WORKTREE, COMMAND, STATE, EXIT, PROGRESS, NOW. | 0 |
+| `heph session show <id> [--json]` | The progress view printed once, then "Stuck on": lock waits naming the holding session, resource waits, targets running over 30s, and a `Next:` command. | 0 |
+| `heph session attach <id>` | Follow the session live until it ends; `q`/Ctrl-C detaches without cancelling it. Line form without a terminal. | the session's exit code; 0 on detach |
+| `heph session inflight <id> [--json]` | Ask a running session for its in-flight report (open work); waits 5s. | 0 |
+
+- `<id>`: full id, a live session's pid, or a unique prefix/suffix. Prefer the
+  last 4–5 characters or the pid — ids start with the start time.
+- The line backend prints `heph: session <id> (heph session attach <id>)` on
+  stderr at start.
+- STATE: `running`, `waiting` (every open target on a lock/resource wait),
+  `quiet` (no event past `--stall-notice`, 60s when off — not a verdict),
+  `ok`/`failed`, `lost` (died without recording its end), `unknown` (newer
+  format).
+- Every error of `heph session` itself exits **125**. `attach` mirrors the
+  session's code, so a mirrored 125 is announced on stderr
+  (`heph: session <id> exited 125`).
+- Agents: read `list --json` / `show --json`. Use `blocked_on` and `progress`,
+  not `now` (human text); `last_event_unix_ms` is the stable "gone silent"
+  signal. `show --json` has `next: {kind, command, argv, cwd, reason}` — run
+  `argv` in `cwd`; `command` is display text.
+- A run waiting on another run's lock names it: `held by session <id> (pid N)`.
+- Off: `HEPH_NO_SESSION=1`, or `heph run --raw`. A target that runs heph should
+  set `HEPH_NO_SESSION=1` in its `env`.
+
 ## `heph tool`
 
 Maintenance subcommands operating on the workspace or local cache.
