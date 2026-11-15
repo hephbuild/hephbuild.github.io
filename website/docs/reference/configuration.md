@@ -10,6 +10,12 @@ description: Every key in .hephconfig — registering plugins and tuning the eng
 It registers the [plugins](/docs/plugins) your build uses and tunes a handful of
 engine-level settings. It is YAML.
 
+:::tip
+For completion and validation of `.hephconfig` in your editor, generate its
+schema with `heph tool config-schema`. See
+[Editor setup](/docs/guides/editor-setup#validating-hephconfig).
+:::
+
 ```yaml title=".hephconfig"
 version: 1.2.3
 plugins:

@@ -3,6 +3,8 @@
 `.hephconfig` sits at the workspace root and marks it as a heph project. It is
 **YAML**. It registers the plugins the build uses and tunes engine-level
 settings. Source: `https://hephbuild.github.io/docs/reference/configuration.md`.
+Editor validation: `heph tool config-schema > tools/hephconfig.schema.json`, then
+map it to `.hephconfig` files in yaml-language-server (see the CLI reference).
 
 ```yaml title=".hephconfig"
 version: 1.2.3

@@ -1,14 +1,16 @@
 ---
 title: "Editor setup"
 sidebar_position: 6
-description: Connect your editor to heph's language server for diagnostics, completion, hover, go-to-definition, and formatting.
+description: Connect your editor to heph's language server for BUILD files, and to the .hephconfig schema for config validation.
 ---
 
 # Editor setup
 
 heph ships a language server that connects to any editor supporting the Language
 Server Protocol. It provides diagnostics, completion, hover documentation,
-go-to-definition, and document formatting.
+go-to-definition, and document formatting for BUILD files. For `.hephconfig`,
+heph prints a schema your editor can validate against (see
+[Validating `.hephconfig`](#validating-hephconfig)).
 
 ## What it provides
 
@@ -82,3 +84,113 @@ Any editor with LSP support works. The relevant settings are:
 - **Transport**: stdio
 - **Root marker**: `.hephconfig`
 - **File patterns**: `BUILD` (or your workspace's configured names)
+
+## Validating `.hephconfig`
+
+heph prints a JSON Schema of `.hephconfig` that your editor can use for
+completion, hover and validation. It covers `.hephconfig`, the legacy
+`.hephconfig2`, and every [profile](/docs/reference/configuration#profiles--layered-config-overlays)
+(`ci.hephconfig`). Any editor that runs yaml-language-server can use it.
+
+Write the schema to a file:
+
+```sh
+heph tool config-schema > tools/hephconfig.schema.json
+```
+
+The schema comes from the binary itself. In a workspace that pins a
+[`version`](/docs/reference/configuration#pinning-the-version), heph switches to
+the pinned release first, so the schema matches the heph that reads your config.
+The command doesn't read your config, so it also works outside a workspace.
+heph doesn't publish the schema at a URL. This command is the only source.
+
+Write it to a tracked path such as `tools/hephconfig.schema.json` so your whole
+team gets it, or to a path outside the repository just for yourself.
+Regenerate it when the pinned version changes. Don't put it in `.heph/`, which
+is gitignored and holds heph's cache.
+
+### Neovim
+
+Mark the config files as YAML, then map the schema to them in yamlls:
+
+```lua title="~/.config/nvim/init.lua"
+vim.filetype.add({
+  filename = {
+    [".hephconfig"] = "yaml",
+    [".hephconfig2"] = "yaml",
+  },
+  pattern = {
+    [".*%.hephconfig2?$"] = "yaml",
+  },
+})
+
+vim.lsp.config("yamlls", {
+  settings = {
+    yaml = {
+      schemas = {
+        ["/path/to/repo/tools/hephconfig.schema.json"] = {
+          "**/.hephconfig",
+          "**/*.hephconfig",
+          "**/.hephconfig2",
+          "**/*.hephconfig2",
+        },
+      },
+    },
+  },
+})
+vim.lsp.enable("yamlls")
+```
+
+The `**/` globs match the base file and every profile, in any directory.
+
+### VS Code
+
+The heph extension doesn't register the schema yet. Map it in the YAML
+extension's `yaml.schemas` setting, using the same globs as for Neovim.
+
+### A single file
+
+Put a modeline at the top of the file. This works in any editor that runs
+yaml-language-server:
+
+```yaml title=".hephconfig"
+# yaml-language-server: $schema=tools/hephconfig.schema.json
+```
+
+### Quote numbers in text fields
+
+heph loads a plain number where it expects text, but the schema flags it.
+Usually a number there is a mistake: `version: 1.10` loads as `1.1`. Quote the
+value (`version: "1.10"`) and heph and the schema agree.
+
+### What the schema doesn't check
+
+The schema never rejects a config that heph loads, apart from the numbers above.
+It can be looser than heph, though:
+
+- **Plugin `options`.** Each plugin checks its own keys. The schema only checks
+  that `options` is a map.
+- **Profile merges.** The schema sees one file at a time. A profile that sets a
+  cache's `read` without its `uri` passes the schema. Whether the merged config
+  is complete is checked when heph loads the files together.
+- **`~` for an empty section.** `resources:` with nothing after it loads, and
+  so do `plugins:` and `caches:`. The schema also accepts `resources: ~`, which
+  heph refuses.
+- **Extreme values.** The schema doesn't catch a resource amount too large to
+  store, or a `cpu` fraction below 0.000001.
+
+### Using the schema from a script or plugin
+
+The document's layout isn't stable: key order, definition names, and titles and
+descriptions can all change. Hand it whole to a validator, and don't `$ref`
+into it from another schema. A tool that runs the command should:
+
+- Use the output only if the command exits 0 and stdout parses as JSON with a
+  `$schema` key. Otherwise use no schema, or a copy it saved earlier, and don't
+  retry.
+- Set a timeout. In a pinned workspace, heph may first download the pinned
+  release.
+
+The command fails in a workspace pinned to a heph release that predates it
+(exit code 2), in a pinned workspace while offline before the pinned release is
+downloaded, and when `.hephconfig` isn't valid YAML.
