@@ -87,7 +87,7 @@ The following target config keys are available:
 | `deps`             | Hashed build-time dependencies.                      |
 | `hash_deps`        | Hash-only dependencies.                              |
 | `runtime_deps`     | Runtime-only dependencies.                           |
-| `tools`            | Executables placed on `PATH`.                        |
+| `tools`            | Executables placed on `PATH`. See [Tool files](#tool-files). |
 | `out`              | Output groups and paths.                             |
 | `support_files`    | Non-output artifacts.                                |
 | `env`              | Literal environment variables.                       |
@@ -106,6 +106,7 @@ These environment variables are available inside the sandbox:
 | `SRC` / `SRC_<group>`         | Dependency paths.        |
 | `LIST_SRC` / `LIST_SRC_<group>` | Dependency list files.   |
 | `TOOL` / `TOOL_<group>`       | Tool paths.              |
+| `TOOL_ROOT` / `TOOL_<group>_ROOT` | Each tool's package directory, as staged. See [Tool files](#tool-files). |
 | `OUT` / `OUT_<group>`         | Output paths.            |
 | `WORKSPACE_ROOT`              | Root of the workspace.   |
 | `PATH`                        | Executables search path. |
@@ -153,6 +154,61 @@ declares, or a binary the runner's environment ships, wins over the builtin of
 the same name. Inside an [OCI](/docs/plugins/oci) container they are not
 available; the image's own utilities apply. Set `coreutils: false` on the driver
 to use the host's utilities instead.
+
+## Tool files
+
+A tool often ships more than its executable: headers, data, a standard
+library. Declare them as the tool's `support_files`, and the consumer reaches
+them through `$TOOL_ROOT` (`$TOOL_<group>_ROOT` for a named group) — the
+tool's package directory, holding its outputs and support files at the paths
+its BUILD file declares them:
+
+```python title="sdk/BUILD"
+target(
+    name = "sdk",
+    driver = "bash",
+    run = [
+        "mkdir -p sdk/bin sdk/include",
+        "echo hello > sdk/include/greeting.txt",
+        "printf '#!/bin/sh\\ncat \"$1/greeting.txt\"\\n' > sdk/bin/greet",
+        "chmod +x sdk/bin/greet",
+    ],
+    out = "sdk/bin/greet",
+    support_files = "sdk/include/",
+)
+```
+
+```python title="app/BUILD"
+target(
+    name = "hello",
+    driver = "bash",
+    tools = "//sdk:sdk",
+    run = "greet $TOOL_ROOT/sdk/include > $OUT",
+    out = "hello.txt",
+)
+```
+
+- **One entry per tool package.** When a group holds tools from several
+  packages, the variable lists each package directory once, sorted and
+  space-separated. A `group` target used as a tool counts each member's
+  package. Treat it as a single path only when the group has one tool package.
+- **It can be unset.** A workspace source file, a host binary, or a tool whose
+  outputs are not under its own package contributes no entry; a group with
+  none of them gets no variable.
+- **Tools from a dependency's `transitive` tools** get a root like any other.
+- **The path is absolute and machine-specific.** If it can end up embedded in
+  an output, strip it with your compiler's prefix-map flag
+  (`-ffile-prefix-map`, `-trimpath`) to keep outputs reproducible.
+
+A target is refused when one of these names would be ambiguous:
+
+- a group's root variable is another group's tool variable —
+  `tools = {"": …, "root": …}` puts both on `TOOL_ROOT`. Group names are
+  uppercased and other characters become `_`, so different spellings can
+  collide;
+- `env`, `runtime_env`, `pass_env`, `runtime_pass_env`, or a dependency's
+  `transitive` env declares one of the target's root variables. heph sets it,
+  so drop the entry or rename the tool group.
 
 ## Dependencies
 
