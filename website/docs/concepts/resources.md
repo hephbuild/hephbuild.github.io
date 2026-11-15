@@ -117,14 +117,27 @@ The `go` provider's `test` state accepts `resources` for generated test targets.
 
 ## How targets are admitted
 
-- **First come, first served.** The target at the head of the queue waits until all of its pools fit, and nothing behind it starts meanwhile.
+- **Whatever fits runs.** Any waiting target whose amounts fit what is free starts. When a target finishes, its slot goes to the oldest waiting target that reserves the same amounts.
+- **The oldest waiter is overtaken only so far.** Targets that fit can start ahead of an older target that doesn't, but only up to 16 times what the older target needs of a pool, and never more than 4 times the pool's capacity. Past that, nothing more starts in the capacity it needs: the pool drains and it starts. No target waits forever.
 - **All or nothing.** A target never holds CPUs while waiting for memory.
 - **Clamped.** A request above a pool's capacity is reduced to it: `cpu: 16` on a 4-CPU run waits for an empty pool, runs alone, and is told `4`.
+
+Start order follows arrival only among targets that reserve the same amounts. Across different amounts, a younger target that fits can start before an older one that doesn't.
+
+:::note
+A target that asks for a whole pool, such as `heph.core.resource("cpu")`, starts only once the pool is empty, after other targets worth about 4 times the pool have started ahead of it. Declare the width the target actually uses, not the whole pool as a way to run alone: a target asking for half the pool starts as soon as half is free.
+:::
 
 The TUI header shows each pool in use as `held/capacity`. A clamped target is marked, for example `[cpu 16→4]`. A target waiting more than 5 seconds is listed with what it waits for:
 
 ```
 ⧗ //a:b waits for cpu 4 (2 free, 6 ahead, 41s)
+```
+
+`ahead` is how many targets were queued before it, not a promise that they start first. A target that would fit but is held back for the oldest waiter names what it yields to:
+
+```
+⧗ //a:b waits for cpu 1 (3 free, yielding to a cpu 8 run, 41s)
 ```
 
 ## The contract
