@@ -231,7 +231,7 @@ memCache:
 
 ## `resources` — capacity pools
 
-Sets how much of each resource a run may use at once. `cpu` and `memory` always exist; add your own pools alongside them.
+Sets how much of each resource a run may use at once. `cpu`, `memory` and `sandbox` always exist; add your own pools alongside them.
 
 ```yaml title=".hephconfig"
 resources:
