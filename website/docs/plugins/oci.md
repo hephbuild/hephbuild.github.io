@@ -30,7 +30,7 @@ binary. It ships as a shared library (cdylib) with a manifest file
 
 ```yaml title=".hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-oci-plugin.json
+  - url: <HEPH_ARTIFACTS_URL>/heph-oci-plugin.json
     checksum: sha256:<hex>   # optional; pin from heph-oci-plugin.json.sha256
 ```
 

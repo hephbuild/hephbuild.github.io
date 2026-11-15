@@ -46,7 +46,7 @@ The GHA plugin is an **external plugin** — it ships as a shared library
 
 ```yaml title=".hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-gha-plugin.json
+  - url: <HEPH_ARTIFACTS_URL>/heph-gha-plugin.json
     checksum: sha256:<hex>   # optional; pin from heph-gha-plugin.json.sha256
 ```
 
@@ -60,7 +60,7 @@ a profile overlay so local runs are unaffected:
 
 ```yaml title="ci.hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-gha-plugin.json
+  - url: <HEPH_ARTIFACTS_URL>/heph-gha-plugin.json
     checksum: sha256:<hex>
 ```
 
@@ -104,7 +104,7 @@ message is emitted. The step summary is always written regardless.
 
 ```yaml title="ci.hephconfig"
 plugins:
-  - url: https://github.com/hephbuild/heph-artifacts-v1/releases/download/v<HEPH_VERSION_URL>/heph-gha-plugin.json
+  - url: <HEPH_ARTIFACTS_URL>/heph-gha-plugin.json
     options:
       refreshSecs: 30          # optional
       summaryPath: ""          # optional

@@ -754,3 +754,80 @@ body:has(.theme-doc-markdown) .navbar__brand::after {
     display: none;
   }
 }
+
+/* ==========================================================================
+   Release-channel bar — sits on top of a code block whose contents depend on
+   the channel (the `version:` pin, plugin manifest URLs, the installer). Same
+   language as the code well's title band: light surface, hairline frame, mono.
+   Rendered by src/components/ReleaseChannelSelector.tsx.
+   ========================================================================== */
+.theme-doc-markdown.markdown .hephChannelBlock {
+  margin: 18px 0;
+}
+/* The well below the bar joins it — the block's own vertical margin is carried
+   by the wrapper instead. */
+.theme-doc-markdown.markdown .hephChannelBlock .theme-code-block,
+.theme-doc-markdown.markdown .hephChannelBlock div[class*='codeBlockContainer'] {
+  margin: 0;
+}
+.theme-doc-markdown.markdown .hephChannelBlock .theme-admonition {
+  margin: 12px 0;
+}
+.hephChannelBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--bg-1);
+  border: 1px solid var(--hair);
+  border-bottom: 0;
+  font-family: var(--font-mono);
+}
+.hephChannelBar__label {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.hephChannelBar__group {
+  display: flex;
+  margin-left: auto;
+  border: 1px solid var(--hair-2);
+  background: var(--paper);
+}
+.hephChannelBar__option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  cursor: pointer;
+}
+.hephChannelBar__option + .hephChannelBar__option {
+  border-left: 1px solid var(--hair-2);
+}
+.hephChannelBar__option:hover {
+  color: var(--ink);
+}
+.hephChannelBar__option--on {
+  background: var(--ac-soft);
+  color: var(--ac);
+}
+/* Marks which channel a reader gets when they have not picked one. */
+.hephChannelBar__default {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.hephChannelBar__option--on .hephChannelBar__default {
+  color: var(--ac);
+  opacity: 0.7;
+}
