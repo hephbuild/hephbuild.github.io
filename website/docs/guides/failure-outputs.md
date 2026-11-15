@@ -57,8 +57,45 @@ The failure box prints where each part is:
     …
     ╰────
   full log: /ws/.heph/failures/web_e2e-…/log.txt
+  sandbox: removed (rerun with --keep-failed-sandboxes to keep it)
   outputs: /ws/.heph/failures/web_e2e-…/out
 ```
+
+## Keeping the failed sandbox
+
+The slot outlives a failure; the sandbox the run failed in does not. Once the
+slot is filled (and any `in_place` fixes are written back), the sandbox is
+removed, just like after a passing run.
+
+To keep it on disk for inspection, pass `--keep-failed-sandboxes`:
+
+```bash title="terminal"
+heph run //web:e2e --keep-failed-sandboxes
+```
+
+A kept sandbox stays until the target's next run, and it does not count
+against the [`sandbox` resource pool](/docs/concepts/resources). A
+[credential](/docs/concepts/credentials) target whose outputs are credential
+material has its sandbox removed even with the flag.
+
+The failure box's `sandbox:` line says what happened:
+
+| Line | When |
+| --- | --- |
+| `sandbox: removed (rerun with --keep-failed-sandboxes to keep it)` | Default |
+| `sandbox: <path> (kept)` | With `--keep-failed-sandboxes` |
+| `sandbox: removed (credential material)` | Credential material, with the flag |
+| `sandbox: left (run abandoned after timeout)` | The run didn't stop after its [`timeout`](/docs/plugins/exec#timeouts) |
+
+There is no `sandbox:` line when the run had no sandbox (for example a
+`template` or `fs` target, or a failure before the driver ran).
+`heph inspect failure` reports only the slot, never the sandbox.
+
+:::note
+If heph cannot fill the slot (for example, the failures directory is not
+writable), the box still shows the log's tail, but the full log is removed with
+the sandbox unless you passed `--keep-failed-sandboxes`.
+:::
 
 ## Keeping diagnostics with `failure_out`
 

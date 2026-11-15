@@ -118,7 +118,13 @@ filesystem directly).
 **Reclaim space:** a target's revisions beyond its configured `history` count
 are trimmed automatically at the end of the run that writes the new one — no
 action needed. `heph tool gc` sweeps everything else no longer reachable from
-any current target (removed targets, orphaned entries).
+any current target (removed targets, orphaned entries), then gives the cache
+database's (`cache.db`) free space back to the filesystem. heph also reclaims
+that free space by itself at the end of a run that removed entries (at most
+hourly, sooner when free space is large, a few seconds per run). A cache from
+an older heph version only does so once converted: the first `heph tool gc`
+rewrites the whole database (minutes on a large one; other heph processes'
+cache writes wait), and skips it when the disk lacks room for the copy.
 
 ## Scratch caches
 
@@ -247,6 +253,14 @@ clears it, `heph tool gc --failure-max-age-days N` (default 7) drops old ones.
   `--json` prints `{addr, slot, hashin, failed_at, log, out, fixes}` (absent
   part = `null`), or `null` with exit 0 when nothing is recorded; the text form
   exits 1 then.
+- The failed run's **sandbox is removed** once the slot is filled (box line
+  `sandbox: removed (rerun with --keep-failed-sandboxes to keep it)`).
+  `--keep-failed-sandboxes` keeps it until the target's next run, outside the
+  `sandbox` pool's cap (box line `sandbox: <path> (kept)`). A credential-material
+  target's sandbox is removed even under the flag. A run abandoned after its
+  `timeout` grace leaves its sandbox on disk (`sandbox: left (run abandoned
+  after timeout)`); the next run removes it. `heph inspect failure` never
+  reports the sandbox.
 - heph uploads nothing; in CI, upload `.heph/failures/*/out/**` on failure.
 - Nothing about failure outputs reaches any hash: `failure_out` and the codegen
   mode are off the def hash.

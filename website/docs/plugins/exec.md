@@ -315,8 +315,13 @@ When the limit is hit:
 - If the run still hasn't returned 10s after being cancelled, heph stops waiting
   and the failure says the process may still be running.
 - The target fails with `//p:integration timed out after 10m (its `timeout`)`.
-  The log tail is shown, the sandbox is kept for diagnostics, and nothing is
-  cached, so the next build runs the target again.
+  The log tail is shown, the log and `failure_out` matches are kept in the
+  [failure slot](/docs/guides/failure-outputs), and nothing is cached, so the
+  next build runs the target again.
+- If heph stopped waiting on the run, its sandbox is left on disk (the process
+  may still be writing to it) and the target's next run removes it. Otherwise
+  the sandbox is removed like any failed target's; pass
+  `--keep-failed-sandboxes` to keep it.
 
 The clock covers staging inputs, running the command and collecting outputs. It
 does not cover waiting for [resources](/docs/concepts/resources) or building

@@ -126,3 +126,8 @@ heph run //app:server --shell
 
 From there you can list `$SRC_*`, re-run the command by hand, and see precisely
 what the target sees.
+
+A failed target's sandbox is removed once its failure is recorded. To look at
+the tree the run actually failed in, rerun with `--keep-failed-sandboxes`; the
+failure box prints the kept sandbox's path. See
+[Keeping the failed sandbox](/docs/guides/failure-outputs#keeping-the-failed-sandbox).
