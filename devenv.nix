@@ -17,6 +17,11 @@
     PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
     # npm install must NOT try to download its own browsers — use the nix ones.
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+    # onnxruntime-node (pulled in by transformers.js for build-time search
+    # embeddings) downloads its CUDA add-on from GitHub releases on linux-x64
+    # during `npm ci`. We only run on CPU, and that asset 404s — skip it. The
+    # CPU binaries ship inside the npm package.
+    ONNXRUNTIME_NODE_INSTALL_CUDA = "skip";
   };
 
   # Scripts mirrored by CI (see .github/workflows/deploy.yml) so local and CI
