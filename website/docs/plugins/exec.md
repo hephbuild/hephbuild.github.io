@@ -107,6 +107,7 @@ These environment variables are available inside the sandbox:
 | `LIST_SRC` / `LIST_SRC_<group>` | Dependency list files.   |
 | `TOOL` / `TOOL_<group>`       | Tool paths.              |
 | `TOOL_ROOT` / `TOOL_<group>_ROOT` | Each tool's package directory, as staged. See [Tool files](#tool-files). |
+| `HEPH_TOOLS_DIR`              | Directory every tool of the target is staged under. See [Launchers that find their own files](#launchers-that-find-their-own-files). |
 | `OUT` / `OUT_<group>`         | Output paths.            |
 | `WORKSPACE_ROOT`              | Root of the workspace.   |
 | `PATH`                        | Executables search path. |
@@ -209,6 +210,64 @@ A target is refused when one of these names would be ambiguous:
 - `env`, `runtime_env`, `pass_env`, `runtime_pass_env`, or a dependency's
   `transitive` env declares one of the target's root variables. heph sets it,
   so drop the entry or rename the tool group.
+
+### Launchers that find their own files
+
+`$HEPH_TOOLS_DIR` is the directory every tool of a target is staged under. A
+tool that is a launcher script reads it to find the files shipped beside it:
+the launcher runs as part of the consumer, so it sees the consumer's variable.
+
+Below it, a tool target's outputs and `support_files` sit at
+`<package>/<path>`. The package is written without `//`, and the root package
+adds nothing in front. That path stays the same whichever group the consumer
+lists the tool in and whatever else the group holds. It also holds for tools
+brought in through another tool's `transitive` tools. `$TOOL_ROOT` does not
+give you that: it lists several directories when the group holds several tool
+packages.
+
+```python title="greetcli/BUILD"
+target(
+    name = "cli",
+    driver = "bash",
+    run = [
+        "mkdir -p lib",
+        "echo hello > lib/data.txt",
+        "printf '#!/bin/sh\\ncat \"$HEPH_TOOLS_DIR/greetcli/lib/data.txt\"\\n' > greet",
+        "chmod +x greet",
+    ],
+    out = "greet",
+    support_files = "lib/",
+)
+```
+
+```python title="app/BUILD"
+target(
+    name = "hello",
+    driver = "bash",
+    tools = ["//greetcli:cli"],
+    run = "greet > $OUT",   # the launcher finds lib/data.txt
+    out = "out.txt",
+)
+```
+
+- **It is set only for a target with tools.** It is unset when none of the
+  tools staged a file (an empty `group`).
+- **Some tools have no package directory.** A relocating `group` (`prefix`,
+  `strip_prefix`, `rename`), a workspace source file and a host binary are not
+  under a package directory of their own.
+- **The path is absolute and machine-specific.** It is not hashed.
+- **heph owns the name on a target with tools.** Setting `HEPH_TOOLS_DIR`
+  through `env`, `runtime_env`, `pass_env`, `runtime_pass_env` or a
+  dependency's `transitive` env is refused, by the same rule as a root
+  variable. A target without tools keeps its own value.
+- **A `"*"` passthrough never carries the host's `HEPH_TOOLS_DIR`.** This
+  holds for both `pass_env` and `runtime_pass_env`.
+
+:::tip
+A wrong path fails inside the launcher with "No such file or directory",
+naming the full path. Add `ls -R "$HEPH_TOOLS_DIR"` to the consumer's `run` to
+see what was staged.
+:::
 
 ## Dependencies
 

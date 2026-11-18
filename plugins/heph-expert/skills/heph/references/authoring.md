@@ -270,6 +270,7 @@ Available inside an exec sandbox:
 | `LIST_SRC` / `LIST_SRC_<group>` | File listing each dependency path. |
 | `TOOL` / `TOOL_<group>` | Tool paths. |
 | `TOOL_ROOT` / `TOOL_<group>_ROOT` | Each tool's package directory as staged, holding its outputs and `support_files` at their declared paths (`$TOOL_ROOT/sdk/include`). One entry per tool package, sorted, space-separated; unset when no tool comes from a package (source file, host binary). Absolute — strip with `-ffile-prefix-map`/`-trimpath` if it can reach an output. Refused at parse if it collides with another group's `TOOL_<group>` (`{"": …, "root": …}`) or with a name in `env`/`runtime_env`/`pass_env`/`runtime_pass_env`/transitive env. |
+| `HEPH_TOOLS_DIR` | Directory every tool is staged under; a tool's outputs and `support_files` sit at `<package>/<path>` below it (package without `//`), whatever group lists it and whatever else that group holds. Lets a launcher script find files shipped beside it, e.g. `cat "$HEPH_TOOLS_DIR/greetcli/lib/data.txt"`. Set only for a target with tools; unset when none staged a file. Setting it yourself on such a target is refused at parse; a `"*"` passthrough never carries the host's value. Absolute, not hashed. |
 | `OUT` / `OUT_<group>` | Output paths. |
 | `WORKSPACE_ROOT` | Root of the workspace. |
 | `PATH` | Executables search path. |
