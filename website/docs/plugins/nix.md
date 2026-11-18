@@ -63,3 +63,11 @@ must exist at `{store_path}/bin/{program}` after the nix build. Remote caching
 is disabled because wrappers reference host-local `/nix/store` paths. Use
 `system` to override the default host system detection (e.g. for
 cross-compilation specs).
+
+## Logs
+
+nix's progress output (fetching, evaluating, building) goes to the target's log
+as nix writes it, so `heph log -f //pkg:nix_tools` follows a long build while
+it runs. What nix prints on stdout, the flake metadata and the store path, is
+never written to the log. When a nix step fails, the error gives the exit
+status, and nix's output is in the target's log.
