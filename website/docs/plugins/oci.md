@@ -151,6 +151,13 @@ cleared environment and an explicit passthrough allowlist, so a stray
 `BUILDX_BUILDER` or `SOURCE_DATE_EPOCH` on the host cannot change the build
 behind the cache key's back.
 
+#### The build log
+
+`docker buildx build`'s output goes to the target's log as Docker writes it, so
+`heph log -f <addr>` follows a build while it runs. The values of the target's
+credentials are scrubbed from the log. The answers heph reads back from
+Docker, the image ID and the builder's platforms, are not written to it.
+
 ### `oci.image` and `oci.layer`
 
 `oci.layer` turns target outputs into one image layer — a tar of a file tree,

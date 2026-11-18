@@ -502,6 +502,23 @@ fails. The plugin's default published binary is unaffected either way.
 Add a `"govet/<tag>/<goos>/<goarch>"` entry to `checksums` to verify a pinned
 `govet` release download other than the plugin's own build.
 
+## Logs
+
+The output of the Go tools a target runs goes to that target's log, which
+`heph log <addr>` prints. Each tool's output is written when the tool exits, not
+while it runs, so a Go target's log stays empty until its first tool finishes.
+
+| Step | What reaches the log |
+|---|---|
+| Compiling (`go tool compile`, `asm`, `pack`) | stdout and stderr |
+| Formatting | stdout and stderr |
+| Format check | stderr. The files that need formatting are named in the error, not the log. |
+| Linting | stderr. The JSON report is the target's output and is not logged. |
+| Resolving packages (`go list`), downloading modules (`go mod download`) | nothing on success |
+
+When a tool itself fails (an error rather than a finding), both its stdout and
+stderr go to the log.
+
 ## Provider functions
 
 The go plugin exposes one helper function in every BUILD file under the `heph.go`

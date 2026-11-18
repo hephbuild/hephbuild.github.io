@@ -100,6 +100,14 @@ Cached locally, never remotely — the captured environment names this
 machine's own nix store paths, and publishing it would let one host's
 resolution key another's builds.
 
+## Logs
+
+While the runner target resolves the environment, devenv's progress output
+(building the shell) goes to that target's log as devenv writes it. `heph log
+-f <runner addr>` follows it. The resolved environment itself is never written
+to the log, not even when the step fails, because it can hold the values of
+passed-through variables.
+
 ## Guarding against a self-referential default
 
 A runner target must not run under the workspace-wide default it configures.
