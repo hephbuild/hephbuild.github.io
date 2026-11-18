@@ -90,7 +90,10 @@ Any editor with LSP support works. The relevant settings are:
 heph prints a JSON Schema of `.hephconfig` that your editor can use for
 completion, hover and validation. It covers `.hephconfig`, the legacy
 `.hephconfig2`, and every [profile](/docs/reference/configuration#profiles--layered-config-overlays)
-(`ci.hephconfig`). Any editor that runs yaml-language-server can use it.
+(`ci.hephconfig`).
+
+In VS Code, the [heph extension](#vs-code) sets this up for you. In any other
+editor that runs yaml-language-server, set it up by hand as below.
 
 Write the schema to a file:
 
@@ -142,11 +145,6 @@ vim.lsp.enable("yamlls")
 ```
 
 The `**/` globs match the base file and every profile, in any directory.
-
-### VS Code
-
-The heph extension doesn't register the schema yet. Map it in the YAML
-extension's `yaml.schemas` setting, using the same globs as for Neovim.
 
 ### A single file
 
