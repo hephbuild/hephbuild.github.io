@@ -323,9 +323,13 @@ When the limit is hit:
   the sandbox is removed like any failed target's; pass
   `--keep-failed-sandboxes` to keep it.
 
-The clock covers staging inputs, running the command and collecting outputs. It
-does not cover waiting for [resources](/docs/concepts/resources) or building
-dependencies. A cache hit runs nothing, so it never times out.
+The clock covers only the command's process, from the moment it starts until
+it exits. Nothing heph does around it counts: waiting for
+[resources](/docs/concepts/resources), building dependencies, staging inputs
+into the sandbox, preparing the [runner](#runners) and collecting outputs are
+all off the clock. Under a runner, the process is the runner's wrapper, so
+whatever the wrapper does before starting your command is timed. A cache hit
+runs nothing, so it never times out.
 
 `timeout` is not part of the cache key: adding, changing or removing it never
 rebuilds a target. `heph run` holds an entrypoint to its `timeout` like any

@@ -92,8 +92,10 @@ out); host directories are not on it, so an undeclared host binary fails with
 `command not found`. The `path` option (empty by default) names host
 directories back. `runner` option sets a workspace-wide default
 [runner](#runners) for every target using this driver. `timeout = "10m"` (a
-duration string or whole seconds, above zero) fails the target once its run
-exceeds it: process group `SIGINT` then `SIGKILL`, nothing cached, never part of
+duration string or whole seconds, above zero) fails the target once its
+process runs longer than that (only the spawned process is timed, a runner's
+wrapper included; not staging inputs, preparing the runner or collecting
+outputs): process group `SIGINT` then `SIGKILL`, nothing cached, never part of
 the cache key. Per target only; `--shell` is never timed.
 
 ### Nix (`nix`)
