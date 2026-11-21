@@ -70,7 +70,7 @@ target(
 | `root` | `string` | the target's own package | Directory containing `devenv.nix`, relative to the target's package. Must stay inside the package — an absolute path or a `..` component is rejected. |
 | `profile` | `string` | unset | devenv profile to enter (`devenv --profile <profile> shell`), if the environment declares one. |
 | `deps` | `string[]` | `[]` | The environment's own files (`devenv.nix`, `devenv.lock`, `devenv.yaml`, anything they import) as target addresses — typically a `glob`. Rebuilds the runner when the environment's definition changes; **not** what the fingerprint is derived from — see [Fingerprint](#fingerprint). |
-| `pass_env` | `string[]` | a fixed set `devenv` needs to reach the nix store and the network (`HOME`, `PATH`, `NIX_PATH`, TLS/proxy variables, …) | Host environment variables `devenv` may see while resolving the environment. Hashed at parse. |
+| `pass_env` | `string[]` | a fixed set `devenv` needs to reach the nix store and the network (`HOME`, `PATH`, `NIX_PATH`, TLS/proxy variables, …) | Host environment variables `devenv` may see while resolving the environment. Hashed at parse. In `session` mode, the held `devenv shell` is also launched with exactly these variables and nothing else from the host. |
 
 ## Choosing a mode
 
