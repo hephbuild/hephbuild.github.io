@@ -124,10 +124,46 @@ hand-written [Textfile](/docs/plugins/textfile) target is a legitimate runner.
 | `runner` | Behavior | `config` |
 |---|---|---|
 | `wrap` | Static rewrite of the command: an argv prefix and an environment, applied at spawn. | `prefix` — argv prepended to the command; its head becomes the program. `env` — hashed base environment; a variable the target also sets keeps the target's value (`PATH` is composed instead). `runtime_pass_env` — host variables pulled in by name at spawn time, under the same rule; unhashed. |
-| `session` | Holds one process open inside the environment for the whole build, and runs each target inside it. | `launch` — argv that enters the environment; the target's command is appended to it. `cwd` — where `launch` runs. |
+| `session` | Holds one process open inside the environment for the whole build, and runs each target inside it. | `launch` — argv that enters the environment; the target's command is appended to it. `cwd` — where `launch` runs; unset means `/`, never the directory heph was invoked from. `launch_env` — the launch command's whole environment; hashed. |
 
 `session` has no `env` key, deliberately: the held process's own environment
 *is* the environment targets run in, so there is nothing separate to declare.
+
+`launch_env` is what the `launch` command itself starts with — `PATH` to find
+`devenv`, `HOME` for nix's settings. The launch starts from an empty
+environment plus `launch_env`; nothing from the shell that ran heph reaches it
+any other way, so a variable you exported there (`GOFLAGS`, `CGO_ENABLED`, …)
+can't leak into targets outside the cache key.
+
+```json title="runner.json"
+{
+  "version": 1,
+  "fingerprint": "…",
+  "runner": "session",
+  "config": {
+    "launch": ["devenv", "shell", "--"],
+    "cwd": "/repo",
+    "launch_env": {
+      "PATH": "/run/current-system/sw/bin:/usr/bin:/bin",
+      "HOME": "/home/me"
+    }
+  }
+}
+```
+
+:::warning
+A hand-written `session` runner must declare at least `PATH` in `launch_env`,
+unless `launch` names an absolute program. A bare program name with no `PATH`
+is refused before anything runs.
+:::
+
+A variable `launch_env` leaves out is missing from the targets too, not just
+from the launch: a launch that passes its environment through has nothing to
+pass. A target that needs a host directory on `PATH` gets it through the
+runner, or declares it itself.
+
+What `launch_env` does not cover is what sits behind its values: a changed
+binary in a directory `PATH` names moves no cache key.
 
 ### The fingerprint
 
