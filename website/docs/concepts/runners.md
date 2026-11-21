@@ -135,6 +135,10 @@ environment plus `launch_env`; nothing from the shell that ran heph reaches it
 any other way, so a variable you exported there (`GOFLAGS`, `CGO_ENABLED`, …)
 can't leak into targets outside the cache key.
 
+With [Devenv](/docs/plugins/devenv) in `session` mode you never write this
+file: the plugin fills `launch_env` from its `pass_env` snapshot. You write it
+only for a hand-written `session` runner, along these lines:
+
 ```json title="runner.json"
 {
   "version": 1,
