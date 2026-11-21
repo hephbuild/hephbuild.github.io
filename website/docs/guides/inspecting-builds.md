@@ -130,6 +130,7 @@ heph inspect packages cmd/...      # packages under a matcher
 heph inspect functions             # provider-exposed BUILD functions
 heph inspect labels                # every label declared across the workspace
 heph inspect labels //cmd/...      # labels scoped to a matcher
+heph inspect labels --exact        # only labels of targets that exist
 ```
 
 `functions` lists every provider function available in BUILD files, with its
@@ -141,6 +142,12 @@ names and types before writing a call.
 `labels` prints the sorted, deduplicated set of labels declared across every
 matching target — a quick way to see what labels exist in a package before
 writing a [query](/docs/plugins/query) predicate against them.
+
+By default the labels come from what providers list, without resolving any
+target. That is fast, but a target that is listed and does not exist can still
+contribute a label — for example a Go `test` target in a package with no tests.
+`--exact` resolves every matching target and prints only the labels of targets
+that exist, at the cost of a slower run.
 
 ## "Where did my failure's log and traces go?"
 
