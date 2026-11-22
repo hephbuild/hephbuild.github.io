@@ -145,10 +145,15 @@ place; labels `build-format`, `format`, `fix`). `//...` includes
 `build-format`, so `heph run //...` reformats BUILD files. CI:
 `heph validate && heph run -e 'label(lint-check) || label(format-check)'`.
 `requireTypeAnnotations: true` requires a type on every `def` parameter
-(return types and literal-default parameters are inferred). `heph.types.<Alias>`
-(`Addr`, `Deps`, `Env`, `Labels`, `PassEnv`, `RuntimePassEnv`, `Tools` — each
-includes `None` — and `Number` = `int | float`) types wrapper parameters that
-forward to `target()`. A file is checked only by the package whose directory
+(return types and scalar-literal-default parameters are inferred; a `[]`/`{}`/`()`
+default still needs an annotation with no `Any`, e.g. `srcs: list[str] = []`).
+`heph.types.<Alias>` (`Deps`, `Env`, `Labels`, `PassEnv`, `RuntimePassEnv`,
+`Tools` — each includes `None` — and `Number` = `int | float`) types wrapper
+parameters that forward to `target()`. `heph.types.<driver>.Kwargs` (e.g.
+`heph.types.bash.Kwargs`, `heph.types.oci.image.Kwargs`; registered drivers
+only) types a wrapper's `**kwargs` per key: `target()`'s fields minus `driver`
+plus the driver's fields, closed (unknown key = type error), every key optional
+and `None`-accepting; checked by lint and at evaluation. A file is checked only by the package whose directory
 holds it — name shared helpers `*.BUILD`. A user target with a check's name
 shadows it; `heph validate` fails on that. Full page:
 <https://hephbuild.github.io/docs/guides/checking-build-files>.
