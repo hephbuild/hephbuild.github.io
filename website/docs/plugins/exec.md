@@ -543,3 +543,23 @@ heph run //app:server --shell
 The `bash` driver allocates a PTY and starts an interactive shell inside
 the prepared sandbox, so you can inspect `$SRC_*`, re-run the command by hand,
 and see why it broke.
+
+To shell into a dependency without building it on its own, name it with
+`--shell=ADDRESS` and run the target that depends on it:
+
+```bash title="terminal"
+heph run --shell=//app:lib //app:server   # build //app:server, enter //app:lib
+heph run --shell=//app:lib                # same as `heph run --shell //app:lib`
+```
+
+| Form | Which target gets the terminal |
+|---|---|
+| `--shell` | The single target the run names. A group of exactly one member counts as that member; a group of two or more, or a multi-target selection, is refused. |
+| `--shell=ADDRESS` | `ADDRESS`, which may be any target the run resolves: a selected target, a member of a group, or a dependency of either. Every other target builds without a terminal. |
+
+`ADDRESS` takes the same forms as the target argument, so `:lib` is relative
+to the current package. An address that no target has, or that the run never
+reaches, prints a warning and no shell is opened; the build still runs.
+
+The target you enter always executes, never a cache hit, and its outputs are
+not cached. `--shell` needs a terminal.
