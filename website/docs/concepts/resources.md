@@ -38,7 +38,7 @@ An amount is a number or a string, read in its pool's unit:
 
 Pool names match `[a-z][a-z0-9_]{0,63}`, and a target names at most 16 pools. Naming a pool that isn't configured is an error, and `heph validate` reports it.
 
-A target that declares no `cpu` costs 1 CPU. HTTP downloads, OCI and Go module downloads cost 0.1 CPU; `fs` targets and relocating `group` targets cost nothing. Undeclared `memory` and custom pools cost 0.
+A target that declares no `cpu` costs 1 CPU. HTTP downloads, OCI and Go module downloads cost 0.1 CPU (except a gzipped `oci.layer`, which costs 1); `fs` targets and relocating `group` targets cost nothing. Undeclared `memory` and custom pools cost 0.
 
 :::note
 A target that costs nothing on any bounded pool starts immediately and is never queued, so nothing limits how many run together. Don't declare `cpu: 0` on a target that spawns heavy processes. An `exec` or `bash` target always takes one [`sandbox`](#the-sandbox-pool) slot, so even at `cpu: 0` it queues.

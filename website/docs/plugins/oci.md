@@ -161,7 +161,7 @@ Docker, the image ID and the builder's platforms, are not written to it.
 ### `oci.image` and `oci.layer`
 
 `oci.layer` turns target outputs into one image layer — a tar of a file tree,
-nothing executes. `oci.image` stacks `oci.layer` targets on an optional base
+nothing executes — or adopts a tar another target already built. `oci.image` stacks `oci.layer` targets on an optional base
 into a built image. Splitting the two means a big shared layer (static
 assets, a CA bundle) is built and cached once and reused by every image that
 lists it.
@@ -188,23 +188,60 @@ target(
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `srcs` | `string[]` | `[]` | Targets whose files go into this layer, at their workspace-relative path, rewritten by `strip` and `prefix`. A `srcs` that produces no files is an error, not an empty layer — an image missing its binary would otherwise build, push, and start, and only fail when something tries to run it. |
-| `prefix` | `string` | **required** | Where the files land inside the image, e.g. `"/usr/bin"`. Required deliberately — a default of `/` (files at their workspace-relative path, e.g. `/cmd/server/bin`) is never what anyone wants, and would fail silently at `docker run` time instead of at build time. |
-| `strip` | `string` | unset | A leading workspace-relative path to drop before applying `prefix` — e.g. `strip = "cmd/server"` puts `cmd/server/bin` at `<prefix>/bin`. A `strip` that matches nothing is an error, not a silent no-op. |
-| `mode` | `string` (octal) | `"0755"` for executable files, `"0644"` otherwise | File mode as an octal string, e.g. `"0755"`. A string because Starlark has no octal literal — `mode = 755` would silently mean decimal 755. Setuid, setgid, and the sticky bit are rejected: heph's artifact hash records only the executable bit, so those permissions can't survive a rebuild from cache. |
-| `cache` | bool or dict | both tiers on | Caching for the layer tar. See [Cache control](#cache-control). |
+| `srcs` | `string[]` | `[]` | Targets whose files go into this layer, at their workspace-relative path, rewritten by `strip` and `prefix`. A `srcs` that produces no files is an error, not an empty layer — an image missing its binary would otherwise build, push, and start, and only fail when something tries to run it. Exactly one of `srcs` and `tar`. |
+| `tar` | `string` | unset | A target producing one uncompressed tar, adopted as the layer as it is. See [Adopting a prebuilt tar](#adopting-a-prebuilt-tar). Exactly one of `srcs` and `tar`. |
+| `prefix` | `string` | **required** with `srcs` | Where the `srcs` files land inside the image, e.g. `"/usr/bin"`. Required deliberately — a default of `/` (files at their workspace-relative path, e.g. `/cmd/server/bin`) is never what anyone wants, and would fail silently at `docker run` time instead of at build time. Refused with `tar`. |
+| `strip` | `string` | unset | A leading workspace-relative path to drop before applying `prefix` — e.g. `strip = "cmd/server"` puts `cmd/server/bin` at `<prefix>/bin`. A `strip` that matches nothing is an error, not a silent no-op. `srcs` only; refused with `tar`. |
+| `mode` | `string` (octal) | `"0755"` for executable files, `"0644"` otherwise | File mode as an octal string, e.g. `"0755"`. A string because Starlark has no octal literal — `mode = 755` would silently mean decimal 755. Setuid, setgid, and the sticky bit are rejected: heph's artifact hash records only the executable bit, so those permissions can't survive a rebuild from cache. `srcs` only; refused with `tar`. |
+| `compress` | `bool` | `true` | Gzip the layer. It is compressed once, and every image that lists it reuses the compressed blob. Set `False` for a layer of already-compressed files (archives, images, a packed binary), where gzip costs time and saves nothing. Flipping it changes the layer's digest, and so the digest of every image that lists it. |
+| `cache` | bool or dict | both tiers on | Caching for the layer. See [Cache control](#cache-control). |
+| `resources` | dict | `{"cpu": 1}` gzipped, `{"cpu": 0.1}` with `compress = False` | What the target reserves while it runs. See [Resources](/docs/concepts/resources). |
 
-A layer's bytes are written to be reproducible regardless of the host: file
-timestamps, uid, and gid are zeroed; entries are sorted by path; symlinks are
-preserved (never followed); and the layer is written uncompressed.
+A layer built from `srcs` is reproducible regardless of the host: file
+timestamps, uid, and gid are zeroed; entries are sorted by path; and symlinks
+are preserved (never followed). Gzip is applied deterministically, so the
+layer's digest depends only on its contents.
+
+##### Adopting a prebuilt tar
+
+When something else builds the file tree — a rootfs, a vendor's archive, a
+`docker export` — point `tar` at the target that produces it:
+
+```python title="BUILD"
+target(
+    name = "rootfs_layer",
+    driver = "oci.layer",
+    tar = ":rootfs",   # produces one uncompressed .tar
+)
+```
+
+The tar's bytes are used unchanged: entries keep their names, modes, owners
+and times, and are gzipped per `compress`. Symlinks are kept whatever they
+point at (an absolute symlink resolves against the image's root), and
+whiteout entries are kept, so an adopted layer can express deletions.
+
+The layer target fails when it runs if the tar is:
+
+- not a tar, or truncated;
+- gzipped (decompress it first);
+- empty (no entries);
+- carrying an entry with an absolute path or a `..` component, a hardlink to
+  one, or a hardlink with no target;
+- followed by anything but zero padding (two tars concatenated, say).
+
+:::warning
+Reproducibility is the producing target's job. The layer's digest follows the
+tar's bytes, so a tar carrying a build time or the builder's uid makes a new
+layer, and a new image, on every build.
+:::
 
 #### `oci.image` fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `base` | `string` | unset | Base image — an `oci.pull(layout = True)` (or another `oci.image`) target. Omitted, the image starts from scratch. This target's layers go on top; the base's config (`Env`, `Entrypoint`, `Cmd`, `User`, `WorkingDir`, `Labels`, `ExposedPorts`) is inherited, and anything set below wins. A multi-platform build needs a base with an instance per platform: `oci.pull(layout = True, all_platforms = True)`. |
-| `layers` | `string[]` | `[]` | `oci.layer` targets, bottom to top. Order matters — a later layer's file shadows the same path in an earlier one. |
-| `layers_by_platform` | dict of platform → `string[]` | `{}` | Layers that differ per platform, appended after `layers`. Every platform in `platforms` needs an entry and vice versa — a missing one would silently ship an image without its binary for that platform. |
+| `layers` | `string[]` | `[]` | `oci.layer` targets, bottom to top. Order matters — a later layer's file shadows the same path in an earlier one. Only `oci.layer` targets (or a `group` re-exporting exactly one) are accepted; see [Layers must be `oci.layer` targets](#layers-must-be-ocilayer-targets). |
+| `layers_by_platform` | dict of platform → `string` or `string[]` | `{}` | Layers that differ per platform, appended after `layers`. Each value is one `oci.layer` target or a list of them. Every platform in `platforms` needs an entry and vice versa — a missing one would silently ship an image without its binary for that platform. |
 | `platforms` | `string[]` | **required** | Target platforms, e.g. `["linux/amd64", "linux/arm64"]`. No default: `platforms` is a label written into the image config with nothing relating it to `layers`, so defaulting to the host's architecture would let an `amd64` laptop and an `arm64` CI runner build different images from one BUILD file, or let an `amd64` binary ship inside a config claiming `arm64` — an `exec format error` at run time, correctly cached, with no build-time error. |
 | `entrypoint` | `string[]` | `[]` | The image's entrypoint (`ENTRYPOINT`). Setting it clears any `cmd` inherited from the base, mirroring a Dockerfile's `ENTRYPOINT`. |
 | `cmd` | `string[]` | `[]` | The image's default arguments (`CMD`). |
@@ -220,6 +257,19 @@ preserved (never followed); and the layer is written uncompressed.
 
 Like `oci.docker_build`, `oci.image` has a default output group (the
 archive/layout) plus a `digest` group holding the image digest as text.
+
+#### Layers must be `oci.layer` targets
+
+Every entry in `layers` and `layers_by_platform` must be an `oci.layer`
+target, or a `group` re-exporting exactly one. Anything else — a binary, a
+config file, a tar written by a script — fails the image build, naming the
+entry. Without this check its output would be shipped as a layer blob as it
+is, and a container runtime would only reject it at deploy.
+
+The check runs when the image target runs, not at `heph query` or
+`heph validate`. To fix it, put an `oci.layer` in between: wrap the files with
+`srcs` and `prefix`, or, when the target already produces a tar, adopt it with
+`tar`.
 
 ## Multi-platform images
 
