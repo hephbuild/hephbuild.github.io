@@ -25,14 +25,10 @@ heph run -e 'label(fix)'            # apply every fix in the workspace
 ```
 
 :::warning
-`//...` includes `build-format`, so `heph run //...` rewrites every unformatted
+`//...` includes `build-format`, so `heph run -e '//...'` rewrites every unformatted
 BUILD file in place. It also includes the two checks, which fail on an
 unformatted file or a type error.
 :::
-
-`heph tool build-fmt` stays: use it for ad-hoc and editor formatting, and
-`build-format` for the cached gate. Both produce the same output. See
-[Formatting BUILD files](./formatting-build-files.md).
 
 ## In CI
 
@@ -267,13 +263,13 @@ made to it.
 ## Shadowing
 
 There are no reserved names. A target you declare as `build-format`,
-`build-format-check` or `build-lint-check` shadows the check: `heph run //...`
+`build-format-check` or `build-lint-check` shadows the check: `heph run -e '//...'`
 runs your target instead. `heph validate` fails on every such conflict, names
 where the target was declared, and tells you to rename or remove it.
 
 ## What changes on upgrade
 
-- `heph run //...` now formats BUILD files in place and can fail on type errors
+- `heph run -e '//...'` now formats BUILD files in place and can fail on type errors
   or unformatted files.
 - `label(fix)` and `label(format)` now include `build-format`;
   `label(lint-check)` and `label(format-check)` now include the BUILD checks.
