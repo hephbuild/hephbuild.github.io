@@ -100,6 +100,44 @@ Cached locally, never remotely — the captured environment names this
 machine's own nix store paths, and publishing it would let one host's
 resolution key another's builds.
 
+## Keeping the environment alive
+
+The captured environment names nix store paths, so heph keeps them from being
+garbage-collected. Each run of a devenv runner adds a nix GC root covering
+every store path the environment names, at:
+
+```
+<home>/devenv-runner/gcroots/<one per runner>
+```
+
+`<home>` is `.heph/` under the workspace root by default. If a
+`nix-collect-garbage` removes those paths anyway, the cached runner becomes a
+cache miss and runs again, rather than handing targets an environment that
+points at deleted paths.
+
+- **`nix` must be on the `PATH` in `pass_env`.** When the environment names a
+  store path and `nix` can't be found there, the runner fails.
+- **One root per runner target**, replaced in place on each run. A failed run
+  keeps the previous root.
+- **heph never removes them.** `heph tool clean` and `heph tool gc` leave
+  `<home>/devenv-runner/` alone, and a runner that is deleted or renamed leaves
+  its root behind. While a root exists, `nix-collect-garbage` keeps the whole
+  environment — typically the toolchain and its dependencies.
+
+To release them, delete the directory:
+
+```bash
+rm -rf .heph/devenv-runner/gcroots
+```
+
+The next `nix-collect-garbage` may then collect those paths; any runner whose
+paths were collected re-runs on its next build and creates its root again.
+
+:::note
+After upgrading heph, every devenv runner re-runs once to create its root.
+Targets that use it keep their cache keys.
+:::
+
 ## Logs
 
 While the runner target resolves the environment, devenv's progress output
