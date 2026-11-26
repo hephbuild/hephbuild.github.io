@@ -55,6 +55,62 @@ heph validate
 
 It reports every problem it finds, not just the first one.
 
+## Machine-readable results
+
+`heph run --json` prints one JSON entry per matched target on stdout, written
+as each one finishes. Everything else — failure boxes, warnings — stays on
+stderr, and the exit code is the same as without `--json`.
+
+```bash title="terminal"
+heph run //... --json
+heph run test //... --jq '.[] | select(.outcome == "failed") | .addr'
+heph run //cmd/server:bin --fields +outputs
+```
+
+Entries come in completion order, not address order. A dependency the
+selector did not match gets no entry.
+
+| Field | Meaning |
+|---|---|
+| `addr` | The target's address. |
+| `outcome` | `cached`, `ran`, `failed`, `blocked` or `cancelled`. |
+| `cache` | `local`, `remote` or `miss`; `null` when no cache was consulted (`--force`, caching off, or it failed before the lookup). |
+| `remote` | The name of the remote cache a `remote` hit came from. |
+| `duration_ms` | From the start of its resolution to its end. |
+| `exit_code` | Its process's exit code: `0` for `ran`, the code for a failed run; `null` when nothing ran or a signal ended it. |
+| `timed_out` | It failed because its run outlasted its `timeout`. |
+| `error` | Why it failed, on one line; `null` on success. |
+| `blocked_by` | For `blocked`: the failed dependency at the root of it. |
+| `failure` | `{log, out, fixes}`, as [`heph inspect failure`](/docs/guides/failure-outputs#finding-a-failure) prints it; `null` unless it failed running. |
+| `outputs` | Not printed by default. Its output files, as `--list-out` prints them. Selecting it downloads a remote hit's outputs. |
+| `hashin` | Not printed by default. Its input hash. |
+
+The outcomes:
+
+| Outcome | Means |
+|---|---|
+| `cached` | No process ran; the result came from a cache (`cache` says which). |
+| `ran` | It ran and succeeded. A cache hit whose blobs turned out to be gone is rebuilt and reads as a miss. |
+| `failed` | Its own run failed, or resolving it did. |
+| `blocked` | It did not run because a dependency failed. |
+| `cancelled` | Ctrl-C stopped the run while it was pending. |
+
+`--fields` picks the fields (`+outputs` adds one to the defaults, `--fields
+help` lists them) and `--jq` filters the list inside heph, with no `jq`
+installed.
+
+The list is closed with `]` only when it is whole. A `--fail-fast` stop, a
+package that could not be evaluated, or Ctrl-C leaves it open, so `jq` rejects
+it instead of reading a short list as complete. A failed target does not.
+
+:::note
+`--shell`, `--cat-out`, `--list-out` and `--raw` need stdout or the terminal,
+so they are refused with `--json`, `--fields` or `--jq` (exit 2). `--copy-out`
+and `--output` combine with it. An [entrypoint](/docs/guides/entrypoints) has
+no JSON form: `heph run <entrypoint> --json` is refused before anything runs
+(exit 2).
+:::
+
 ## Upload what a failure kept
 
 heph uploads nothing itself. Add a step that uploads failure slots, so the

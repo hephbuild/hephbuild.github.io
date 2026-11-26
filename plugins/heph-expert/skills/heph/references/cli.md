@@ -35,6 +35,21 @@ heph run <LABEL> <PACKAGE_MATCHER>
 | `-e`, `--exclude <ADDR>` | Exclude a target address (repeatable). |
 | `--frozen` | Fail if generated output differs from the tree (CI codegen check). |
 | `--keep-failed-sandboxes` | Keep a failed target's sandbox on disk (until its next run) instead of removing it; the failure box prints its path. Global flag. |
+| `--json` / `--fields a,b` / `--jq EXPR` | Print one JSON entry per matched target on stdout, in completion order (see below). Exit code and stderr unchanged. Refused (exit 2) with `--shell`, `--cat-out`, `--list-out`, `--raw`, and on an entrypoint. |
+
+`heph run --json` fields (default unless noted): `addr`; `outcome`
+(`cached`/`ran`/`failed`/`blocked`/`cancelled`); `cache`
+(`local`/`remote`/`miss`, null when no cache consulted, e.g. `--force`);
+`remote` (remote cache name of a `remote` hit); `duration_ms`; `exit_code`
+(0 for `ran`, the code for a failed run, null if nothing ran or a signal ended
+it); `timed_out`; `error` (one line, null on success); `blocked_by` (for
+`blocked`: the failed dependency at the root); `failure` (`{log, out, fixes}`
+as `heph inspect failure`, null unless it failed running); `outputs` (opt-in,
+as `--list-out`; downloads a remote hit's outputs); `hashin` (opt-in, built).
+A dependency the selector did not match gets no entry. The list is left
+without its `]` when `--fail-fast` stopped the walk, a package could not be
+evaluated, or Ctrl-C — not for a failed target. `heph run test //... --jq '.[]
+| select(.outcome == "failed") | .addr'` lists failed targets.
 
 Examples:
 ```bash
