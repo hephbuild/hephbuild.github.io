@@ -18,7 +18,8 @@ progress in GitHub Actions:
   tick, then holds off for 10 seconds before the next early update — so several
   targets failing together produce one refresh, not a burst of them.
 - **Step summary** — the full markdown is written once to
-  `$GITHUB_STEP_SUMMARY` when the command finishes.
+  `$GITHUB_STEP_SUMMARY` when the command finishes. It includes a table of the
+  slowest executed targets; see [Slowest targets](#slowest-targets).
 - **Failure annotations** — a `::error::` workflow command for each failing
   target, emitted the moment the failure is seen. See
   [Failure annotations](#failure-annotations).
@@ -167,6 +168,17 @@ starts the comment fresh — the previous build's sections are cleared when the
 first step of a new run writes to the comment. Steps within the same run
 continue to preserve each other's sections as described above.
 
+## Slowest targets
+
+The step summary lists up to 20 of the slowest targets the run executed, longest
+first. Only targets that ran and succeeded are listed — a cache hit or a failure
+is not.
+
+A target's duration covers its own execution: from when it starts running to
+when it finishes. Time spent waiting for its dependencies to build is not
+counted, so a quick target that depends on a slow one doesn't show up with the
+slow one's time. Targets that executed in under one second are left out.
+
 ## Failure annotations
 
 A failing target gets a GitHub Actions `::error::` annotation the moment its
@@ -255,6 +267,9 @@ options:
 `failures` lists only targets that failed on their own; a target blocked by
 one of those failures is counted in that entry's `blocked_count` instead of
 getting its own entry. Unset by default — no file is written.
+
+`slowest` holds the same targets as the summary's
+[slowest targets](#slowest-targets) table.
 
 The `cache` block counts targets, once per cacheable target per run:
 `local_hits + remote_hits + misses` is the number of targets that consulted the
