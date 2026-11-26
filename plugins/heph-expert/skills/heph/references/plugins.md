@@ -20,6 +20,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 
 | Plugin | Driver(s) | Purpose | Registration |
 |---|---|---|---|
+| Archive | `archive.extract`, `archive.create` | Unpack a `tar`/`tar.gz`/`tar.zst`/`zip` file into a directory; pack deps' outputs into a reproducible archive. No host `tar`/`unzip` needed. | Built-in, always on. |
 | Exec | `exec`, `bash` | Run shell commands in sandboxed builds; interactive `--shell` debugging. | Built-in; list under `plugins:` as `builtin: exec` (or `bash`). |
 | Filesystem | `fs` | Reference workspace files/globs as inputs. | Built-in, always on. |
 | Group | `group` | Bundle targets transparently (pass-through); add `include`/`exclude`/`strip_prefix`/`prefix`/`rename` to re-export deps' outputs filtered and relocated, without copying. | Built-in, always on. |
@@ -146,6 +147,24 @@ logic. Returns a `group` target.
 //@heph/query:cmd@package_prefix=cmd,exclude_provider=go
 //@heph/query:fast-tests@package_prefix=tests,label=fast
 ```
+
+### Archive (`archive.extract` / `archive.create`)
+- **`archive.extract`:** `src` = a target with exactly one output file (the
+  archive). `format` (`tar`, `tar.gz`, `tar.zst`, `zip`) is inferred from the
+  file suffix, else its magic bytes. `strip_components` (default 0), `out`
+  (directory, default the target name), `max_bytes` (default 4 GiB),
+  `max_entries` (default 1,000,000). Archives are untrusted: absolute/`..`
+  paths, symlinks escaping the output, devices/fifos and duplicate paths are
+  refused; modes normalized to `0755`/`0644`.
+- **`archive.create`:** `deps` (required) are packed; `format` from `out`'s
+  suffix or explicit (a contradiction is refused); `out` defaults to
+  `<name>.<format>`. Entry name = file's workspace-relative path, minus
+  `strip_prefix` (whole components; a file not under it is an error), plus
+  `prefix`. Output is byte-reproducible: sorted entries, owners cleared, modes
+  normalized, mtime 0 (zip: 1980-01-01), `SOURCE_DATE_EPOCH` ignored.
+- Both cache by default (`cache = False` / `{"remote": False}`); `resources`
+  defaults to `{"cpu": 1}`. A `|group` dep contributes all its outputs to the
+  key, and the group name is not in it.
 
 ### Group / Filesystem / Hostbin / Textfile
 - **Group:** bundle several targets as a single transparent, pass-through

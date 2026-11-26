@@ -33,6 +33,7 @@ through.
 
 | Plugin                  | Driver                                   | Purpose                                                              |
 |-------------------------|--------------------------------------------|--------------------------------------------------------------------------|
+| [Archive](./archive.md) | `archive.extract`, `archive.create`      | Unpacks archives into directories and packs target outputs into reproducible archives. |
 | [Exec](./exec.md)       | `exec`, `bash`, `sh`                     | Runs shell commands in sandboxed builds, with interactive debugging. |
 | [Filesystem](./fs.md)   | `fs`                                     | References workspace files and globs as build inputs.                |
 | [Group](./group.md)     | `group`                                  | Bundles targets transparently with no extra work.                    |

@@ -45,6 +45,7 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       items: [
         'plugins/index',
+        'plugins/archive',
         'plugins/buildfile',
         'plugins/devenv',
         'plugins/exec',
