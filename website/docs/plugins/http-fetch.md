@@ -51,7 +51,9 @@ not a silent fetch of the wrong file.
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `url` | `string` | required | URL template to fetch. |
-| `sha256` | `string` | none | Expected SHA-256 of the downloaded bytes, in hex. When set, a mismatch fails the build. When omitted, the file is fetched **unverified** — the target is only as reproducible as the remote server, and a warning naming the actual hash is logged so you can pin it. |
+| `sha256` | `string` | none | Expected SHA-256 of the downloaded bytes, in hex. When set, a mismatch fails the build. When omitted, the file is fetched **unverified** — the target is only as reproducible as the remote server, and a warning naming the actual hash is logged so you can pin it (unless `cache = False` or `unpinned = True`). |
+| `unpinned` | `bool` | `false` | The content deliberately has no `sha256`. Silences the unverified-download warning. Cannot be combined with `sha256`. See [Unpinned content](#unpinned-content). |
+| `refresh` | `list[string]` | `[]` | Only with a computed `url` (`${read://…}`). Targets to refresh when the server answers 404, as addresses relative to the package (`[":tool_release"]`). See [Stale computed URLs](#stale-computed-urls). |
 | `out` | `string` | the URL's last path segment | Output filename, relative to the target's package. Required when the URL has no usable last segment (for example one ending in `/`). |
 | `executable` | `bool` | `false` | Mark the fetched file executable. |
 | `cache` | `bool` or dict | both tiers on | Caching for the fetched file. See [Cache control](#cache-control). |
@@ -84,6 +86,48 @@ target(
     cache = {"remote": False},   # keep local-only
 )
 ```
+
+## Unpinned content
+
+Some content cannot be pinned with a `sha256` but still means the same thing
+every time — an API response that carries a download counter, for example.
+Set `unpinned = True` to say so:
+
+```python title="BUILD"
+target(
+    name = "release_json",
+    driver = "http_fetch",
+    url = "https://api.example.com/releases/v1.2.3",
+    out = "release.json",
+    unpinned = True,
+)
+```
+
+The fetch is still cached. `unpinned` only silences the warning; it doesn't
+change the cache key or the output. By setting it you assert the content is
+stable — heph doesn't check. The cache key is the URL and headers, not the
+bytes, so refresh a stale entry with `heph run --force <target>`.
+
+## Stale computed URLs
+
+When `url` is the output of another target (`${read://pkg:name}`) and that
+target computed it from a cached lookup, the lookup can go stale and the URL
+can stop existing. On a 404, the error says the URL may come from a stale
+lookup. List that lookup in `refresh` and the error prints the exact command
+to run:
+
+```python title="BUILD"
+target(
+    name = "tool",
+    driver = "http_fetch",
+    url = "${read://tools:tool_url}",
+    out = "tool",
+    refresh = [":release_json"],
+)
+```
+
+A 404 on `//tools:tool` then tells you to run
+`heph run --force //tools:release_json` and build again.
 
 ## Notes
 
