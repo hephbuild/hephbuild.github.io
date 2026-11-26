@@ -138,6 +138,27 @@ excludes directories from the walk (vendored code, generated trees, etc.).
 when most targets in the workspace share the same driver. An explicit `driver`
 in `target()` always takes precedence. Authoring details in `authoring.md`.
 
+Every package with a BUILD file gets three targets: `build-lint-check` (static
+typecheck of `def` bodies only — top-level code is checked at evaluation;
+labels `build-lint-check`, `lint-check`), `build-format-check` (labels
+`build-format-check`, `format-check`) and `build-format` (rewrites files in
+place; labels `build-format`, `format`, `fix` — so `label(fix)` reformats
+BUILD files). Select them by label; never advise running `//...`. CI:
+`heph validate && heph run -e 'label(lint-check) || label(format-check)'`.
+`requireTypeAnnotations: true` requires a type on every `def` parameter
+(return types and scalar-literal-default parameters are inferred; a `[]`/`{}`/`()`
+default still needs an annotation with no `Any`, e.g. `srcs: list[str] = []`).
+`heph.types.<Alias>` (`Deps`, `Env`, `Labels`, `PassEnv`, `RuntimePassEnv`,
+`Tools` — each includes `None` — and `Number` = `int | float`) types wrapper
+parameters that forward to `target()`. `heph.types.<driver>.Kwargs` (e.g.
+`heph.types.bash.Kwargs`, `heph.types.oci.image.Kwargs`; registered drivers
+only) types a wrapper's `**kwargs` per key: `target()`'s fields minus `driver`
+plus the driver's fields, closed (unknown key = type error), every key optional
+and `None`-accepting; checked by lint and at evaluation. A file is checked only by the package whose directory
+holds it — name shared helpers `*.BUILD`. A user target with a check's name
+shadows it; `heph validate` fails on that. Full page:
+<https://hephbuild.github.io/docs/guides/checking-build-files>.
+
 ### Query (provider)
 Address the `@heph/query` package with matcher args; combining matchers is AND
 logic. Returns a `group` target.

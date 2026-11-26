@@ -1,0 +1,286 @@
+---
+title: "Checking BUILD files"
+sidebar_position: 5
+description: Typecheck and format-check BUILD files with the build-lint-check, build-format-check and build-format targets every package gets.
+---
+
+# Checking BUILD files
+
+Every package with a BUILD file gets three targets. They are always on, and
+need no setup beyond the `buildfile` plugin:
+
+| Target | Does | Writes | Labels |
+|---|---|---|---|
+| `//<pkg>:build-lint-check` | Statically typechecks the package's own BUILD files. With [`requireTypeAnnotations`](#requiring-type-annotations), also requires a type on every `def` parameter. | nothing | `build-lint-check`, `lint-check` |
+| `//<pkg>:build-format-check` | Fails when a file differs from the formatter's output, the same rule as `heph tool build-fmt --check`. | nothing | `build-format-check`, `format-check` |
+| `//<pkg>:build-format` | Rewrites the package's files to the formatter's output. | the package's BUILD files | `build-format`, `format`, `fix` |
+
+The labels match the Go plugin's, so one label run covers both languages. All
+three are cached locally, never remotely.
+
+```bash title="terminal"
+heph run //pkg:build-lint-check     # typecheck one package
+heph run //pkg:build-format         # format one package in place
+heph run -e 'label(fix)'            # apply every fix in the workspace
+```
+
+:::note
+`build-format` carries the `fix` and `format` labels, so a run of either label
+also rewrites unformatted BUILD files in place.
+:::
+
+## In CI
+
+```bash title="terminal"
+heph validate && heph run -e 'label(lint-check) || label(format-check)'
+```
+
+A bare `label()` in `-e` selects across the whole workspace, wherever it is run
+from. Run `heph validate` first: it is what reports a
+[shadowed check](#shadowing).
+
+## What the typecheck covers
+
+`build-lint-check` checks without executing anything, and it checks only the
+**body of each `def`**. Top-level statements are not statically checked:
+
+```python title="BUILD"
+def lib(name: str) -> None:
+    n: int = name          # reported: type-error, inside a def
+
+x: int = "s"               # not reported: top level
+lib(1)                     # not reported: top level
+```
+
+A bad top-level statement still fails: evaluation runs it with runtime type
+checks, so `heph run`, `heph query` and `heph validate` report it. A passing
+`build-lint-check` means every def body typechecks, not the whole file.
+
+Lambdas cannot be annotated, so they are exempt.
+
+## Inferred types
+
+Two types are inferred, so their annotations are optional and calls are still
+checked against them:
+
+- **The return type** of a top-level `def`: the union of what its `return`s
+  give, plus `None` when the body can run off its end.
+- **A parameter with a literal default** takes the literal's type:
+
+| Default | Inferred type |
+|---|---|
+| `1`, `-1` | `int` |
+| `1.5`, `-1.5` | `int \| float` (same as `heph.types.Number`) |
+| `"s"` | `str` |
+| `True`, `False` | `bool` (only while the file never rebinds `True`/`False`) |
+| `[]`, `{}`, `()` (empty or not) | a `list`, `dict` or `tuple` of `Any`: callers are held to the container, never its elements |
+
+A container default does not say what goes in it, so with
+[`requireTypeAnnotations`](#requiring-type-annotations) on, such a parameter
+still needs an annotation with no `Any` in it: write `srcs: list[str] = []`.
+Only a type inferred from a default is held to that; an annotation you write
+may contain `Any`.
+
+Any other default infers nothing, so the parameter needs an annotation: `None`,
+a name (`x = DEFAULT`), a call, an operator (`1 + 1`, `not True`), and `...`.
+
+An annotation always wins over the default. To accept more than the default's
+type, annotate the parameter:
+
+```python title="defs.BUILD"
+def scaled(n: heph.types.Number = 1): ...        # accepts a float too
+def named(name: str | None = ""): ...            # accepts None
+def lib(deps: heph.types.Deps = []): ...         # accepts one address or a map
+```
+
+Only `build-lint-check` checks inferred types. Evaluation checks annotations
+alone, so it accepts any argument for a parameter typed only by its default.
+
+### Allowing `None`
+
+A parameter takes `None` only when its annotation says `| None`, or when it is
+a [field alias](#hephtypes), which includes `None`. An inferred type never
+includes `None`.
+
+| Parameter | Takes `None` | Type checked by |
+|---|---|---|
+| `s: str` | no | lint and evaluation |
+| `s: str \| None = None` | yes | lint and evaluation |
+| `s = ""` | no | lint only |
+| `s = None` | yes, and any other value | nothing; `requireTypeAnnotations` reports it |
+| `deps: heph.types.Deps = None` | yes | lint and evaluation |
+| `n: heph.types.Number \| None = None` | yes; `heph.types.Number` alone does not | lint and evaluation |
+
+## `heph.types`
+
+`heph.types.X` names what `target()` accepts for one field, so a wrapper `def`
+can type the parameters it passes through instead of falling back to
+`**kwargs`:
+
+```python title="defs.BUILD"
+def lib(name: str, deps: heph.types.Deps = None, labels: heph.types.Labels = None):
+    target(name = name, driver = "bash", run = "true", labels = labels, transitive = {"deps": deps})
+```
+
+| Alias | Means |
+|---|---|
+| `Deps`, `Env`, `Labels`, `PassEnv`, `RuntimePassEnv`, `Tools` | What `target()` accepts for that field, **`None` included** |
+| `Number` | `int \| float`; does not include `None` |
+
+A field alias widens with its field and never narrows. `transitive` and
+`approval` have no alias; a driver's own fields are typed by its
+[`Kwargs`](#driver-kwargs). An unknown name such as `heph.types.Nope` fails
+before evaluation and lists the known aliases and driver namespaces. In the
+editor, `heph.types.` completes the aliases, then the driver namespaces, and
+each alias shows its expansion on hover.
+
+`target(labels = None)` means labels left out, so a wrapper can pass
+`labels: heph.types.Labels = None` straight through.
+
+### Driver kwargs
+
+`heph.types.<driver>.Kwargs` types a wrapper's `**kwargs` key by key, for one
+driver. `<driver>` is the name `target(driver = …)` takes, dots included:
+`heph.types.bash.Kwargs`, `heph.types.oci.image.Kwargs`.
+
+```python title="defs.BUILD"
+def lib(name: str, **kwargs: heph.types.bash.Kwargs):
+    target(name = name, driver = "bash", **kwargs)
+
+def app():
+    lib(name = "a", run = "echo")   # ok
+    lib(name = "a", run = 1)        # type-error: wrong type for `run`
+    lib(name = "a", rnu = "echo")   # type-error: unknown key `rnu`
+```
+
+`heph.types.<driver>` exists only for drivers that are registered. A builtin
+such as `bash` registers its driver only when `.hephconfig` `plugins:` lists
+it, so the example needs `bash` there.
+
+| Rule | |
+|---|---|
+| Keys | `target()`'s own fields except `driver`, plus the driver's fields. A driver field named like a `target()` field takes `target()`'s type. |
+| Closed | A key `Kwargs` does not list is a type error. |
+| Optional | Every key is optional and accepts `None`. A missing required field is reported by `target()` at evaluation. |
+| `transitive`, `approval` | Typed `dict[str, typing.Any]`. |
+| Float fields | Typed `int \| float`, so an int is accepted, as the field does. |
+| Inside the def | `kwargs` is a dict of the keys' types, so forwarding it to `target()` typechecks. |
+
+Both `build-lint-check` and evaluation check every call. Lint reports at the
+argument, without naming the key:
+
+```text
+pkg/BUILD:6:21: type-error: Expected type `None | str | list[str]` but got `int`
+pkg/BUILD:7:21: type-error: Unexpected parameter named `rnu`
+```
+
+Evaluation fails the call and names the key:
+``Unexpected key `rnu` for argument `kwargs`; known keys: …``, or
+``Value `1` of type `int` for key `run` does not match the type annotation …``.
+
+`heph.types.nope.Kwargs` fails before evaluation, naming the drivers that have
+one and pointing at `.hephconfig` `plugins:`. `heph.types.bash.Nope` names the
+members that exist.
+
+`Kwargs` follows the registered driver; it is not a frozen copy:
+
+- A driver removed, renamed or left out of `plugins:` fails every file that
+  names its `Kwargs` before evaluation, including a file that only `load()`s a
+  wrapper using it.
+- A driver field removed or narrowed fails the calls that pass it.
+- A driver field added widens the type.
+
+In the editor, `heph.types.<driver>.` completes `Kwargs` and the namespaces
+under it. Hovering `Kwargs` lists its keys and their types, and marks each key
+the driver requires with `(required by the driver)`. The mark is informative:
+the key stays optional in the type.
+
+## Requiring type annotations
+
+Turn on `requireTypeAnnotations` to require a type on every `def` parameter,
+`*args` and `**kwargs` included. The return type may be left out, and so may
+the type of a parameter with a scalar literal default (not `None`, and not a
+list, dict or tuple; see [Inferred types](#inferred-types)).
+
+```yaml title=".hephconfig"
+plugins:
+  - builtin: buildfile
+    options:
+      requireTypeAnnotations: true   # default false
+```
+
+The typecheck always runs; only the annotation rule sits behind the option.
+With it on, the [editor](./editor-setup.md) also marks each missing annotation
+at its parameter. Type errors are not shown in the editor; only
+`build-lint-check` reports them.
+
+:::note
+A profile's `builtin: buildfile` entry replaces the base entry wholesale, so it
+must repeat `requireTypeAnnotations` (and `patterns`, `indent`) to keep them.
+:::
+
+## Reading a failure
+
+One line per finding, sorted by file, line and column, then a count line:
+
+```text
+pkg/BUILD:3:9: annotation: parameter `x` of `make_lib` has no type; add `: <type>`
+pkg/BUILD:7:10: annotation: parameter `srcs` of `make_bin` is typed `list` by its default, a list of `Any`; add a type with no `Any`, e.g. `: list[str]`
+pkg/defs.BUILD:12:5: type-error: Expected type `str` but got `int`
+3 findings in //pkg
+annotations are required by requireTypeAnnotations in .hephconfig (plugins: buildfile, options)
+```
+
+The last line appears only when there is an `annotation:` finding. A parameter
+named like a field alias gets that alias suggested: `deps = []` ends with
+``add `: heph.types.Deps` ``. A dict default suggests `dict[str, str]` and a
+tuple default `tuple[str, ...]`; put in the element types the parameter really
+takes.
+
+`build-format-check` prints a `format: not formatted` line per file, naming the
+first line that differs, and ends with `run heph run //pkg:build-format to fix`.
+
+The lines go to the target's failure log. Read it with
+`heph inspect failure <addr>`, or get its path with
+`heph inspect failure --json <addr>`. See
+[Failure outputs](./failure-outputs.md).
+
+## Which package checks a file
+
+A file is checked and formatted by the package whose directory holds it, never
+by a package that only loads it. A loaded file's types still apply to the calls
+made to it.
+
+- **Name shared helpers `*.BUILD`.** A `defs.BUILD` next to a BUILD file belongs
+  to that package, so it is checked and formatted.
+- **Unowned files are not checked.** A non-BUILD file (`defs.star`) that only
+  other packages load, or a loaded file in a directory with no BUILD file, is
+  never checked itself. Editing it still re-runs every check that loads it.
+- **Symlinked files are never checked or formatted** by the package holding the
+  link, only by the package that owns the link's target, if any.
+
+## Shadowing
+
+There are no reserved names. A target you declare as `build-format`,
+`build-format-check` or `build-lint-check` shadows the check: your target is used in its
+place. `heph validate` fails on every such conflict, names
+where the target was declared, and tells you to rename or remove it.
+
+## What changes on upgrade
+
+- `label(fix)` and `label(format)` now include `build-format`, so running them
+  rewrites unformatted BUILD files in place.
+- `label(lint-check)` and `label(format-check)` now include the BUILD checks,
+  so they can fail on type errors or unformatted BUILD files.
+- Calls to an unannotated `def` are checked against its inferred return type,
+  and a parameter with a literal default has that literal's type. Common new
+  findings: `f(1.5)` against `n = 1`, `f(None)` against `name = ""`, and passing
+  `deps = "//a:b"` to a wrapper declared with `deps = []`, which types it
+  `list`. Annotate the parameter to widen it (`deps: heph.types.Deps = []`).
+- With `requireTypeAnnotations` on, a parameter whose default is a list, dict
+  or tuple (`srcs = []`, `creds = {}`, `t = ()`) needs an annotation with no
+  `Any` in it. The finding suggests one.
+- An existing target named like a check keeps working but makes
+  `heph validate` fail until renamed.
+- A plugin named `types` no longer loads: the name is reserved for
+  `heph.types`.

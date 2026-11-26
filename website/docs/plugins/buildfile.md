@@ -48,6 +48,12 @@ plugins:
 | `skip` | `string[]` | `[]` | Workspace-relative glob patterns for directories to exclude from the BUILD file walk. |
 | `defaultDriver` | `string` | `""` | Driver name to use when a target omits `driver`. An explicit `driver` in `target()` always wins. |
 | `indent` | number | `4` | Indentation width in spaces per level, used by [`heph tool build-fmt`](/docs/guides/formatting-build-files). |
+| `requireTypeAnnotations` | `bool` | `false` | Require a type on every `def` parameter in `build-lint-check`. See [Checking BUILD files](/docs/guides/checking-build-files#requiring-type-annotations). |
+
+### Check targets
+
+Every package with a BUILD file gets `build-lint-check`, `build-format-check`
+and `build-format` targets. See [Checking BUILD files](/docs/guides/checking-build-files).
 
 ### Skipping directories
 
@@ -129,6 +135,7 @@ The plugin exposes a fixed set of builtins:
 | `get_pkg()` | the current package path | Compute addresses relative to where the BUILD file lives. Prefer `heph.core.pkg()`. |
 | `provider_state(provider, **kwargs)` | — | Hand package-level state to a provider. |
 | `heph.core` | namespace | Host platform info and current package. See [below](#hephcore--host-platform). |
+| `heph.types` | namespace | Type aliases for `target()` fields, to annotate wrapper `def`s. See [`heph.types`](/docs/guides/checking-build-files#hephtypes). |
 
 `file()` and `glob()` resolve to [filesystem](./fs.md) addresses; `query()`
 resolves to a [query](./query.md) address. All three drop straight into a
@@ -171,7 +178,7 @@ everything else is handed verbatim to the **driver**:
 |-------|----------|---------|
 | `name` | yes | The target's name within its package. |
 | `driver` | no* | The driver that executes it (`bash`, `go.golist`, `group`, …). Required when `defaultDriver` is not set. |
-| `labels` | no | A label or list of labels, used by [query](./query.md) and matchers. Each must match `[A-Za-z0-9_-]+` — a `target()` with a label outside that grammar fails to evaluate. |
+| `labels` | no | A label or list of labels (`None` means none), used by [query](./query.md) and matchers. Each must match `[A-Za-z0-9_-]+` — a `target()` with a label outside that grammar fails to evaluate. |
 | `transitive` | no | Sandbox settings propagated to targets that depend on this one. |
 | `approval` | no | `True`, or `{"required": True, "notice": [...]}` to gate execution on explicit user confirmation. See [Approval gates](/docs/concepts/approval). |
 

@@ -34,7 +34,8 @@ heph tool build-fmt --check
 ```
 
 A CI job that requires `--check` to pass keeps the workspace consistently
-formatted. See [Using heph in CI](/docs/guides/ci) for a representative setup.
+formatted. Every package also has cached `build-format-check` and
+`build-format` targets; see [Checking BUILD files](./checking-build-files.md). See [Using heph in CI](/docs/guides/ci) for a representative setup.
 
 ## Opting a file out
 
