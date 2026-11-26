@@ -28,7 +28,8 @@ heph run <LABEL> <PACKAGE_MATCHER>
 | Flag | Description |
 |---|---|
 | `--force` | Force execution, ignoring any cached result. |
-| `--shell` | Drop into an interactive shell in the target's sandbox instead of running it (bash driver). |
+| `--shell` | Drop into an interactive shell in the target's sandbox instead of running it (bash driver). Bare `--shell` enters the single target the run names (refused for a multi-target selection or a group of 2+). |
+| `--shell=ADDRESS` | Enter `ADDRESS` instead: any target the run resolves (a selected target, a group member, or a dependency). The rest builds without a terminal. Unknown/unreached address → warning, no shell, build continues. On its own (`heph run --shell=//a:b`) it is the same as `--shell //a:b`. |
 | `--cat-out` | Print output artifacts to stdout. |
 | `--list-out` | Print the output file list to stdout. |
 | `-e`, `--exclude <ADDR>` | Exclude a target address (repeatable). |
@@ -40,6 +41,7 @@ Examples:
 heph run //cmd/server:bin              # one target
 heph run test //...                    # every target labelled "test"
 heph run //cmd/server:bin --shell      # debug in the sandbox
+heph run --shell=//lib:core //cmd/server:bin  # build server, shell into its dep
 heph run build //... -e //vendor/...   # run, excluding a subtree
 ```
 
