@@ -24,10 +24,9 @@ heph run //pkg:build-format         # format one package in place
 heph run -e 'label(fix)'            # apply every fix in the workspace
 ```
 
-:::warning
-`//...` includes `build-format`, so `heph run -e '//...'` rewrites every unformatted
-BUILD file in place. It also includes the two checks, which fail on an
-unformatted file or a type error.
+:::note
+`build-format` carries the `fix` and `format` labels, so a run of either label
+also rewrites unformatted BUILD files in place.
 :::
 
 ## In CI
@@ -263,16 +262,16 @@ made to it.
 ## Shadowing
 
 There are no reserved names. A target you declare as `build-format`,
-`build-format-check` or `build-lint-check` shadows the check: `heph run -e '//...'`
-runs your target instead. `heph validate` fails on every such conflict, names
+`build-format-check` or `build-lint-check` shadows the check: your target is used in its
+place. `heph validate` fails on every such conflict, names
 where the target was declared, and tells you to rename or remove it.
 
 ## What changes on upgrade
 
-- `heph run -e '//...'` now formats BUILD files in place and can fail on type errors
-  or unformatted files.
-- `label(fix)` and `label(format)` now include `build-format`;
-  `label(lint-check)` and `label(format-check)` now include the BUILD checks.
+- `label(fix)` and `label(format)` now include `build-format`, so running them
+  rewrites unformatted BUILD files in place.
+- `label(lint-check)` and `label(format-check)` now include the BUILD checks,
+  so they can fail on type errors or unformatted BUILD files.
 - Calls to an unannotated `def` are checked against its inferred return type,
   and a parameter with a literal default has that literal's type. Common new
   findings: `f(1.5)` against `n = 1`, `f(None)` against `name = ""`, and passing

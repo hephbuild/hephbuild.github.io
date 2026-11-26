@@ -141,8 +141,8 @@ Every package with a BUILD file gets three targets: `build-lint-check` (static
 typecheck of `def` bodies only — top-level code is checked at evaluation;
 labels `build-lint-check`, `lint-check`), `build-format-check` (labels
 `build-format-check`, `format-check`) and `build-format` (rewrites files in
-place; labels `build-format`, `format`, `fix`). `//...` includes
-`build-format`, so `heph run -e '//...'` reformats BUILD files. CI:
+place; labels `build-format`, `format`, `fix` — so `label(fix)` reformats
+BUILD files). Select them by label; never advise running `//...`. CI:
 `heph validate && heph run -e 'label(lint-check) || label(format-check)'`.
 `requireTypeAnnotations: true` requires a type on every `def` parameter
 (return types and scalar-literal-default parameters are inferred; a `[]`/`{}`/`()`
