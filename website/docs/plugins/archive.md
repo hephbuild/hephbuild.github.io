@@ -69,6 +69,38 @@ target(
 )
 ```
 
+## Using an unpacked binary as a tool
+
+A [tool](./exec.md#tool-files) is one file. An unpacked directory is a tool
+only when it holds exactly one file; to put one binary from a larger archive on
+a target's `PATH`, pick it out with a [`group`](./group.md):
+
+```python title="tool/BUILD"
+target(name = "tool", driver = "group", deps = [":unpacked"],
+       include = ["tool/unpacked/bin/tool"])
+
+target(name = "use", driver = "bash", run = ["tool --version"],
+       tools = [":tool"])
+```
+
+An `include` matches a dep's paths either workspace-relative,
+`<package>/<out>/…` (here package `tool`, directory `unpacked`), or as the
+dep's own `BUILD` file writes them (`unpacked/bin/tool`). Run
+`heph inspect outputs //tool:unpacked` to list them.
+
+A filter on the tool reference does the same without a group, and takes the
+workspace-relative form only:
+
+```python title="tool/BUILD"
+tools = ["//tool:unpacked[tool/unpacked/bin/tool]"]
+```
+
+:::note
+The one-file rule is checked when the consumer runs, not by `heph query` or
+`heph validate`. An `include` that matches two files, or none, fails the
+consumer with an error naming the tool and the files it found.
+:::
+
 ## Extracting
 
 | Field              | Default         | Description |
@@ -183,6 +215,7 @@ a change.
 | `nothing to extract: strip_components = N removed every entry` | Count the leading directories of the listed entries and lower `strip_components`. |
 | `raise max_bytes` / `raise max_entries` | The archive is larger than the default bounds; set the option if that is expected. |
 | `set format` | The archive's name has no known suffix and its bytes match no format; set `format`. |
+| `tool target '…' must produce exactly 1 file, found N` | A tool is one file. Narrow it with a `group`'s `include` or a `[filter]`; see [Using an unpacked binary as a tool](#using-an-unpacked-binary-as-a-tool). |
 | `must produce exactly one file` | `src` has several outputs; point it at one file, with `\|group` if needed. |
 | `… not under strip_prefix …` | Use the suggested `strip_prefix`, narrow `deps`, or shorten `strip_prefix`. |
 | `` `format` is "zip" but `out` "x.tar.gz" names a "tar.gz" `` | Drop `format`, or rename `out`. |

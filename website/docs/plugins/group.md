@@ -110,6 +110,25 @@ Relative symlinks whose target stays inside the re-exported tree survive
 `include`/`exclude`/`rename` relocates only one end of the pair.
 :::
 
+### Using a group as a tool
+
+A filtering or relocating group whose result is **one file** can be used in
+`tools`, just like the target that produced the file. Use it to put one binary
+from a directory output, such as an [unpacked archive](./archive.md#using-an-unpacked-binary-as-a-tool),
+on a target's `PATH`, or to give a tool a new name:
+
+```python title="BUILD"
+target(name = "tool2", driver = "group", deps = [":bin"], rename = "tool2")
+
+target(name = "use", driver = "bash", run = ["tool2 > $OUT"], out = "out.txt",
+       tools = [":tool2"])
+```
+
+How many files the group holds is known only once it runs, so the one-file
+rule is checked when the consumer runs, not by `heph query` or `heph validate`.
+A group that re-exports two files, or none, fails the consumer with an error
+naming the group and the files it found.
+
 ### Diagnosing the result
 
 `heph inspect outputs <addr>` prints the paths a target actually produces.
