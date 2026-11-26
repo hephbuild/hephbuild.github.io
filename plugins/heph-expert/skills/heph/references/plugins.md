@@ -195,6 +195,14 @@ logic. Returns a `group` target.
   outputs filtered/relocated with zero copying — this makes the group a real,
   uncached target instead of a transparent one. `heph inspect outputs <addr>`
   shows the resulting paths.
+- **Group as a tool:** a filtering/relocating group whose result is exactly
+  one file works in `tools` (e.g. `include = ["pkg/unpacked/bin/tool"]` on an
+  `archive.extract` dep, or `rename = "newname"`). A `[filter]` on the tool
+  reference also works (workspace-relative path only):
+  `tools = ["//pkg:unpacked[pkg/unpacked/bin/tool]"]`. `include` matches
+  workspace-relative (`<package>/<out>/…`) or the dep's own BUILD-relative
+  path. The one-file check runs when the consumer runs, not at `heph query` /
+  `heph validate`; 0 or 2+ files fail the consumer naming the tool and files.
 - **Filesystem:** the `fs` driver; surfaces workspace files/globs as inputs
   (the target side of `file()`/`glob()`).
 - **Hostbin:** wraps host binaries as targets via generated wrapper scripts —
