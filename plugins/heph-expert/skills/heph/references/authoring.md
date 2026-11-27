@@ -10,6 +10,7 @@ deterministic Python dialect) discovered by the `buildfile` provider. Sources:
 - [`target()`: engine fields vs driver fields](#target-engine-fields-vs-driver-fields)
 - [`file()` and `glob()`](#file-and-glob)
 - [`heph.core`: host platform](#hephcore-host-platform)
+  - [`heph.core.matrix`: one declaration, many variants](#hephcorematrix-one-declaration-many-variants)
 - [`load()`: sharing symbols](#load-sharing-symbols)
 - [Exec driver fields](#exec-driver-fields)
 - [Dependency kinds](#dependency-kinds)
@@ -138,6 +139,59 @@ target(
 ```
 
 You can branch on platform with normal Starlark `if`.
+
+### `heph.core.matrix`: one declaration, many variants
+
+`heph.core.matrix(axes, cell=None, default=None, exclude=None, include=None)`
+calls `cell` once per combination of axis values (keyword args, one per axis)
+and returns `.cells` (each with `.axes` and `.value` = what `cell` returned)
+plus `.default` (the value of the cell `default` names; absent without
+`default`). The matrix declares nothing itself: targets a cell declares are
+ordinary targets. Cell order is the cross product (last axis fastest) minus
+`exclude`, then `include` (GitHub Actions rules).
+
+```python title="BUILD"
+ASSETS = {
+    "linux/amd64":  ("tool-x86_64-unknown-linux-gnu.tar.gz",  "<sha256>"),
+    "linux/arm64":  ("tool-aarch64-unknown-linux-gnu.tar.gz", "<sha256>"),
+    "darwin/arm64": ("tool-aarch64-apple-darwin.tar.gz",      "<sha256>"),
+}
+
+def _tool(platform):
+    asset, sha = ASSETS[platform]
+    return heph.gh.release_asset(
+        name = "tool." + platform.replace("/", "-"),  # axis value in the name
+        repo = "acme/tool",
+        tag = "v1.2.0",
+        asset = asset,
+        sha256 = sha,
+        extract = True,
+        strip_components = 1,
+    )
+
+TOOL = heph.core.matrix(
+    axes = {"platform": ["linux/amd64", "linux/arm64", "darwin/arm64"]},
+    cell = _tool,
+    default = {"platform": heph.core.os() + "/" + heph.core.arch()},
+)
+```
+
+`TOOL.default` is this host's tool (`tools = [TOOL.default]`);
+`[c.value for c in TOOL.cells]` is every platform's (`//p:tool.linux-amd64`, …).
+
+- Axis values are any Starlark value; a non-identifier axis name reaches a
+  `**kwargs` cell. `exclude` entries must match a cell (stale = error);
+  `include` entries name every axis; an include duplicating a present cell is
+  an error.
+- `default = {"platform": heph.core.os() + "/" + heph.core.arch()}` makes
+  `.default` host-dependent (consumers' cache keys move with the host) and
+  fails evaluation on a host with no cell. Inside a cell, take config from the
+  cell's arguments, not `heph.core.os()`/`arch()`.
+- Limits: at most 1,024 cells per call; a cell may not call `heph.core.matrix()`.
+- Not a configuration (deps aren't rebuilt per cell), not cross-execution, no
+  implicit context for plugin functions, no `@axis=value` address sugar.
+- Same address declared twice in one package with different configs is an
+  error (matrix or not); identical declarations collapse into one.
 
 ## `load()`: sharing symbols
 

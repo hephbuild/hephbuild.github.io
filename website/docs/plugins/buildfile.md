@@ -189,6 +189,10 @@ the named driver, which decides what it means. For the fields a given driver
 accepts, see that driver's page, e.g. [Exec](./exec.md) for `bash`/`exec`.
 :::
 
+Declaring the same address twice in one package with different configs is an
+error, in one BUILD file or across two. Identical declarations (the same helper
+called twice) collapse into one.
+
 `target()` returns the new target's address, so you can bind it to a variable
 and reference it from another target instead of retyping the address:
 
@@ -242,6 +246,7 @@ host platform so targets can vary by operating system or CPU architecture.
 | `heph.core.pkg()` | current package path | `"tools/build"` |
 | `heph.core.num_cpu()` | CPUs available to the process | `8` |
 | `heph.core.packages(matcher)` | matching workspace package paths | `["tools", "tools/build"]` |
+| `heph.core.matrix(axes, cell, default, exclude, include)` | one value per combination of axis values | See [Matrices](/docs/guides/matrices). |
 
 `heph.core.os()` and `heph.core.arch()` return normalized names that match
 the conventions used by container registries and most package distribution
