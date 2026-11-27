@@ -144,9 +144,31 @@ $ heph run 'lint && !go-lint' //...
 $ heph run -e 'label(lint) && !label(go-lint) && //...'
 ```
 
+### Selecting whole packages
+
+`heph run` refuses an expression that takes every target of whole packages
+unless you pass `--allow-all`. That is an expression bounded only by package
+paths or a negation: `//pkg`, `//pkg/...`, `//... && !//vendor/...`,
+`!label(slow)`. An address, `label()`, `driver()` or `tree_output()` joined
+with `&&` bounds it, and needs no flag.
+
+```bash
+heph run -e '//app/...'                       # refused
+heph run -e '//app/...' --allow-all           # every target under //app
+heph run -e '//app/... && label(test)'        # bounded by a label, no flag
+heph run -e '//... && !//vendor/...' --allow-all
+```
+
+A union is bounded only if each branch is: `label(test) || //c/...` needs the
+flag. The check reads the expression as written, so `!!label(x)` counts as
+unbounded too. The refusal happens before anything builds. The positional
+`all <PACKAGE_MATCHER>` form (`heph run all //app/...`) needs `--allow-all` as
+well. `heph query` never asks for the flag.
+
 :::note
 The old `-e`/`--exclude` flag was removed. Use `!` inside a query expression
-to exclude targets — for example `//... && !//vendor/...`.
+to exclude targets — for example `//... && !//vendor/...` (on `heph run`,
+with `--allow-all`).
 :::
 
 :::note
