@@ -20,7 +20,7 @@ own). Sources under `https://hephbuild.github.io/docs/plugins/` and
 
 | Plugin | Driver(s) | Purpose | Registration |
 |---|---|---|---|
-| Archive | `archive.extract`, `archive.create` | Unpack a `tar`/`tar.gz`/`tar.zst`/`zip` file into a directory; pack deps' outputs into a reproducible archive. No host `tar`/`unzip` needed. | Built-in, always on. |
+| Archive | `archive.extract`, `archive.create` | Unpack a `tar`/`tar.gz`/`tar.xz`/`tar.zst`/`zip`/bare `gz` file into a directory; pack deps' outputs into a reproducible archive. No host `tar`/`unzip` needed. | Built-in, always on. |
 | Exec | `exec`, `bash` | Run shell commands in sandboxed builds; interactive `--shell` debugging. | Built-in; list under `plugins:` as `builtin: exec` (or `bash`). |
 | Filesystem | `fs` | Reference workspace files/globs as inputs. | Built-in, always on. |
 | Group | `group` | Bundle targets transparently (pass-through); add `include`/`exclude`/`strip_prefix`/`prefix`/`rename` to re-export deps' outputs filtered and relocated, without copying. | Built-in, always on. |
@@ -177,14 +177,34 @@ logic. Returns a `group` target.
 
 ### Archive (`archive.extract` / `archive.create`)
 - **`archive.extract`:** `src` = a target with exactly one output file (the
-  archive). `format` (`tar`, `tar.gz`, `tar.zst`, `zip`) is inferred from the
-  file suffix, else its magic bytes. `strip_components` (default 0), `out`
-  (directory, default the target name), `max_bytes` (default 4 GiB),
-  `max_entries` (default 1,000,000). Archives are untrusted: absolute/`..`
+  archive). `format` (`tar`, `tar.gz`, `tar.xz`, `tar.zst`, `zip`, `gz`) is
+  inferred from the file suffix (longest wins: `x.tar.gz` → `tar.gz`, `x.gz` →
+  `gz`; `.tgz`/`.txz`/`.tzst` too), else its magic bytes. `strip_components`
+  (default 0; refused with `gz`), `include` (glob string/list, `group`
+  syntax, matched against the path after `strip_components`, e.g. `bin/tool`;
+  only matching files/links extracted; each pattern must match something or
+  the run fails listing the paths; a kept symlink/hard link whose target is
+  left out is an error; `"/x"`, `"./x"`, `"bin/"`, `"a//b"` refused at parse),
+  `executable` (`True` = every regular file `0755`; or glob patterns for some
+  files only; only ever adds the bit), `out` (directory, default the target
+  name), `max_bytes` (default 4 GiB of decoded bytes; tar entries left out are
+  still decoded and count), `max_entries` (default 1,000,000). Patterns are
+  case-sensitive, `*` matches dotfiles, `[!x]` negates, names compared byte
+  for byte (no NFC/NFD normalization). Archives are untrusted: absolute/`..`
   paths, symlinks escaping the output, devices/fifos and duplicate paths are
-  refused; modes normalized to `0755`/`0644`.
+  refused; modes normalized to `0755`/`0644`; xz decoder memory capped at
+  256 MiB.
+- **Bare `gz`** (one gzipped file, not a tar, e.g. a released binary):
+  unpacks to one file in `out` named after the archive minus `.gz`; gzip
+  records no mode, so use `executable = True`. Inferred `.gz` whose content is
+  a tar unpacks as `tar.gz`. Trailing garbage after the last member is an
+  error.
+- **One binary as a tool:** `archive.extract` with `include = "bin/tool"`
+  (plus `executable = True` if the archive has no modes) yields a one-file
+  output usable directly in `tools`.
 - **`archive.create`:** `deps` (required) are packed; `format` from `out`'s
-  suffix or explicit (a contradiction is refused); `out` defaults to
+  suffix or explicit (a contradiction is refused; `tar.xz` and `gz` are
+  read-only and refused); `out` defaults to
   `<name>.<format>`. Entry name = file's workspace-relative path, minus
   `strip_prefix` (whole components; a file not under it is an error), plus
   `prefix`. Output is byte-reproducible: sorted entries, owners cleared, modes
