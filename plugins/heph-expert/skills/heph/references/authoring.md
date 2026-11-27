@@ -10,6 +10,7 @@ deterministic Python dialect) discovered by the `buildfile` provider. Sources:
 - [`target()`: engine fields vs driver fields](#target-engine-fields-vs-driver-fields)
 - [`file()` and `glob()`](#file-and-glob)
 - [`heph.core`: host platform](#hephcore-host-platform)
+  - [`heph.core.matrix`: one declaration, many variants](#hephcorematrix-one-declaration-many-variants)
 - [`load()`: sharing symbols](#load-sharing-symbols)
 - [Exec driver fields](#exec-driver-fields)
 - [Dependency kinds](#dependency-kinds)
@@ -138,6 +139,48 @@ target(
 ```
 
 You can branch on platform with normal Starlark `if`.
+
+### `heph.core.matrix`: one declaration, many variants
+
+`heph.core.matrix(axes, cell=None, default=None, exclude=None, include=None)`
+calls `cell` once per combination of axis values (keyword args, one per axis)
+and returns `.cells` (each with `.axes` and `.value` = what `cell` returned)
+plus `.default` (the value of the cell `default` names; absent without
+`default`). The matrix declares nothing itself: targets a cell declares are
+ordinary targets. Cell order is the cross product (last axis fastest) minus
+`exclude`, then `include` (GitHub Actions rules).
+
+```python title="BUILD"
+def _test(go, race):
+    return target(
+        name = "test.go" + go + (".race" if race else ""),  # axis values in the name
+        driver = "bash",
+        run = "go test %s ./..." % ("-race" if race else ""),
+        tools = ["//tools/go:go" + go],
+    )
+
+TESTS = heph.core.matrix(
+    axes = {"go": ["1.22", "1.23"], "race": [False, True]},
+    cell = _test,
+    default = {"go": "1.23", "race": False},
+)
+target(name = "test", driver = "group", deps = [TESTS.default])
+target(name = "test-all", driver = "group", deps = [c.value for c in TESTS.cells])
+```
+
+- Axis values are any Starlark value; a non-identifier axis name reaches a
+  `**kwargs` cell. `exclude` entries must match a cell (stale = error);
+  `include` entries name every axis; an include duplicating a present cell is
+  an error.
+- `default = {"platform": heph.core.os() + "/" + heph.core.arch()}` makes
+  `.default` host-dependent (consumers' cache keys move with the host) and
+  fails evaluation on a host with no cell. Inside a cell, take config from the
+  cell's arguments, not `heph.core.os()`/`arch()`.
+- Limits: at most 1,024 cells per call; a cell may not call `heph.core.matrix()`.
+- Not a configuration (deps aren't rebuilt per cell), not cross-execution, no
+  implicit context for plugin functions, no `@axis=value` address sugar.
+- Same address declared twice in one package with different configs is an
+  error (matrix or not); identical declarations collapse into one.
 
 ## `load()`: sharing symbols
 
