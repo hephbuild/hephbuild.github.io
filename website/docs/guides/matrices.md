@@ -8,34 +8,52 @@ description: Declare many variants of a target — per Go version, per platform,
 
 A **matrix** is a cross product of axes. `heph.core.matrix()` calls a cell
 function once per combination of axis values and returns what each call
-returned. Use it to declare one target per Go version, per platform or per flag
+returned. Use it to declare one target per platform, per Go version or per flag
 set without writing each one out.
 
-```python title="BUILD"
-def _test(go, race):
-    return target(
-        name = "test.go" + go + (".race" if race else ""),
-        driver = "bash",
-        run = "go test %s ./..." % ("-race" if race else ""),
-        tools = ["//tools/go:go" + go],
+A common case is a tool released as one archive per platform, each pinned by
+its own `sha256`:
+
+```python title="tools/BUILD"
+ASSETS = {
+    "linux/amd64":  ("tool-x86_64-unknown-linux-gnu.tar.gz",  "<sha256>"),
+    "linux/arm64":  ("tool-aarch64-unknown-linux-gnu.tar.gz", "<sha256>"),
+    "darwin/arm64": ("tool-aarch64-apple-darwin.tar.gz",      "<sha256>"),
+}
+
+def _tool(platform):
+    asset, sha = ASSETS[platform]
+    return heph.gh.release_asset(
+        name = "tool." + platform.replace("/", "-"),
+        repo = "acme/tool",
+        tag = "v1.2.0",
+        asset = asset,
+        sha256 = sha,
+        extract = True,
+        strip_components = 1,
     )
 
-TESTS = heph.core.matrix(
-    axes = {"go": ["1.22", "1.23"], "race": [False, True]},
-    cell = _test,
-    default = {"go": "1.23", "race": False},
+TOOL = heph.core.matrix(
+    axes = {"platform": ["linux/amd64", "linux/arm64", "darwin/arm64"]},
+    cell = _tool,
+    default = {"platform": heph.core.os() + "/" + heph.core.arch()},
 )
-# [c.value for c in TESTS.cells] == ["//p:test.go1.22", "//p:test.go1.22.race",
-#                                    "//p:test.go1.23", "//p:test.go1.23.race"]
-# TESTS.default == "//p:test.go1.23"
+# [c.value for c in TOOL.cells] == ["//tools:tool.linux-amd64",
+#                                   "//tools:tool.linux-arm64",
+#                                   "//tools:tool.darwin-arm64"]
+# TOOL.default == this machine's cell, e.g. "//tools:tool.darwin-arm64"
 
-target(name = "test", driver = "group", deps = [TESTS.default])
-target(name = "test-all", driver = "group", deps = [c.value for c in TESTS.cells])
+target(name = "tool", driver = "group", deps = [TOOL.default])
+target(name = "tool-all", driver = "group", deps = [c.value for c in TOOL.cells])
 ```
 
+`TOOL.default` is this machine's tool (`tools = [TOOL.default]`), and
+`[c.value for c in TOOL.cells]` is every platform's, so a macOS laptop can
+bundle the `linux/arm64` one.
+
 The matrix itself declares nothing. A target a cell declares is an ordinary
-target, exactly as if the BUILD file had written that `target()` call itself:
-`:test.go1.22.race` is cached, queried and run like any other. A cell can also
+target, exactly as if the BUILD file had written that call itself:
+`:tool.linux-arm64` is cached, queried and run like any other. A cell can also
 declare nothing and just compute a value, such as a URL or a command line.
 
 A cell names its own targets. Put the cell's axis values in the name: two cells
@@ -89,41 +107,9 @@ each `.value` is that dict. The result is an ordinary value: a `.star` file can
 build it at top level, and other packages can `load()` it.
 
 There is no alias target for the default. If you want one stable name, declare
-a `group` over `M.default` yourself, as `:test` does above.
+a `group` over `M.default` yourself, as `:tool` does above.
 
-## Per-platform downloads
-
-A release that ships one asset per platform, each pinned by its own `sha256`:
-
-```python title="tools/BUILD"
-ASSETS = {
-    "linux/amd64":  ("tool-x86_64-unknown-linux-gnu.tar.gz",  "<sha256>"),
-    "linux/arm64":  ("tool-aarch64-unknown-linux-gnu.tar.gz", "<sha256>"),
-    "darwin/arm64": ("tool-aarch64-apple-darwin.tar.gz",      "<sha256>"),
-}
-
-def _tool(platform):
-    asset, sha = ASSETS[platform]
-    return heph.gh.release_asset(
-        name = "tool." + platform.replace("/", "-"),
-        repo = "acme/tool",
-        tag = "v1.2.0",
-        asset = asset,
-        sha256 = sha,
-        extract = True,
-        strip_components = 1,
-    )
-
-TOOL = heph.core.matrix(
-    axes = {"platform": ["linux/amd64", "linux/arm64", "darwin/arm64"]},
-    cell = _tool,
-    default = {"platform": heph.core.os() + "/" + heph.core.arch()},
-)
-```
-
-`TOOL.default` is this machine's tool (`tools = [TOOL.default]`), and
-`[c.value for c in TOOL.cells]` is every platform's, so a macOS laptop can
-bundle the `linux/arm64` one.
+## Host-dependent defaults
 
 :::warning
 A `default` built from `heph.core.os()` and `heph.core.arch()` depends on the
