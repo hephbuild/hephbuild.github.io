@@ -151,22 +151,33 @@ ordinary targets. Cell order is the cross product (last axis fastest) minus
 `exclude`, then `include` (GitHub Actions rules).
 
 ```python title="BUILD"
-def _test(go, race):
-    return target(
-        name = "test.go" + go + (".race" if race else ""),  # axis values in the name
-        driver = "bash",
-        run = "go test %s ./..." % ("-race" if race else ""),
-        tools = ["//tools/go:go" + go],
+ASSETS = {
+    "linux/amd64":  ("tool-x86_64-unknown-linux-gnu.tar.gz",  "<sha256>"),
+    "linux/arm64":  ("tool-aarch64-unknown-linux-gnu.tar.gz", "<sha256>"),
+    "darwin/arm64": ("tool-aarch64-apple-darwin.tar.gz",      "<sha256>"),
+}
+
+def _tool(platform):
+    asset, sha = ASSETS[platform]
+    return heph.gh.release_asset(
+        name = "tool." + platform.replace("/", "-"),  # axis value in the name
+        repo = "acme/tool",
+        tag = "v1.2.0",
+        asset = asset,
+        sha256 = sha,
+        extract = True,
+        strip_components = 1,
     )
 
-TESTS = heph.core.matrix(
-    axes = {"go": ["1.22", "1.23"], "race": [False, True]},
-    cell = _test,
-    default = {"go": "1.23", "race": False},
+TOOL = heph.core.matrix(
+    axes = {"platform": ["linux/amd64", "linux/arm64", "darwin/arm64"]},
+    cell = _tool,
+    default = {"platform": heph.core.os() + "/" + heph.core.arch()},
 )
-target(name = "test", driver = "group", deps = [TESTS.default])
-target(name = "test-all", driver = "group", deps = [c.value for c in TESTS.cells])
 ```
+
+`TOOL.default` is this host's tool (`tools = [TOOL.default]`);
+`[c.value for c in TOOL.cells]` is every platform's (`//p:tool.linux-amd64`, …).
 
 - Axis values are any Starlark value; a non-identifier axis name reaches a
   `**kwargs` cell. `exclude` entries must match a cell (stale = error);
