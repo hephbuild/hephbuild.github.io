@@ -96,6 +96,32 @@ def lib(deps: heph.types.Deps = []): ...         # accepts one address or a map
 Only `build-lint-check` checks inferred types. Evaluation checks annotations
 alone, so it accepts any argument for a parameter typed only by its default.
 
+### Functions and `Any`
+
+Every BUILD file has the `typing` namespace: `typing.Callable`, `typing.Any`,
+`typing.Iterable` and `typing.Never`. A parameter that takes a function names
+the function's parameter types and return type:
+
+```python title="defs.BUILD"
+def apply(fn: typing.Callable[[str], str], x: str) -> str:
+    return fn(x)
+
+def keep(xs: list[str], filter: list[str] | typing.Callable[[str], bool]) -> list[str]:
+    ...
+```
+
+`build-lint-check` checks a function passed there against that signature:
+`apply(_len, "s")`, with `def _len(s: str) -> int`, reports:
+
+```text
+type-error: Expected type `typing.Callable[[str], str]` but got `def(s: str) -> int`
+```
+
+Evaluation checks only that the argument is a function. Bare `typing.Callable`
+takes any function and `typing.Any` takes any value; both satisfy
+[`requireTypeAnnotations`](#requiring-type-annotations), and neither is
+checked any further.
+
 ### Allowing `None`
 
 A parameter takes `None` only when its annotation says `| None`, or when it is
@@ -130,7 +156,9 @@ def lib(name: str, deps: heph.types.Deps = None, labels: heph.types.Labels = Non
 A field alias widens with its field and never narrows. `transitive` and
 `approval` have no alias; a driver's own fields are typed by its
 [`Kwargs`](#driver-kwargs). An unknown name such as `heph.types.Nope` fails
-before evaluation and lists the known aliases and driver namespaces. In the
+before evaluation and lists the known aliases and driver namespaces.
+`heph.types.Callable`, `heph.types.Any` and the other `typing` names fail
+pointing at `typing.<name>` (see [Functions and `Any`](#functions-and-any)). In the
 editor, `heph.types.` completes the aliases, then the driver namespaces, and
 each alias shows its expansion on hover.
 

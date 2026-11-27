@@ -136,6 +136,7 @@ The plugin exposes a fixed set of builtins:
 | `provider_state(provider, **kwargs)` | — | Hand package-level state to a provider. |
 | `heph.core` | namespace | Host platform info and current package. See [below](#hephcore--host-platform). |
 | `heph.types` | namespace | Type aliases for `target()` fields, to annotate wrapper `def`s. See [`heph.types`](/docs/guides/checking-build-files#hephtypes). |
+| `typing` | namespace | `typing.Callable`, `typing.Any`, `typing.Iterable`, `typing.Never`, to annotate `def` parameters. See [Functions and `Any`](/docs/guides/checking-build-files#functions-and-any). |
 
 `file()` and `glob()` resolve to [filesystem](./fs.md) addresses; `query()`
 resolves to a [query](./query.md) address. All three drop straight into a

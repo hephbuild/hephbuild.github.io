@@ -154,7 +154,13 @@ parameters that forward to `target()`. `heph.types.<driver>.Kwargs` (e.g.
 `heph.types.bash.Kwargs`, `heph.types.oci.image.Kwargs`; registered drivers
 only) types a wrapper's `**kwargs` per key: `target()`'s fields minus `driver`
 plus the driver's fields, closed (unknown key = type error), every key optional
-and `None`-accepting; checked by lint and at evaluation. A file is checked only by the package whose directory
+and `None`-accepting; checked by lint and at evaluation. Starlark's `typing`
+namespace is a global in every BUILD file (`typing.Callable`, `typing.Any`,
+`typing.Iterable`, `typing.Never`): `fn: typing.Callable[[str], bool]` types a
+function parameter — lint checks the passed function's signature, evaluation
+only that it is a function; bare `typing.Callable` / `typing.Any` satisfy
+`requireTypeAnnotations` and are not checked further. `heph.types.Callable` /
+`heph.types.Any` fail pointing at `typing.<name>`. A file is checked only by the package whose directory
 holds it — name shared helpers `*.BUILD`. A user target with a check's name
 shadows it; `heph validate` fails on that. Full page:
 <https://hephbuild.github.io/docs/guides/checking-build-files>.
