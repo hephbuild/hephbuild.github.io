@@ -602,14 +602,12 @@ target(
     name = "load",
     driver = "oci.load",
     image = ":img",
-    tag = "app:runner",
 )
 
 target(
     name = "runner",
     driver = "oci.runner",
-    image = "app:runner",
-    deps = [":load"],
+    image = ":load",
 )
 
 target(
@@ -622,18 +620,38 @@ target(
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `image` | `string` | **required** | Image reference to run targets in, e.g. the tag `oci.load` gave it. Must already be in the local docker daemon. |
-| `deps` | `string[]` | `[]` | Targets that must build first — normally the `oci.load` target that puts `image` in the daemon. Hashed: rebuilding the image re-derives the runner. |
+| `image` | `string` | **required** | The image to run targets in: an `oci.load` target (`":load"`, `"//svc:load"`), or an image reference already in the local docker daemon (`"myimage:dev"`). |
 | `run_args` | `string[]` | `[]` | Extra `docker run` arguments for the held container — `--network`, additional `-v` mounts, `--user`. The workspace root and heph's own home are mounted automatically; do not repeat them here. |
+
+`image` is usually the `oci.load` target that puts the image in the daemon.
+The runner depends on it and uses the ref it loaded, so the ref is stated
+once, on the load, whether its `tag` is derived or fixed.
+
+`image` may instead be a literal reference, for an image put in the daemon
+from outside the build. The runner then depends on nothing.
+
+`oci.runner` takes no `deps`. Setting it is an error: name the `oci.load`
+target as `image` instead.
+
+The target named as `image` must write exactly one file holding one ref, as
+`oci.load` does. Anything else fails the runner, naming the target.
 
 One container is held open for the whole build and each target runs inside it
 with `docker exec`. The runner's fingerprint is the image's content digest,
 resolved from the daemon at build time — retagging the image moves the
-digest, which re-keys every target that runs under it.
+digest, which re-keys every target that runs under it. The container is
+launched by digest, so it is the image the fingerprint describes even if the
+tag moves mid-build.
 
-Cached locally, never remotely: the answer is a fact about this daemon's
-image store, and publishing it would let one machine's resolution key
-another's builds.
+The runner is never cached: it asks the daemon for the digest on every build,
+so a build that uses it fails when the daemon is down. Targets that run under
+it stay cache hits until the digest changes.
+
+:::warning
+With a fixed `tag` on the `oci.load`, two builds sharing one daemon can race:
+another build's load can retag the image between this build's load and its
+runner's inspect. A derived tag (no `tag`, or a repository only) is immune.
+:::
 
 ### Interactive shells
 
@@ -663,4 +681,4 @@ accept `cache` as a bare bool or a dict with up to three keys:
 A bare `True` sets both `enabled` and `remote` to `true`. A bare `False`
 disables both. `oci.push`, `oci.load`, and `oci.runner` have no `cache`
 field — as actions with an external side effect (or, for `oci.runner`, an
-answer scoped to this machine's own daemon), they're never remotely cached.
+answer scoped to this machine's own daemon), they're never cached.
