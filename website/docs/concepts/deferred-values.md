@@ -70,11 +70,12 @@ target normally with `deps` instead if you need those too.
 ## Where you can use one
 
 Support is per option, not per driver — an option only accepts a deferred
-value if its documentation says so. Three do today: the `run`, `env` and
+value if its documentation says so. Today they are: the `run`, `env` and
 `runtime_env` options on the [`exec` and `bash`](/docs/plugins/exec) drivers,
 the `env`/`files` values
 in a [credential](/docs/concepts/credentials)'s `present` block, and the `ref`
-option of [`oci.push`](/docs/plugins/oci#ocipush) (`${read://…}` only).
+option of [`oci.push`](/docs/plugins/oci#ocipush), [`oci.exists`](/docs/plugins/oci#ociexists)
+and [`oci.tag`](/docs/plugins/oci#ocitag) (`${read://…}` only).
 
 In `env` and `runtime_env`, only a variable's **value** may hold a reference,
 not its name. A `runtime_env` value stays out of the cache key as usual, but
