@@ -59,7 +59,7 @@ Dockerfile and with or without a daemon.
 
 | Plugin        | Driver                                                                                        | Purpose                                        |
 |---------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------|
-| [OCI](./oci.md) | `oci.docker_build`, `oci.image`, `oci.layer`, `oci.index`, `oci.pull`, `oci.push`, `oci.load`, `oci.runner` | Build an image (with a Dockerfile or from target outputs), group multi-platform images, move images between a registry, the cache, and a local docker daemon, and run targets inside a running container. |
+| [OCI](./oci.md) | `oci.docker_build`, `oci.image`, `oci.layer`, `oci.index`, `oci.pull`, `oci.push`, `oci.load`, `oci.exists`, `oci.tag`, `oci.runner` | Build an image (with a Dockerfile or from target outputs), group multi-platform images, move images between a registry, the cache, and a local docker daemon, check and retag images in a registry, and run targets inside a running container. |
 
 ## Runners
 

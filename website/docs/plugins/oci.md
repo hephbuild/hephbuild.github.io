@@ -10,7 +10,8 @@ The OCI plugin builds and moves container images. `oci.docker_build` builds one
 from a Dockerfile with `docker buildx`; `oci.image` assembles one directly
 from target outputs, with no Dockerfile, no daemon, and nothing executed.
 `oci.pull`, `oci.push`, and `oci.load` move an image between a registry,
-heph's cache, and a local docker daemon. `oci.index` groups images built
+heph's cache, and a local docker daemon; `oci.exists` and `oci.tag` check
+and retag an image already in a registry. `oci.index` groups images built
 separately, one per platform, into a single multi-platform image. `oci.runner`
 turns a running container into a [runner](/docs/concepts/runners) other
 targets can execute inside.
@@ -18,9 +19,9 @@ targets can execute inside.
 ## Driver
 
 A **driver** is the component that knows how to execute a target's action.
-This plugin registers eight drivers: `oci.docker_build`, `oci.image`,
-`oci.layer`, `oci.index`, `oci.pull`, `oci.push`, `oci.load`, and
-`oci.runner`.
+This plugin registers ten drivers: `oci.docker_build`, `oci.image`,
+`oci.layer`, `oci.index`, `oci.pull`, `oci.push`, `oci.load`, `oci.exists`,
+`oci.tag`, and `oci.runner`.
 
 ## Enabling it
 
@@ -527,9 +528,88 @@ keeps a derived tag rather than being read as tag `5000/app`. A `tag` that
 can't identify an image to load — empty, `:dev`, `app:`, or pinned to a
 digest (`app@sha256:…`) — is rejected at parse.
 
+## Checking and retagging images
+
+Two drivers act on an image that is already in a registry, without
+downloading it. Both look at the registry as it is when they run, so neither
+is cached: they run every time they're requested.
+
+Each writes one output, `<name>.ref`: the image's reference pinned by digest,
+`registry/repository@sha256:…`. That is what `${read://pkg:name}` hands a later
+target, such as a deploy step. (`oci.push`'s `<name>.ref` holds the
+`registry/repository:tag` it pushed to instead.)
+
+### `oci.exists`
+
+Checks that an image reference resolves in a registry, and fails when it
+doesn't.
+
+```python title="BUILD"
+target(
+    name = "published",
+    driver = "oci.exists",
+    ref = "${read://app:publish}",   # what an oci.push target pushed
+)
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `ref` | `string` | **required** | The image reference to look up, by tag or digest, e.g. `registry.io/me/app:1.2` or `registry.io/me/app@sha256:…`. May use `${read://pkg:name}`; any other `${…}` is refused at parse. |
+| `insecure` | `bool` | `false` | Look up in an insecure (HTTP / self-signed) registry: plain HTTP, certificate validation off. |
+| `credentials` | `string[]` | `[]` | [Credential](/docs/concepts/credentials) targets to look up with, presented with `heph.auth.docker([...])`. See [Registry authentication](#registry-authentication). |
+| `ambient_credentials` | `bool` | `false` | Look up with the host's own `docker login`. Not combinable with `credentials`. |
+
+The image counts as missing only when the registry says it is unknown (a 404,
+`MANIFEST_UNKNOWN` or `NAME_UNKNOWN`); the error quotes the registry's answer.
+A refused login, a 401, a 403 or a network failure is a separate error, so an
+expired credential never reads as an unpublished image.
+
+:::note
+`oci.exists` is a check, not a cache gate: a target that depends on it does
+not skip any work because the image exists. A registry that hides private
+repositories behind a 404 answers an identity that can't read the image
+exactly as it answers for an image that isn't there.
+:::
+
+### `oci.tag`
+
+Points more tags at an image already in a registry. The image's manifest is
+pushed back unchanged under each tag, so every tag resolves to the same digest
+as `ref`, and a multi-platform image is retagged whole. Nothing is rebuilt or
+downloaded beyond the manifest.
+
+```python title="BUILD"
+target(
+    name = "release",
+    driver = "oci.tag",
+    ref = "${read://app:publish}",
+    tags = ["1.2", "latest"],
+    credentials = [":ghcr"],
+)
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `ref` | `string` | **required** | The image to tag, by tag or digest, e.g. `registry.io/me/app:sha-abc` or `registry.io/me/app@sha256:…`. May use `${read://pkg:name}`; any other `${…}` is refused at parse. |
+| `tags` | `string[]` | **required** | The tags to add, bare (`["1.2", "latest"]`), in the repository `ref` names. At least one; repeats are dropped. |
+| `insecure` | `bool` | `false` | Talk to an insecure (HTTP / self-signed) registry: plain HTTP, certificate validation off. |
+| `credentials` | `string[]` | `[]` | [Credential](/docs/concepts/credentials) targets to tag with; they need push access to the repository. See [Registry authentication](#registry-authentication). |
+| `ambient_credentials` | `bool` | `false` | Tag with the host's own `docker login`. Not combinable with `credentials`. |
+
+A tag must be up to 128 letters, digits, `_`, `.` and `-`, not starting with
+`.` or `-`. A whole reference such as `other/app:1` is refused: a tag is added
+where the image already is, and copying an image to another repository is an
+`oci.push`.
+
+:::warning
+A tag that already exists is moved to this image, silently. Tags are moved one
+at a time, so a failure partway leaves the earlier ones moved; the error names
+them, and re-running is safe.
+:::
+
 ## Registry authentication
 
-`oci.pull` and `oci.push` are **anonymous by default**. A target that needs a
+`oci.pull`, `oci.push`, `oci.exists` and `oci.tag` are **anonymous by default**. A target that needs a
 registry login says which identity it uses, in the BUILD file:
 
 | The target sets | It authenticates as |
@@ -676,6 +756,8 @@ accept `cache` as a bare bool or a dict with up to three keys:
 | `history` | int | `1` | Number of past revisions to retain in the local cache (minimum `1`). |
 
 A bare `True` sets both `enabled` and `remote` to `true`. A bare `False`
-disables both. `oci.push`, `oci.load`, and `oci.runner` have no `cache`
-field — as actions with an external side effect (or, for `oci.runner`, an
-answer scoped to this machine's own daemon), they're never cached.
+disables both. `oci.push`, `oci.load`, `oci.tag`, `oci.exists`, and
+`oci.runner` have no `cache` field — as actions with an external side effect
+(or, for `oci.exists`, a check of the registry's current state, and for
+`oci.runner`, an answer scoped to this machine's own daemon), they're never
+cached.

@@ -231,7 +231,7 @@ regardless of which identity ran it, leave caching on; if the output embeds
 the identity — a plan naming an account, a presigned URL — set
 `cache = False`.
 
-[`oci.pull` and `oci.push`](/docs/plugins/oci#registry-authentication) take `credentials` too, presented with `heph.auth.docker`; they are anonymous unless one is named.
+[`oci.pull`, `oci.push`, `oci.exists` and `oci.tag`](/docs/plugins/oci#registry-authentication) take `credentials` too, presented with `heph.auth.docker`; they are anonymous unless one is named.
 
 A target cannot reference the same credential twice, and two credentials
 can't both present the same variable name to one target — both are rejected
