@@ -630,9 +630,6 @@ once, on the load, whether its `tag` is derived or fixed.
 `image` may instead be a literal reference, for an image put in the daemon
 from outside the build. The runner then depends on nothing.
 
-`oci.runner` takes no `deps`. Setting it is an error: name the `oci.load`
-target as `image` instead.
-
 The target named as `image` must write exactly one file holding one ref, as
 `oci.load` does. Anything else fails the runner, naming the target.
 
