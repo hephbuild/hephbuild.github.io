@@ -202,6 +202,15 @@ logic. Returns a `group` target.
 - **One binary as a tool:** `archive.extract` with `include = "bin/tool"`
   (plus `executable = True` if the archive has no modes) yields a one-file
   output usable directly in `tools`.
+- **Support files:** `support_files` (glob string/list, `include` syntax)
+  names extracted files that are not the output but are staged beside it for
+  a tool user or dependent, never on `PATH`/`$SRC` (e.g. `include =
+  "bin/protoc"`, `support_files = "include/**"`; reach them at
+  `$HEPH_TOOLS_DIR/<pkg>/<out>/include` and pass the path explicitly). Needs
+  `include`; widens what is extracted; a file matching both fails the run;
+  both lists then limited to `*`, `?`, `**`, `[…]` (no `{a,b}`, no `\`);
+  no symlink crossing output↔support; refused with a bare `gz`. Swapping
+  `include`/`support_files` doesn't move a dependent's key — clean it.
 - **`archive.create`:** `deps` (required) are packed; `format` from `out`'s
   suffix or explicit (a contradiction is refused; `tar.xz` and `gz` are
   read-only and refused); `out` defaults to

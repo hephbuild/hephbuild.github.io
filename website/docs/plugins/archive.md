@@ -90,6 +90,72 @@ target(name = "use", driver = "bash", run = ["tool --version"],
        tools = [":tool"])
 ```
 
+### Keeping the files a binary needs
+
+Some binaries read files shipped beside them, such as `protoc` and its
+`include/` directory. Name those files with `support_files`. They are extracted
+with the binary and staged next to it wherever the extract is used as a tool or
+a dep. They are not part of the output, so the binary stays the only file on
+`PATH`:
+
+```python title="p/BUILD"
+target(
+    name = "protoc",
+    driver = "archive.extract",
+    src = ":protoc_zip",
+    include = "bin/protoc",        # the output: one file, usable as a tool
+    support_files = "include/**",  # extracted too, staged, not on PATH
+    executable = ["bin/protoc"],
+)
+
+target(
+    name = "gen",
+    driver = "bash",
+    tools = [":protoc"],
+    deps = ["//api:protos"],
+    run = ['protoc -I "$HEPH_TOOLS_DIR/p/protoc/include" -I . --cpp_out=out api/x.proto'],
+    out = "out/",
+)
+```
+
+- **In a tool user**, the support files are at
+  `$HEPH_TOOLS_DIR/<package>/<out>/…` (here `$HEPH_TOOLS_DIR/p/protoc/include`)
+  or `$TOOL_ROOT/<out>/…`. See
+  [Launchers that find their own files](./exec.md#launchers-that-find-their-own-files).
+- **Pass the directory explicitly**, as `-I` above. The binary on `PATH` is a
+  link, so a tool that looks for files next to its own location does not find
+  them.
+- **In a plain dependent** (`deps`), the output is in `$SRC` and the support
+  files are on disk beside it: `$(dirname "$SRC")/../include/…` here.
+
+Rules:
+
+- `support_files` **needs `include`**, which then names the output.
+- `support_files` **widens** what is extracted: a file it matches is extracted
+  even if `include` does not match it.
+- Every extracted file is either output or support file. A file **both** lists
+  match fails the run, naming it.
+- With `support_files`, both lists are limited to `*`, `?`, `**` and `[…]`: no
+  `{a,b}` and no `\` escapes. List each alternative as its own pattern.
+- A symlink may not point from the output to a support file, or the reverse.
+  A `**` over a tree holding a symlinked directory fails the run.
+- Refused with a bare `gz`: its one file would be the support file, leaving no
+  output.
+
+:::warning
+Swapping `include` and `support_files` over the same files reruns the extract,
+but a dependent's cache key does not change, so it can serve its old result.
+Clean the dependents after such a swap.
+:::
+
+:::note
+On macOS's case-insensitive filesystem, two directories differing only by case
+(`include/`, `Include/`) unpack into one, so which files are collected can
+differ from Linux.
+:::
+
+### Picking one file from a larger output
+
 To pick one file out of a target that is not an extract, use a
 [`group`](./group.md):
 
@@ -124,6 +190,7 @@ consumer with an error naming the tool and the files it found.
 | `format`           | inferred        | `tar`, `tar.gz`, `tar.xz`, `tar.zst`, `zip` or `gz`. When omitted, taken from the file name's suffix, the longest match winning (`x.tar.gz` is a `tar.gz`, `x.gz` a `gz`; `.tgz`, `.txz` and `.tzst` work too), else from the file's leading bytes. |
 | `strip_components` | `0`             | Leading path components dropped from every entry, like `tar --strip-components`. A leading `./` counts as one. Refused with a `gz`. |
 | `include`          | every entry     | Glob patterns, a string or a list, matched against each entry's path after `strip_components` (`bin/tool`). Only matching files and links are extracted. See [Picking entries](#picking-entries). |
+| `support_files`    | none            | Glob patterns, a string or a list, in `include`'s syntax, naming extracted files that are **support files**, not output: staged beside the output for a dependent or a tool user, never on `PATH` or in `$SRC`. Needs `include`. See [Keeping the files a binary needs](#keeping-the-files-a-binary-needs). |
 | `executable`       | `False`         | `True` marks every extracted regular file `0755`. A list of glob patterns (a string or a list) marks only the files that match. The execute bit is only ever added. |
 | `out`              | the target name | Directory, relative to the package, the archive unpacks into. |
 | `max_bytes`        | 4 GiB           | The most bytes the archive may decode to. In a tar, entries `include` or `strip_components` leave out are still decoded to reach the next one, and count. |
@@ -306,6 +373,9 @@ a change.
 | `a dep staged that path` | `out` collides with a file a dep produced; rename `out`. |
 | `` `include` pattern "…" matches no file or link in the archive `` | Match one of the listed paths. They are below `out` and after `strip_components`: write `bin/tool`, not `tool-1.0/bin/tool`. A pattern matching only a directory (`bin`) needs `bin/*`. |
 | `` `executable` pattern "…" matches no extracted regular file `` | The pattern names a typo, a directory, a symlink, or a file `include` left out. |
+| `` `support_files` needs `include` `` | Set `include` to the file(s) that are the output. |
+| `` "…" matches both `include` and `support_files` `` | Narrow one of the two lists so the file is in only one. |
+| `` with `support_files`, patterns are limited to `*`, `?`, `**` and `[…]` `` | Replace `{a,b}` with one pattern per alternative; match a special character with `?`. |
 | `hard link target "…" is not included` | Add the linked file's path to `include`. |
 | `` symlink "…": points at "…", which `include` left out `` | Add the symlink's target to `include`. |
 | `"bin/" matches no file; to take a directory's files write "bin/**"` | Write what the error suggests. |

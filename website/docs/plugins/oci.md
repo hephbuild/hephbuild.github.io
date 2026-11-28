@@ -591,7 +591,7 @@ target(
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `ref` | `string` | **required** | The image to tag, by tag or digest, e.g. `registry.io/me/app:sha-abc` or `registry.io/me/app@sha256:…`. May use `${read://pkg:name}`; any other `${…}` is refused at parse. |
-| `tags` | `string[]` | **required** | The tags to add, bare (`["1.2", "latest"]`), in the repository `ref` names. At least one; repeats are dropped. |
+| `tags` | `string[]` | **required** | The tags to add, bare (`["1.2", "latest"]`), in the repository `ref` names. At least one; repeats are dropped. Each may use `${read://pkg:name}`, alone or inside text (`"v${read://app:version}"`); any other `${…}` is refused at parse. |
 | `insecure` | `bool` | `false` | Talk to an insecure (HTTP / self-signed) registry: plain HTTP, certificate validation off. |
 | `credentials` | `string[]` | `[]` | [Credential](/docs/concepts/credentials) targets to tag with; they need push access to the repository. See [Registry authentication](#registry-authentication). |
 | `ambient_credentials` | `bool` | `false` | Tag with the host's own `docker login`. Not combinable with `credentials`. |
@@ -600,6 +600,21 @@ A tag must be up to 128 letters, digits, `_`, `.` and `-`, not starting with
 `.` or `-`. A whole reference such as `other/app:1` is refused: a tag is added
 where the image already is, and copying an image to another repository is an
 `oci.push`.
+
+A tag can come from a target's output, such as a version file:
+
+```python title="BUILD"
+target(
+    name = "release",
+    driver = "oci.tag",
+    ref = "${read://app:publish}",
+    tags = ["v${read://app:version}", "latest"],
+)
+```
+
+A literal tag is checked at parse. A tag holding a `${read://…}` is checked
+once its value is known, at run; two tags that read the same value are tagged
+once.
 
 :::warning
 A tag that already exists is moved to this image, silently. Tags are moved one
