@@ -34,6 +34,10 @@ The buildfile plugin exposes a fixed set of Starlark builtins:
 | `provider_state(provider, **kwargs)` | — | Hand package-level state to a provider. |
 | `heph.core` | namespace | Host platform info + current package. |
 
+f-strings work in BUILD files and in `load()`ed `.star` files:
+`target(name = f"tool-{version}", deps = [f"//tools:{tool}"])`. Any expression
+goes inside the braces (`f"{xs[0]}_{len(xs)}"`); `{{` / `}}` are literal braces.
+
 ## `target()`: engine fields vs driver fields
 
 `target()` returns the new target's address, so you can bind it to a variable
