@@ -22,13 +22,29 @@ export interface Booted {
 
 const PLUGIN_DIR = '/opt/heph/plugins';
 
-// The guest's apk fetches its packages over plain HTTP from this host name;
-// the page answers with this site's mirror of them (plugins/playground-vm).
-// apk still checks the index signatures and every package checksum.
-const MIRROR_HOST = 'dl-cdn.alpinelinux.org';
-const REPOSITORIES = ['main', 'community']
-  .map((repo) => `http://${MIRROR_HOST}/alpine/${ALPINE_BRANCH}/${repo}`)
+// Setup installs its packages over plain HTTP from this host name, which
+// only the page answers: with this site's mirror of them (plugins/playground-vm),
+// so a slow or unreachable internet can't break a start. apk still checks the
+// index signatures and every package checksum.
+const MIRROR_HOST = 'mirror.playground.invalid';
+const repositories = (base: string) => ['main', 'community']
+  .map((repo) => `${base}/alpine/${ALPINE_BRANCH}/${repo}`)
   .join('\n');
+
+// Everything else reaches the internet through a public Wisp proxy (TCP over a
+// WebSocket; browsers can't open sockets). unkernel's own server admits only
+// its own origins, so this is a third-party one its docs list: it sees the
+// host names the VM connects to, while TLS stays end to end. Just one:
+// unkernel races a list on handshake time, and the other listed server
+// handshakes faster but moves bytes ~14x slower (`apk add go`: 3m49 vs 17s).
+// `?wisp=<url>[,<url>…]` replaces it, `?wisp=off` cuts the VM off.
+const WISP_SERVERS = ['wss://anura.pro/'];
+
+function wispServers(): string[] {
+  const fromQuery = new URLSearchParams(window.location.search).get('wisp');
+  if (fromQuery === 'off') return [];
+  return fromQuery ? fromQuery.split(',') : WISP_SERVERS;
+}
 
 // The two glibc symbols gcompat lacks, forwarded to their musl equivalents.
 // Linked into the heph binary rather than preloaded: heph re-runs itself for
@@ -50,7 +66,7 @@ const ROOT = { user: 'root', cwd: '/root' } as const;
 
 const WRAPPER = [
   '#!/bin/sh',
-  // The VM is offline: skip the self-update check and telemetry.
+  // The release is picked on the page: skip the self-update check, and telemetry.
   'export HEPH_NO_SELF_UPDATE=1 HEPH_DISABLE_TELEMETRY=1',
   `exec ${HEPH_BIN} "$@"`,
   '',
@@ -131,17 +147,22 @@ async function openDistro(): Promise<BlockDevice> {
 
 /** Boot Alpine and install everything that doesn't depend on the heph release. */
 async function bootBase(onProgress: (p: Progress) => void): Promise<KernelInstance> {
-  const { createKernel, fetchRoutes } = await import('unkernel');
+  const { createKernel, fetchRoutes, wispBackend } = await import('unkernel');
   onProgress({ stage: 'boot' });
+  const servers = wispServers();
   const vm = await createKernel({
     distro: await openDistro(),
-    // Nothing else resolves: the VM reaches only the mirror.
-    net: fetchRoutes(undefined, { [MIRROR_HOST]: `${window.location.origin}${MIRROR_PATH}` }),
+    net: fetchRoutes(
+      servers.length ? wispBackend(servers) : undefined,
+      { [MIRROR_HOST]: `${window.location.origin}${MIRROR_PATH}` },
+    ),
   });
   try {
     onProgress({ stage: 'packages', detail: PACKAGES.join(' ') });
-    await writeFile(vm, '/etc/apk/repositories', `${REPOSITORIES}\n`);
+    await writeFile(vm, '/etc/apk/repositories', `${repositories(`http://${MIRROR_HOST}`)}\n`);
     await run(vm, `apk add --no-cache ${PACKAGES.join(' ')}`);
+    // From here on, the visitor's `apk add` goes to the real mirror.
+    await writeFile(vm, '/etc/apk/repositories', `${repositories('https://dl-cdn.alpinelinux.org')}\n`);
     await writeFile(vm, '/opt/heph/lib/compat.c', COMPAT_SHIM);
     await run(vm, `tcc -shared -nostdlib -o ${COMPAT_LIB} /opt/heph/lib/compat.c`);
     await writeFile(vm, '/usr/local/bin/heph', WRAPPER, 0o755);

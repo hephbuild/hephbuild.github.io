@@ -232,7 +232,7 @@ export function Playground() {
         <h1>Try heph in your browser</h1>
         <p>
           A real Linux VM — Alpine on an emulated arm64 CPU — boots in this tab with heph and
-          every plugin of the release you pick. Nothing to install; nothing leaves your machine.
+          every plugin of the release you pick. Nothing to install.
         </p>
       </header>
 
@@ -282,7 +282,10 @@ export function Playground() {
         <aside className="pg-examples">
           <Eyebrow>Examples</Eyebrow>
           <p className="pg-offline">
-            The VM has no internet access: it can build only what is already inside it.
+            The VM reaches the internet through a public proxy: try
+            {' '}
+            <code>apk add go</code>
+            . Every example target sleeps for a second, so you can watch heph&apos;s dashboard.
           </p>
           <ul className="pg-ex-list">
             {EXAMPLES.map((ex) => {

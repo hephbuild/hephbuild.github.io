@@ -2,7 +2,8 @@
  * The example workspaces copied into the VM under /root/examples. Each one is a
  * self-contained heph workspace with a `.hephconfig`, BUILD files and a README,
  * and makes one point through a few steps: run, change something, run again.
- * Everything runs offline — the VM has no internet; `tcc` is the C compiler.
+ * `tcc` is the C compiler. Every target starts with `sleep 1`, so builds take
+ * long enough to watch heph's live dashboard.
  */
 
 export interface Step {
@@ -52,7 +53,7 @@ const HELLO: Example = {
     BUILD: `greeting = target(
     name = "greeting",
     driver = "bash",
-    run = "echo 'hello world' > $OUT",
+    run = "sleep 1 && echo 'hello world' > $OUT",
     out = "greeting.txt",
 )
 
@@ -60,7 +61,7 @@ target(
     name = "shout",
     driver = "bash",
     deps = {"msg": greeting},
-    run = "tr a-z A-Z < $SRC_MSG > $OUT",
+    run = "sleep 1 && tr a-z A-Z < $SRC_MSG > $OUT",
     out = "shout.txt",
 )
 `,
@@ -106,7 +107,7 @@ def c_object(name):
         driver = "bash",
         tools = "//@heph/bin:tcc",
         deps = {"c": file("src/" + name + ".c"), "h": glob("src/*.h")},
-        run = "tcc -c $SRC_C -o $OUT",
+        run = "sleep 1 && tcc -c $SRC_C -o $OUT",
         out = name + ".o",
     )
 
@@ -117,7 +118,7 @@ target(
     driver = "bash",
     tools = "//@heph/bin:tcc",
     deps = objects,
-    run = "tcc $SRC -o $OUT",
+    run = "sleep 1 && tcc $SRC -o $OUT",
     out = "app",
 )
 
@@ -127,7 +128,7 @@ target(
     labels = ["test"],
     tools = "//@heph/bin:tcc",
     deps = {"test": file("src/strutil_test.c"), "h": glob("src/*.h"), "lib": ":strutil.o"},
-    run = "tcc $SRC_TEST $SRC_LIB -o strutil_test && ./strutil_test > $OUT",
+    run = "sleep 1 && tcc $SRC_TEST $SRC_LIB -o strutil_test && ./strutil_test > $OUT",
     out = "test.log",
 )
 `,
@@ -227,7 +228,7 @@ const SANDBOX: Example = {
     name = "banner",
     driver = "bash",
     # deps = [file("config.txt")],
-    run = "grep name config.txt > $OUT",
+    run = "sleep 1 && grep name config.txt > $OUT",
     out = "banner.txt",
 )
 `,
@@ -268,7 +269,7 @@ const CODEGEN: Example = {
     driver = "bash",
     codegen = "copy",
     deps = [file("VERSION")],
-    run = 'echo "#define VERSION \\\\"$(cat $SRC)\\\\"" > $OUT',
+    run = 'sleep 1 && echo "#define VERSION \\\\"$(cat $SRC)\\\\"" > $OUT',
     out = "version.h",
 )
 
@@ -277,7 +278,7 @@ target(
     driver = "bash",
     codegen = "in_place",
     deps = [file("words.txt")],
-    run = "sort -o words.txt words.txt",
+    run = "sleep 1 && sort -o words.txt words.txt",
     out = "words.txt",
 )
 `,
@@ -312,7 +313,7 @@ const appBuild = (out: string, want: string) => `target(
         "hdr": "//libs/strutil:lib|hdr",
         "obj": "//libs/strutil:lib|obj",
     },
-    run = "tcc -I $(dirname $SRC_HDR) $SRC_C $SRC_OBJ -o $OUT",
+    run = "sleep 1 && tcc -I $(dirname $SRC_HDR) $SRC_C $SRC_OBJ -o $OUT",
     out = "${out}",
 )
 
@@ -321,7 +322,7 @@ target(
     driver = "bash",
     labels = ["test"],
     deps = {"bin": ":bin"},
-    run = '[ "$($SRC_BIN hello big world)" = "${want}" ] && echo ok > $OUT',
+    run = 'sleep 1 && [ "$($SRC_BIN hello big world)" = "${want}" ] && echo ok > $OUT',
     out = "test.log",
 )
 `;
@@ -385,7 +386,7 @@ int main(void) {
     driver = "bash",
     tools = "//@heph/bin:tcc",
     deps = {"c": file("strutil.c"), "h": file("strutil.h")},
-    run = "tcc -c $SRC_C -o $OUT_OBJ && cp $SRC_H $OUT_HDR",
+    run = "sleep 1 && tcc -c $SRC_C -o $OUT_OBJ && cp $SRC_H $OUT_HDR",
     out = {"obj": "strutil.o", "hdr": "include/strutil.h"},
 )
 
@@ -395,7 +396,7 @@ target(
     labels = ["test"],
     tools = "//@heph/bin:tcc",
     deps = {"test": file("strutil_test.c"), "hdr": ":lib|hdr", "obj": ":lib|obj"},
-    run = "tcc -I $(dirname $SRC_HDR) $SRC_TEST $SRC_OBJ -o strutil_test && ./strutil_test > $OUT",
+    run = "sleep 1 && tcc -I $(dirname $SRC_HDR) $SRC_TEST $SRC_OBJ -o strutil_test && ./strutil_test > $OUT",
     out = "test.log",
 )
 `,
@@ -448,7 +449,7 @@ const RELEASE: Example = {
     {
       label: 'Deploy',
       run: 'heph run //:deploy --cat-out',
-      expect: 'heph stops and asks first: press `y` to deploy.',
+      expect: 'heph stops and asks first: press Enter to review, then `y` to deploy.',
     },
     {
       label: 'Bump the version and redeploy',
@@ -474,7 +475,7 @@ int main(int argc, char **argv) {
     name = "version",
     driver = "bash",
     deps = [file("VERSION")],
-    run = "tr -d '\\\\n' < $SRC > $OUT",
+    run = "sleep 1 && tr -d '\\\\n' < $SRC > $OUT",
     out = "version.txt",
 )
 
@@ -485,6 +486,7 @@ target(
     deps = {"c": file("main.c")},
     # \${read://:version} is replaced by the output of :version.
     run = """
+sleep 1
 tcc -DVERSION='"\${read://:version}"' $SRC_C -o $OUT_BIN
 $OUT_BIN --help > $OUT_DOC
 """,
@@ -505,7 +507,7 @@ target(
     approval = True,
     cache = False,
     deps = {"dist": ":dist"},
-    run = 'echo "Deployed hello \${read://:version}:" > $OUT; basename -a $SRC_DIST | sed "s|^|  dist/|" >> $OUT',
+    run = 'sleep 1 && echo "Deployed hello \${read://:version}:" > $OUT; basename -a $SRC_DIST | sed "s|^|  dist/|" >> $OUT',
     out = "deploy.log",
 )
 `,
@@ -535,5 +537,6 @@ Examples live in /root/examples; each README walks through a few steps:
 ${examples.map((e) => `  ${e.dir.padEnd(10)} ${e.title}`).join('\n')}
 
 Start with:  cd hello && cat README
-The VM is offline and lives in this tab: refresh and it is gone.
+Every example target sleeps 1s, so you can watch heph's dashboard.
+The VM reaches the internet (try: apk add go) and lives in this tab: refresh and it is gone.
 `;
