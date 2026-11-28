@@ -1,16 +1,14 @@
 import {
   useCallback, useEffect, useRef, useState, type ReactNode,
 } from 'react';
-import type { Vm } from 'arm64js';
-import type { AttachedTerminal } from 'arm64js/terminal';
+import type { KernelInstance } from 'unkernel';
 import { Eyebrow } from '@heph/uikit';
 import '@xterm/xterm/css/xterm.css';
 import { EXAMPLES, type Example } from './examples';
 import { getRelease, listReleases, type Release } from './releases';
+import type { AttachedTerminal } from './terminal';
 import { VersionPicker } from './VersionPicker';
-import {
-  bootPlayground, enterShell, type Progress, type Stage,
-} from './vm';
+import { bootPlayground, type Progress, type Stage } from './vm';
 import './playground.css';
 
 const STAGES: { id: Stage; label: string }[] = [
@@ -23,13 +21,13 @@ const STAGES: { id: Stage; label: string }[] = [
 type Status =
   | { kind: 'idle' }
   | { kind: 'running'; progress: Progress }
-  | { kind: 'ready'; vcpus: number; restored: boolean }
+  | { kind: 'ready' }
   | { kind: 'error'; message: string };
 
 function errorMessage(e: unknown): string {
   const code = (e as { code?: string })?.code;
   if (code === 'unsupported-browser') {
-    return 'This browser cannot run the VM here. Use Chrome or Edge 137 or newer.';
+    return 'This browser cannot run the VM: it needs WebAssembly JSPI. Use Chrome or Edge 137+, Firefox 153+ or Safari 27+.';
   }
   return e instanceof Error ? e.message : String(e);
 }
@@ -96,7 +94,7 @@ export function Playground() {
   const pickAbortRef = useRef<AbortController | null>(null);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const termEl = useRef<HTMLDivElement>(null);
-  const vmRef = useRef<Vm | null>(null);
+  const vmRef = useRef<KernelInstance | null>(null);
   const termRef = useRef<AttachedTerminal | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [openExample, setOpenExample] = useState(EXAMPLES[0]?.dir ?? '');
@@ -135,7 +133,7 @@ export function Playground() {
     abortRef.current?.abort();
     termRef.current?.dispose();
     termRef.current = null;
-    vmRef.current?.dispose();
+    vmRef.current?.stop();
     vmRef.current = null;
   }, []);
 
@@ -167,31 +165,31 @@ export function Playground() {
     abortRef.current = ac;
     setStatus({ kind: 'running', progress: { stage: 'download' } });
     try {
-      const { vm, vcpus, restored } = await bootPlayground(release, (progress) => {
+      const { vm } = await bootPlayground(release, (progress) => {
         if (!ac.signal.aborted) setStatus({ kind: 'running', progress });
       }, ac.signal);
       if (ac.signal.aborted) {
-        vm.dispose();
+        vm.stop();
         return;
       }
       vmRef.current = vm;
-      const { attachTerminal } = await import('arm64js/terminal');
-      termRef.current = attachTerminal(vm, termEl.current, {
-        xterm: {
-          fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
-          fontSize: 13,
-          theme: { background: '#0b0c0f', foreground: '#e6e7ea', cursor: '#5a7dff' },
-        },
+      const { attachTerminal } = await import('./terminal');
+      // Revealed first: the terminal sizes itself to the element.
+      termEl.current.hidden = false;
+      termRef.current = await attachTerminal(vm, termEl.current, {
+        fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
+        fontSize: 13,
+        theme: { background: '#0b0c0f', foreground: '#e6e7ea', cursor: '#5a7dff' },
       });
-      await enterShell(vm);
-      setStatus({ kind: 'ready', vcpus, restored });
+      if (ac.signal.aborted) return;
+      setStatus({ kind: 'ready' });
     } catch (e) {
       if (!ac.signal.aborted) setStatus({ kind: 'error', message: errorMessage(e) });
     }
   };
 
   const runStep = (ex: Example, index: number, command: string) => {
-    vmRef.current?.write(`cd ~/examples/${ex.dir} && ${command}\r`).catch(() => {});
+    termRef.current?.write(`cd ~/examples/${ex.dir} && ${command}\r`);
     setDoneSteps((prev) => new Set(prev).add(`${ex.dir}/${index}`));
     termRef.current?.xterm.focus();
   };
@@ -247,13 +245,6 @@ export function Playground() {
             {release.plugins.length
               ? release.plugins.map((p) => <code key={p.stem}>{p.stem.replace(/^heph-|-plugin$/g, '')}</code>)
               : <em>none</em>}
-          </div>
-        )}
-        {ready && (
-          <div className="pg-plugins">
-            <span>vm</span>
-            <code>{`${status.vcpus} vCPU${status.vcpus > 1 ? 's' : ''}`}</code>
-            {status.restored && <code>from snapshot</code>}
           </div>
         )}
       </div>

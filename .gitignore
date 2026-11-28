@@ -24,6 +24,10 @@ devenv.local.nix
 website/static/search/
 website/.search-cache/
 
+# playground VM image, copied from the unkernel release at build time
+website/static/playground/
+website/.playground-cache/
+
 # terraform
 .terraform/
 *.tfstate
