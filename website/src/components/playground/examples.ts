@@ -71,31 +71,31 @@ target(
 const C_APP: Example = {
   dir: 'c-app',
   title: 'Incremental C build',
-  summary: 'A small C program: one compile target per source file, a link step and a test. `--no-tui` prints each target as it runs.',
+  summary: 'A small C program: one compile target per source file, a link step and a test. Watch the time each run takes; add `--no-tui` to see every target it runs.',
   steps: [
     {
       label: 'Build and run the app',
-      run: 'heph run //:app --no-tui --copy-out out && out/app',
-      expect: 'Each object compiles, then the app links: `cache 0 hit / 5 miss`.',
+      run: 'heph run //:app --copy-out out && out/app',
+      expect: 'Each object compiles, then the app links: about 5 s.',
     },
     {
       label: 'Build again',
-      run: 'heph run //:app --no-tui',
-      expect: 'Nothing runs: `cache 5 hit / 0 miss`.',
+      run: 'heph run //:app',
+      expect: 'Nothing runs: `1 cached`, in a fraction of a second.',
     },
     {
       label: 'Change one file',
-      run: "sed -i 's/Hello/Howdy/' src/greet.c && heph run //:app --no-tui --copy-out out && out/app",
-      expect: 'Only `greet.o` and `app` run; the other objects are cache hits.',
+      run: "sed -i 's/Hello/Howdy/' src/greet.c && heph run //:app --copy-out out && out/app",
+      expect: 'Only `greet.o` and `app` run, so it takes about half as long; the other objects are cache hits.',
     },
     {
       label: 'Change only a comment',
-      run: "sed -i 's|^// .*|// Prints word and character counts.|' src/stats.c && heph run //:app --no-tui",
-      expect: 'Only `stats.o` runs. It compiles to the same bytes, so `app` is a cache hit.',
+      run: "sed -i 's|^// .*|// Prints word and character counts.|' src/stats.c && heph run //:app",
+      expect: 'Only `stats.o` runs. It compiles to the same bytes, so `app` is a cache hit: `1 cached`.',
     },
     {
       label: 'Run the tests',
-      run: 'heph run test //... --no-tui',
+      run: 'heph run test //...',
       expect: 'Only the test runs: it reuses the `strutil.o` already built.',
     },
   ],
@@ -330,12 +330,12 @@ target(
 const MONOREPO: Example = {
   dir: 'monorepo',
   title: 'What does my change affect?',
-  summary: 'Two apps share a library, each package with its own tests. `--no-tui` prints each target as it runs.',
+  summary: 'Two apps share a library, each package with its own tests. The counts are the three tests; add `--no-tui` to see every target a run builds.',
   steps: [
     {
       label: 'Run every test',
-      run: 'heph run test //... --no-tui',
-      expect: 'The library, both apps and the three tests run.',
+      run: 'heph run test //...',
+      expect: 'The library, both apps and the three tests run: `3 / 3 done`.',
     },
     {
       label: 'Who uses the library?',
@@ -344,18 +344,18 @@ const MONOREPO: Example = {
     },
     {
       label: 'Break the library',
-      run: "sed -i 's/toupper/tolower/' libs/strutil/strutil.c && heph run test //... --no-tui",
-      expect: 'Everything downstream reruns, and two tests catch the bug.',
+      run: "sed -i 's/toupper/tolower/' libs/strutil/strutil.c && heph run test //...",
+      expect: 'Everything downstream reruns, and two tests catch the bug: `2 failed`, each named below.',
     },
     {
       label: 'Fix it',
-      run: "sed -i 's/tolower/toupper/' libs/strutil/strutil.c && heph run test //... --no-tui",
-      expect: 'The tests pass again. The two that failed are cache hits: their inputs match the last run where they passed.',
+      run: "sed -i 's/tolower/toupper/' libs/strutil/strutil.c && heph run test //...",
+      expect: 'The tests pass again. The two that failed are cache hits (`2 cached`): their inputs match the last run where they passed.',
     },
     {
       label: 'Change one app',
-      run: "sed -i 's/int words/long words/; s/%d/%ld/' apps/count/main.c && heph run test //... --no-tui",
-      expect: 'Only `//apps/count` runs; greet and the library are cache hits.',
+      run: "sed -i 's/int words/long words/; s/%d/%ld/' apps/count/main.c && heph run test //...",
+      expect: 'Only `//apps/count` and its test run; the other two tests are cache hits: `2 cached`.',
     },
     {
       label: 'Query the graph',
