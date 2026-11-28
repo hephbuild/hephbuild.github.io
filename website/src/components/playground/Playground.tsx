@@ -79,6 +79,17 @@ function versionToUrl(tag: string) {
   window.history.replaceState(window.history.state, '', url);
 }
 
+// The VM itself: the kernel (11 MB), the Alpine image (4 MB) and the
+// packages it installs (12 MB), all served by this site.
+const VM_MB = 27;
+
+/** What a first start downloads for `release`, in MB. */
+function downloadMB(release: Release): number {
+  const names = [release.binary, ...release.plugins.flatMap((p) => [p.manifest, p.lib])];
+  const bytes = names.reduce((n, name) => n + (release.sizes[name] ?? 0), 0);
+  return Math.round(bytes / 1e6) + VM_MB;
+}
+
 function startLabel(status: Status): string {
   if (status.kind === 'running') return 'Starting…';
   return status.kind === 'ready' ? 'Restart' : 'Start VM';
@@ -201,7 +212,10 @@ export function Playground() {
   if (status.kind === 'idle') {
     placeholder = (
       <p>
-        Pick a version and start the VM. The first start downloads about 200&nbsp;MB;
+        Pick a version and start the VM.
+        {release
+          ? ` The first start downloads about ${downloadMB(release)}\u00a0MB; `
+          : ' The first start downloads heph, its plugins and the VM; '}
         later starts reuse the cached copy.
       </p>
     );

@@ -1,4 +1,4 @@
-import type { KernelInstance, Pty } from 'unkernel';
+import type { BlockDevice, KernelInstance, Pty } from 'unkernel';
 import {
   EXAMPLES, WELCOME, hephconfig, readme,
 } from './examples';
@@ -111,12 +111,30 @@ async function writeFile(
   }
 }
 
+/**
+ * The root file system as a read-only disk in memory. Given a URL, unkernel
+ * reads the image lazily with Range requests, which not every static host
+ * honours (Cloudflare Pages previews answer 200 with the whole file). The
+ * image is 4 MB, so one plain download costs little and works anywhere.
+ */
+async function openDistro(): Promise<BlockDevice> {
+  const { BaseDisk } = await import('unkernel');
+  const res = await fetch(DISTRO_PATH);
+  if (!res.ok) throw new Error(`${DISTRO_PATH}: HTTP ${res.status}`);
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  return new BaseDisk({
+    size: bytes.length,
+    identity: `${DISTRO_PATH}:${bytes.length}`,
+    read: (off, len) => bytes.subarray(off, off + len),
+  });
+}
+
 /** Boot Alpine and install everything that doesn't depend on the heph release. */
 async function bootBase(onProgress: (p: Progress) => void): Promise<KernelInstance> {
   const { createKernel, fetchRoutes } = await import('unkernel');
   onProgress({ stage: 'boot' });
   const vm = await createKernel({
-    distro: DISTRO_PATH,
+    distro: await openDistro(),
     // Nothing else resolves: the VM reaches only the mirror.
     net: fetchRoutes(undefined, { [MIRROR_HOST]: `${window.location.origin}${MIRROR_PATH}` }),
   });
