@@ -45,6 +45,9 @@ const config: Config = {
     // the model served from this origin — no search backend, no third party.
     // The navbar field it renders is styled in src/css/custom.css.
     './plugins/orama-search/index.ts',
+    // The /playground VM's root file system and Alpine packages, written to
+    // static/playground/ at build time so the VM needs nothing off-site.
+    './plugins/playground-vm/index.ts',
     // Blueprint OpenGraph cards, rendered per-page at build time (postBuild)
     // via Satori. PNGs land in build/img/og/ and the og:image / twitter:image
     // meta tags are rewritten to absolute URLs under `url`. See src/og/render.ts.
