@@ -75,7 +75,8 @@ value if its documentation says so. Today they are: the `run`, `env` and
 the `env`/`files` values
 in a [credential](/docs/concepts/credentials)'s `present` block, and the `ref`
 option of [`oci.push`](/docs/plugins/oci#ocipush), [`oci.exists`](/docs/plugins/oci#ociexists)
-and [`oci.tag`](/docs/plugins/oci#ocitag) (`${read://…}` only).
+and [`oci.tag`](/docs/plugins/oci#ocitag), and each entry of `oci.tag`'s
+`tags` (`${read://…}` only).
 
 In `env` and `runtime_env`, only a variable's **value** may hold a reference,
 not its name. A `runtime_env` value stays out of the cache key as usual, but
