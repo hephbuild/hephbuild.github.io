@@ -311,6 +311,24 @@ for pkg in heph.core.packages("//services/..."):
     )
 ```
 
+### f-strings
+
+BUILD files and the `.star` files they `load()` support f-strings:
+
+```python title="BUILD"
+version = "1.2.0"
+tools = ["fmt", "lint"]
+
+target(
+    name = f"tool-{version}",
+    driver = "exec",
+    deps = [f"//tools:{tools[0]}"],
+)
+```
+
+Any expression works inside the braces (`f"{xs[0]}_{len(xs)}"`). Write `{{` and
+`}}` for literal braces.
+
 ### Sharing symbols with `load()`
 
 `load()` imports symbols from another Starlark file so common definitions live
