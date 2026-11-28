@@ -2,9 +2,11 @@ import {
   useCallback, useEffect, useRef, useState, type ReactNode,
 } from 'react';
 import type { KernelInstance } from 'unkernel';
+import { usePluginData } from '@docusaurus/useGlobalData';
 import { Eyebrow } from '@heph/uikit';
 import '@xterm/xterm/css/xterm.css';
 import { EXAMPLES, type Example } from './examples';
+import type { ImageInfo } from './image';
 import { getRelease, listReleases, type Release } from './releases';
 import type { AttachedTerminal } from './terminal';
 import { VersionPicker } from './VersionPicker';
@@ -14,7 +16,6 @@ import './playground.css';
 const STAGES: { id: Stage; label: string }[] = [
   { id: 'download', label: 'Download heph + plugins' },
   { id: 'boot', label: 'Boot Alpine Linux' },
-  { id: 'packages', label: 'Install packages' },
   { id: 'install', label: 'Install heph + examples' },
 ];
 
@@ -79,15 +80,11 @@ function versionToUrl(tag: string) {
   window.history.replaceState(window.history.state, '', url);
 }
 
-// The VM itself: the kernel (11 MB), the Alpine image (4 MB) and the
-// packages it installs (12 MB), all served by this site.
-const VM_MB = 27;
-
-/** What a first start downloads for `release`, in MB. */
-function downloadMB(release: Release): number {
+/** What a first start downloads for `release`, in MB: its assets and the VM (`vmBytes`). */
+function downloadMB(release: Release, vmBytes: number): number {
   const names = [release.binary, ...release.plugins.flatMap((p) => [p.manifest, p.lib])];
   const bytes = names.reduce((n, name) => n + (release.sizes[name] ?? 0), 0);
-  return Math.round(bytes / 1e6) + VM_MB;
+  return Math.round((bytes + vmBytes) / 1e6);
 }
 
 function startLabel(status: Status): string {
@@ -96,6 +93,8 @@ function startLabel(status: Status): string {
 }
 
 export function Playground() {
+  // The kernel and the root file system, measured by plugins/playground-vm.
+  const { vmBytes } = usePluginData('playground-vm') as ImageInfo;
   const [releases, setReleases] = useState<Release[] | null>(null);
   const [releasesError, setReleasesError] = useState<string | null>(null);
   const [tag, setTag] = useState('');
@@ -214,7 +213,7 @@ export function Playground() {
       <p>
         Pick a version and start the VM.
         {release
-          ? ` The first start downloads about ${downloadMB(release)}\u00a0MB; `
+          ? ` The first start downloads about ${downloadMB(release, vmBytes)}\u00a0MB; `
           : ' The first start downloads heph, its plugins and the VM; '}
         later starts reuse the cached copy.
       </p>
